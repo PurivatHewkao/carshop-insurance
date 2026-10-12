@@ -1,2 +1,6 @@
 import PlaceholderPage from './pages/PlaceholderPage.jsx';
-export const salesRoutes = [{ path: 'sales', element: <PlaceholderPage /> }];
+import RequestsPage from './pages/RequestsPage.jsx';
+export const salesRoutes = [
+  { path: 'sales', element: <PlaceholderPage /> },
+  { path: 'requests', element: <RequestsPage /> },
+];

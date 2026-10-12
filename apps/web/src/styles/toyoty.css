@@ -1,0 +1,1673 @@
+/* Layout concept: เว็บโชว์รูมรถ — เมนูบนเรียบแบบ Toyota, เฮโร่มืดกลางหน้าแบบ Tesla, ปุ่มแดงลอยขวาแบบ Honda; หลังบ้านใช้แถบข้างมืด + การ์ดบนพื้นเทา */
+:root {
+  --red: #eb0a1e;
+  --red-ink: color-mix(in srgb, var(--red) 86%, #000);
+  --red-soft: color-mix(in srgb, var(--red) 8%, var(--bg));
+  --ink: #14151a;
+  --ink2: #43454c;
+  --mute: #666971;
+  --bg: #ffffff;
+  --bg2: #f3f3f5;
+  --card: #ffffff;
+  --line: #e1e1e5;
+  --line2: #cbccd2;
+  --night: #0c0d10;
+  --night2: #1b1c21;
+  --on-night: #f4f4f5;
+  --on-night2: #a9abb2;
+  --good: #0f7557;
+  --good-bg: #e2f3eb;
+  --warn: #8a4f00;
+  --warn-bg: #fbefd6;
+  --bad: #b3121f;
+  --bad-bg: #fce6e8;
+  --info: #1d5bbf;
+  --info-bg: #e3edfb;
+  --edit: #2563eb;
+  --on-edit: #ffffff;
+  --edit-bg: #e8f0fe;
+  --chrome: #eaeaed;
+  --shadow:
+    0 1px 2px rgba(15, 16, 19, 0.06), 0 10px 28px rgba(15, 16, 19, 0.08);
+  --r: 12px;
+  --r-sm: 8px;
+  --r-btn: 999px;
+  --fd: 'Prompt', 'Noto Sans Thai', 'Leelawadee UI', system-ui, sans-serif;
+  --fb: 'Noto Sans Thai', 'Leelawadee UI', 'Segoe UI', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --red-ink: color-mix(in srgb, var(--red) 62%, #fff);
+    --red-soft: color-mix(in srgb, var(--red) 16%, var(--bg));
+    --ink: #f4f4f5;
+    --ink2: #c6c8ce;
+    --mute: #9295a0;
+    --bg: #0f1013;
+    --bg2: #15161b;
+    --card: #1a1b21;
+    --line: #2a2c33;
+    --line2: #3c3e48;
+    --night: #07080a;
+    --night2: #121317;
+    --good: #4fd6a5;
+    --good-bg: #10302a;
+    --warn: #f2b861;
+    --warn-bg: #352609;
+    --bad: #ff7b86;
+    --bad-bg: #3a1418;
+    --info: #86b5ff;
+    --info-bg: #14253f;
+    --edit: #7ba6ff;
+    --on-edit: #0b1220;
+    --edit-bg: #16233d;
+    --chrome: #08090b;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px rgba(0, 0, 0, 0.45);
+    color-scheme: dark;
+  }
+}
+:root[data-theme='dark'] {
+  --red-ink: color-mix(in srgb, var(--red) 62%, #fff);
+  --red-soft: color-mix(in srgb, var(--red) 16%, var(--bg));
+  --ink: #f4f4f5;
+  --ink2: #c6c8ce;
+  --mute: #9295a0;
+  --bg: #0f1013;
+  --bg2: #15161b;
+  --card: #1a1b21;
+  --line: #2a2c33;
+  --line2: #3c3e48;
+  --night: #07080a;
+  --night2: #121317;
+  --good: #4fd6a5;
+  --good-bg: #10302a;
+  --warn: #f2b861;
+  --warn-bg: #352609;
+  --bad: #ff7b86;
+  --bad-bg: #3a1418;
+  --info: #86b5ff;
+  --info-bg: #14253f;
+  --edit: #7ba6ff;
+  --on-edit: #0b1220;
+  --edit-bg: #16233d;
+  --chrome: #08090b;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  background: var(--chrome);
+  color: var(--ink);
+  font: 400 14px/1.5 var(--fb);
+}
+button {
+  font: inherit;
+}
+:focus-visible {
+  outline: 2px solid var(--edit);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ================= เว็บไซต์จำลอง ================= */
+.stage {
+  width: 100%;
+  margin-inline: auto;
+}
+.stage.mobile {
+  max-width: 392px;
+}
+.browser {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: 12px 12px 0 0;
+}
+.browser i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--line2);
+}
+.browser .url {
+  flex: 1;
+  min-width: 0;
+  margin-left: 8px;
+  padding: 2px 12px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  font: 400 12px var(--fb);
+  color: var(--mute);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.site {
+  position: relative;
+  container: site/inline-size;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 16px/1.6 var(--fb);
+  border: 1px solid var(--line);
+  border-radius: 0 0 12px 12px;
+  overflow: hidden;
+}
+.site h1,
+.site h2,
+.site h3,
+.site h4 {
+  margin: 0;
+  font-family: var(--fd);
+  text-wrap: balance;
+  font-weight: 600;
+}
+.site p {
+  margin: 0;
+}
+.site .sp {
+  flex: 1;
+}
+.ic {
+  width: 22px;
+  height: 22px;
+  flex: none;
+}
+.gut,
+.s-nav,
+.s-main,
+.s-foot,
+.s-adm-top {
+  --gut: clamp(16px, 4.2cqi, 52px);
+}
+.av {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--red-soft);
+  color: var(--red-ink);
+  display: inline-grid;
+  place-items: center;
+  font: 600 13px var(--fd);
+  flex: none;
+}
+
+/* ปุ่ม / ป้าย */
+.s-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 24px;
+  border-radius: var(--r-btn);
+  font: 500 15px/1.2 var(--fd);
+  border: 1.5px solid transparent;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+.s-btn.pri {
+  background: var(--red);
+  color: #fff;
+}
+.s-btn.pri:hover {
+  background: color-mix(in srgb, var(--red) 86%, #000);
+}
+.s-btn.out {
+  border-color: var(--line2);
+  color: var(--ink);
+  background: transparent;
+}
+.s-btn.out:hover {
+  border-color: var(--ink);
+}
+.s-btn.ghost {
+  color: var(--red-ink);
+  padding: 0 10px;
+}
+.s-btn.light {
+  background: #fff;
+  color: #14151a;
+}
+.s-btn.light:hover {
+  background: #e9e9ec;
+}
+.s-btn.glass {
+  border-color: rgba(255, 255, 255, 0.55);
+  color: #fff;
+}
+.s-btn.glass:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.s-btn.sm {
+  min-height: 36px;
+  padding: 0 16px;
+  font-size: 13px;
+}
+.s-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 10px;
+  border-radius: 99px;
+  font: 500 12px/1.7 var(--fd);
+  background: var(--bg2);
+  color: var(--ink2);
+  white-space: nowrap;
+}
+.s-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+.t-good {
+  background: var(--good-bg);
+  color: var(--good);
+}
+.t-warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+.t-bad {
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+.t-info {
+  background: var(--info-bg);
+  color: var(--info);
+}
+.s-eyebrow {
+  font: 500 12px/1.4 var(--fd);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--red-ink);
+}
+.s-eyebrow.on-dark {
+  color: #fff;
+  opacity: 0.85;
+}
+
+/* เมนูบน (Toyota: เรียบ ขีดแดงใต้เมนูปัจจุบัน) */
+.s-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px 28px;
+  min-height: 68px;
+  padding-inline: var(--gut);
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  position: relative;
+  z-index: 3;
+}
+.s-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font: 600 19px/1 var(--fd);
+  letter-spacing: 0.16em;
+  color: var(--ink);
+}
+.s-mark {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  background: var(--red);
+  display: grid;
+  place-items: center;
+}
+.s-mark svg {
+  width: 18px;
+  height: 18px;
+  fill: #fff;
+}
+.s-links {
+  display: flex;
+  gap: 4px 24px;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+  overflow: hidden;
+}
+.s-links a {
+  font: 500 14px var(--fd);
+  color: var(--ink2);
+  padding: 22px 0 20px;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+.s-links a[data-sgo] {
+  cursor: pointer;
+}
+.s-links a[data-sgo]:hover {
+  color: var(--ink);
+}
+.s-links a.on {
+  color: var(--ink);
+  border-color: var(--red);
+}
+.s-util {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+.s-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 500 13px var(--fd);
+  color: var(--ink2);
+}
+.s-burger {
+  display: none;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  font-size: 22px;
+  color: var(--ink);
+}
+@container site (max-width:780px) {
+  .s-links {
+    display: none;
+  }
+  .s-burger {
+    display: grid;
+  }
+  .s-util .s-btn.out,
+  .s-util .s-user span.nm {
+    display: none;
+  }
+}
+@container site (max-width:520px) {
+  .s-util .s-btn.pri {
+    display: none;
+  }
+  .s-nav {
+    min-height: 60px;
+  }
+}
+.editing .s-links {
+  display: flex !important;
+  order: 5;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  overflow: visible;
+}
+.editing .s-links a {
+  padding: 8px 0;
+}
+
+/* โครงหน้า */
+.s-main {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: clamp(28px, 5cqi, 56px) clamp(16px, 2.4cqi, 28px);
+  padding: clamp(24px, 4cqi, 44px) var(--gut) clamp(40px, 7cqi, 80px);
+  align-content: start;
+}
+.s-main.hero-first {
+  padding-top: 0;
+}
+.s-main > .blk {
+  grid-column: span 12;
+  min-width: 0;
+  position: relative;
+}
+.s-main > .blk.w-two3 {
+  grid-column: span 8;
+}
+.s-main > .blk.w-half {
+  grid-column: span 6;
+}
+.s-main > .blk.w-third {
+  grid-column: span 4;
+}
+.s-main > .blk.bleed {
+  grid-column: 1/-1;
+  margin-inline: calc(var(--gut) * -1);
+}
+.s-main > .blk.bleed.k-specs {
+  padding-inline: var(--gut);
+  border-block: 1px solid var(--line);
+}
+@container site (max-width:780px) {
+  .s-main > .blk.w-two3,
+  .s-main > .blk.w-half,
+  .s-main > .blk.w-third {
+    grid-column: 1/-1;
+  }
+}
+.blk.bleed .btool {
+  top: 10px;
+  right: var(--gut);
+}
+.s-ph {
+  grid-column: 1/-1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+.s-crumb {
+  font: 400 13px var(--fd);
+  color: var(--mute);
+  margin-bottom: 6px;
+}
+.s-ph h1 {
+  font-size: clamp(26px, 3.8cqi, 42px);
+  line-height: 1.2;
+}
+.s-ph p {
+  color: var(--ink2);
+  margin-top: 6px;
+  max-width: 62ch;
+}
+.s-sec-h {
+  display: flex;
+  align-items: baseline;
+  gap: 6px 16px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.s-sec-h h2 {
+  font-size: clamp(22px, 3cqi, 32px);
+  line-height: 1.25;
+}
+.s-sec-h .cnt {
+  color: var(--mute);
+  font-size: 14px;
+}
+.s-sec-h .lnk {
+  margin-left: auto;
+  font: 500 14px var(--fd);
+  color: var(--red-ink);
+}
+.s-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 20px;
+}
+.s-card.flush {
+  padding: 0;
+  overflow: hidden;
+}
+.s-card-h {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.s-card-h h3 {
+  font-size: 16px;
+}
+.s-card-f {
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+  color: var(--mute);
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.s-card > h3 {
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+/* เฮโร่ (Tesla กลางหน้า / Honda การ์ดชิดซ้าย) */
+.s-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: var(--on-night);
+  background: var(--night);
+  min-height: clamp(500px, 86cqi, 680px);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  justify-items: center;
+  text-align: center;
+  padding: clamp(40px, 6cqi, 72px) var(--gut) 0;
+}
+.s-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(
+      75% 42% at 50% 104%,
+      color-mix(in srgb, var(--red) 42%, transparent),
+      transparent 72%
+    ),
+    linear-gradient(180deg, #09090c 0%, #15161b 56%, #24262d 100%);
+}
+.s-hero-bg::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 20%;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.5));
+}
+.s-hero-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+}
+.s-hero.hasimg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.6),
+    rgba(0, 0, 0, 0.1) 55%,
+    rgba(0, 0, 0, 0.5)
+  );
+}
+.s-hero h1 {
+  font: 600 clamp(34px, 6.4cqi, 78px)/1.12 var(--fd);
+  letter-spacing: -0.01em;
+  margin-top: 10px;
+}
+.s-hero-sub {
+  font: 400 clamp(15px, 1.8cqi, 19px)/1.65 var(--fb);
+  color: var(--on-night2);
+  margin-top: 12px;
+  max-width: 46ch;
+  margin-inline: auto;
+}
+.s-hero-price {
+  font: 500 17px var(--fd);
+  margin-top: 10px;
+}
+.s-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 24px;
+}
+.s-actions.left {
+  justify-content: flex-start;
+  margin-top: 0;
+}
+.s-hero-car {
+  position: relative;
+  align-self: end;
+  width: min(100%, 700px);
+  margin-top: 18px;
+}
+.s-hero-car svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 26px 28px rgba(0, 0, 0, 0.55));
+}
+.s-hero-car img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.s-dots {
+  position: absolute;
+  top: 20px;
+  right: var(--gut);
+  display: flex;
+  gap: 7px;
+  z-index: 2;
+}
+.s-dots i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+}
+.s-dots i.on {
+  width: 24px;
+  border-radius: 99px;
+  background: #fff;
+}
+@container site (min-width:860px) {
+  .s-hero.left {
+    margin: 20px var(--gut) 0;
+    border-radius: calc(var(--r) * 2);
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    grid-template-rows: 1fr;
+    align-items: center;
+    text-align: left;
+    justify-items: stretch;
+    padding-bottom: 0;
+    min-height: 520px;
+  }
+  .s-hero.left .s-hero-sub {
+    margin-inline: 0;
+  }
+  .s-hero.left .s-actions {
+    justify-content: flex-start;
+  }
+  .s-hero.left .s-hero-car {
+    width: 100%;
+  }
+  .s-main > .blk.bleed:has(.s-hero.left) {
+    margin-inline: 0;
+  }
+}
+.s-hero.left .s-dots {
+  right: 24px;
+}
+
+/* แถวสเปก (Tesla) */
+.s-specs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-block: 1px solid var(--line);
+}
+.blk.bleed .s-specs {
+  border: 0;
+}
+.s-spec {
+  padding: 28px 20px;
+  position: relative;
+}
+.s-spec + .s-spec {
+  box-shadow: -1px 0 0 var(--line);
+}
+.s-spec b {
+  display: block;
+  font: 300 clamp(34px, 5.2cqi, 58px)/1.05 var(--fd);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.s-spec b small {
+  font: 500 14px var(--fd);
+  color: var(--mute);
+  margin-left: 6px;
+  letter-spacing: 0;
+}
+.s-spec > span {
+  display: block;
+  margin-top: 8px;
+  color: var(--mute);
+  font-size: 14px;
+  line-height: 1.5;
+}
+@container site (max-width:780px) {
+  .s-specs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .s-spec:nth-child(2n + 1) {
+    box-shadow: none;
+  }
+  .s-spec:nth-child(n + 3) {
+    border-top: 1px solid var(--line);
+  }
+}
+
+/* กริดรุ่นรถ (Toyota model-list) */
+.s-cats {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+  scrollbar-width: none;
+}
+.s-cat {
+  flex: 0 0 auto;
+  min-width: 108px;
+  padding: 12px 16px 10px;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  color: var(--mute);
+  border-bottom: 3px solid transparent;
+  font: 500 14px var(--fd);
+  cursor: pointer;
+  position: relative;
+}
+.s-cat svg {
+  width: 76px;
+  height: auto;
+}
+.s-cat .ic {
+  width: 30px;
+  height: 30px;
+  margin-block: 8px;
+}
+.s-cat:hover {
+  color: var(--ink);
+}
+.s-cat.on {
+  color: var(--ink);
+  border-color: var(--red);
+}
+.s-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.s-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line2);
+  border-radius: var(--r-btn);
+  font: 500 13px var(--fd);
+  color: var(--ink2);
+  background: var(--bg);
+  position: relative;
+}
+.s-chip::after {
+  content: '▾';
+  font-size: 10px;
+  color: var(--mute);
+}
+.s-chip.sort {
+  margin-left: auto;
+  border-color: transparent;
+  background: var(--bg2);
+}
+.s-cars {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr));
+  gap: 12px 20px;
+}
+@container site (max-width:900px) {
+  .s-cars {
+    --cols: 2 !important;
+  }
+}
+.s-car {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 18px 16px 14px;
+  border-radius: var(--r);
+  transition: background 0.15s;
+}
+.s-car[data-sgo] {
+  cursor: pointer;
+}
+.s-car:hover {
+  background: var(--bg2);
+}
+.s-car h3 {
+  font-size: 17px;
+  line-height: 1.35;
+  padding-right: 64px;
+}
+.s-car .pr {
+  color: var(--ink2);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.s-car .tag {
+  position: absolute;
+  top: 18px;
+  right: 14px;
+}
+.s-car .im {
+  position: relative;
+  margin-top: 10px;
+}
+.s-car .im svg,
+.s-car .im img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.s-car .im img {
+  aspect-ratio: 508/208;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+}
+@container site (max-width:600px) {
+  .s-car {
+    padding: 14px 8px 10px;
+  }
+  .s-car h3 {
+    padding-right: 0;
+    font-size: 15px;
+  }
+  .s-car .tag {
+    position: static;
+    order: -1;
+    align-self: flex-start;
+    margin-bottom: 4px;
+  }
+}
+.s-car .go {
+  margin-top: 8px;
+  font: 500 13px var(--fd);
+  color: var(--mute);
+}
+.s-car:hover .go {
+  color: var(--red-ink);
+}
+
+/* โปรโมชัน */
+.s-promos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+@container site (max-width:860px) {
+  .s-promos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.s-promo {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: calc(var(--r) * 1.5);
+  padding: 24px;
+  min-height: 210px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.s-promo::after {
+  content: '';
+  position: absolute;
+  right: -70px;
+  bottom: -90px;
+  width: 230px;
+  height: 230px;
+  border-radius: 50%;
+  border: 34px solid currentColor;
+  opacity: 0.09;
+  z-index: -1;
+}
+.s-promo.k0 {
+  background: var(--red);
+  color: #fff;
+}
+.s-promo.k1 {
+  background: var(--night2);
+  color: var(--on-night);
+}
+.s-promo.k2 {
+  background: var(--bg2);
+  color: var(--ink);
+}
+.s-promo .tag {
+  align-self: flex-start;
+  font: 500 12px var(--fd);
+  padding: 1px 12px;
+  border: 1px solid currentColor;
+  border-radius: 99px;
+  opacity: 0.9;
+}
+.s-promo .big {
+  font: 600 clamp(30px, 4.4cqi, 44px)/1.1 var(--fd);
+  margin-top: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.s-promo h3 {
+  font-size: 17px;
+}
+.s-promo p {
+  opacity: 0.9;
+  font-size: 14px;
+}
+.s-promo .lnk2 {
+  margin-top: auto;
+  padding-top: 12px;
+  font: 500 13px var(--fd);
+}
+
+/* จุดเด่น */
+.s-feats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+}
+@container site (max-width:780px) {
+  .s-feats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.s-feat .ic-b {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--r-sm);
+  background: var(--red-soft);
+  color: var(--red-ink);
+  display: grid;
+  place-items: center;
+}
+.s-feat h3 {
+  font-size: 18px;
+  margin-top: 14px;
+}
+.s-feat p {
+  color: var(--ink2);
+  margin-top: 6px;
+  font-size: 15px;
+}
+.s-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px 32px;
+  flex-wrap: wrap;
+  padding: clamp(24px, 5cqi, 52px);
+  background: var(--red);
+  color: #fff;
+  border-radius: calc(var(--r) * 1.6);
+}
+.s-cta h2 {
+  font-size: clamp(22px, 3.4cqi, 36px);
+  line-height: 1.25;
+}
+.s-cta p {
+  margin-top: 8px;
+  max-width: 54ch;
+}
+
+/* หน้ารายละเอียดรถ */
+.s-pd {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: clamp(20px, 4cqi, 48px);
+  align-items: start;
+}
+@container site (max-width:880px) {
+  .s-pd {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.s-pd-stage {
+  position: relative;
+  border-radius: calc(var(--r) * 1.6);
+  background: radial-gradient(80% 70% at 50% 42%, var(--bg) 0, var(--bg2) 100%);
+  border: 1px solid var(--line);
+  padding: clamp(20px, 4cqi, 44px) clamp(8px, 3cqi, 32px) 12px;
+  overflow: hidden;
+}
+.s-pd-stage svg,
+.s-pd-stage img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.s-pd-sw {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+.s-sw {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid var(--bg);
+  box-shadow: 0 0 0 1px var(--line2);
+  cursor: pointer;
+  display: inline-block;
+}
+.s-sw.on {
+  box-shadow: 0 0 0 2px var(--red);
+}
+.s-pd-swname {
+  text-align: center;
+  color: var(--ink2);
+  margin-top: 8px;
+  font-size: 14px;
+}
+.crow {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 6px 6px 0 0;
+}
+.s-pd-info h1 {
+  font-size: clamp(28px, 4cqi, 44px);
+  line-height: 1.15;
+  margin-top: 8px;
+}
+.s-pd-info .desc {
+  color: var(--ink2);
+  margin-top: 12px;
+}
+.s-pd-price {
+  font: 500 30px/1.2 var(--fd);
+  margin-top: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.s-pd-price small {
+  display: block;
+  font: 400 13px var(--fb);
+  color: var(--mute);
+  margin-bottom: 2px;
+}
+.s-vars {
+  display: grid;
+  gap: 8px;
+  margin-top: 20px;
+}
+.s-var {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.s-var:hover {
+  border-color: var(--line2);
+}
+.s-var.on {
+  border-color: var(--red);
+  background: var(--red-soft);
+}
+.s-var .rd {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--line2);
+  flex: none;
+}
+.s-var.on .rd {
+  border-color: var(--red);
+  box-shadow: inset 0 0 0 3px var(--bg);
+  background: var(--red);
+}
+.s-var .nm {
+  flex: 1;
+  min-width: 0;
+  font: 500 15px var(--fd);
+}
+.s-var .vp {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink2);
+  font-size: 14px;
+}
+.s-pd-info .s-actions {
+  justify-content: flex-start;
+  margin-top: 22px;
+}
+.s-pd-info .fine {
+  color: var(--mute);
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+/* ฟอร์ม */
+.s-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 16px;
+}
+.s-fld {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  align-content: start;
+}
+.s-fld.wide {
+  grid-column: 1/-1;
+}
+.s-fld > label,
+.s-fld > .lb {
+  font: 500 14px var(--fd);
+  color: var(--ink2);
+}
+.s-in {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--line2);
+  border-radius: var(--r-sm);
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 15px/1.5 var(--fb);
+}
+.s-in::placeholder {
+  color: var(--mute);
+}
+.s-in:focus {
+  outline: none;
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 20%, transparent);
+}
+textarea.s-in {
+  min-height: 112px;
+  resize: vertical;
+}
+div.s-in {
+  color: var(--mute);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+div.s-in.ta {
+  min-height: 112px;
+  align-items: flex-start;
+}
+.s-chk {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 15px;
+}
+.s-chk input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--red);
+}
+.s-drop {
+  border: 1.5px dashed var(--line2);
+  border-radius: var(--r-sm);
+  padding: 18px;
+  text-align: center;
+  color: var(--mute);
+  font-size: 14px;
+}
+.s-form-f {
+  grid-column: 1/-1;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.fctl {
+  display: inline-flex;
+  gap: 2px;
+}
+
+/* ตาราง */
+.s-tw {
+  overflow-x: auto;
+}
+.s-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.s-tbl th {
+  font: 500 12px var(--fd);
+  letter-spacing: 0.04em;
+  color: var(--mute);
+  text-align: left;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+  background: var(--bg2);
+}
+.s-tbl td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.s-tbl tbody tr:hover {
+  background: var(--bg2);
+}
+.s-tbl tr:last-child td {
+  border-bottom: 0;
+}
+.s-tbl .rc {
+  width: 1%;
+  white-space: nowrap;
+}
+.s-thumb {
+  display: block;
+  width: 64px;
+}
+.s-thumb svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.s-act {
+  font: 500 13px var(--fd);
+  color: var(--red-ink);
+  margin-right: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.s-act.del {
+  color: var(--bad);
+}
+.s-act.mute {
+  color: var(--ink2);
+}
+
+/* KPI / กราฟ / รายการ / รายละเอียด / ขั้นตอน */
+.s-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 16px;
+}
+.s-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 18px 20px;
+  position: relative;
+}
+.s-kpi .l {
+  color: var(--mute);
+  font-size: 13px;
+}
+.s-kpi .v {
+  font: 600 clamp(26px, 3.2cqi, 34px)/1.25 var(--fd);
+  font-variant-numeric: tabular-nums;
+}
+.s-kpi .r2 {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+.s-delta {
+  font: 500 12px var(--fd);
+  padding: 1px 9px;
+  border-radius: 99px;
+  background: var(--bg2);
+  color: var(--ink2);
+  white-space: nowrap;
+}
+.spark {
+  flex: none;
+  display: block;
+}
+.s-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.s-chart .tx {
+  font: 400 12px var(--fb);
+  fill: var(--mute);
+}
+.s-chart .tv {
+  font: 600 13px var(--fd);
+  fill: var(--ink);
+}
+.s-chart .gl {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.s-chart .bar {
+  fill: color-mix(in srgb, var(--ink) 16%, var(--card));
+}
+.s-chart .bar.hi {
+  fill: var(--red);
+}
+.s-chart .ln {
+  fill: none;
+  stroke: var(--red);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.s-chart .ar {
+  fill: var(--red);
+  opacity: 0.1;
+}
+.s-chart .pt {
+  fill: var(--card);
+  stroke: var(--red);
+  stroke-width: 2;
+}
+.s-chart .pt.hi {
+  fill: var(--red);
+}
+.s-list .it {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.s-list .it:last-of-type {
+  border-bottom: 0;
+}
+.s-list .grow {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.s-list .grow b {
+  font: 500 14px var(--fd);
+}
+.s-list .grow span {
+  color: var(--mute);
+  font-size: 13px;
+}
+.s-kv .r {
+  display: grid;
+  grid-template-columns: minmax(96px, 38%) minmax(0, 1fr);
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+  align-items: baseline;
+}
+.s-kv .r:last-of-type {
+  border-bottom: 0;
+}
+.s-kv .k {
+  color: var(--mute);
+  font-size: 14px;
+}
+.s-steps {
+  display: flex;
+}
+.s-step {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 8px;
+  position: relative;
+  font: 500 13px/1.4 var(--fd);
+  color: var(--mute);
+}
+.s-step .dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--line2);
+  background: var(--bg);
+  position: relative;
+  z-index: 1;
+  font-size: 13px;
+}
+.s-step + .s-step::before {
+  content: '';
+  position: absolute;
+  top: 16px;
+  left: -50%;
+  width: 100%;
+  height: 2px;
+  background: var(--line2);
+}
+.s-step.done,
+.s-step.cur {
+  color: var(--ink);
+}
+.s-step.done .dot {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+.s-step.done::before,
+.s-step.cur::before {
+  background: var(--red) !important;
+}
+.s-step.cur .dot {
+  border-color: var(--red);
+  color: var(--red-ink);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--red) 18%, transparent);
+}
+.s-note {
+  padding: 14px 16px;
+  border-radius: var(--r);
+  background: var(--info-bg);
+  border: 1px solid color-mix(in srgb, var(--info) 28%, transparent);
+  white-space: pre-wrap;
+}
+.s-plain {
+  color: var(--ink2);
+  white-space: pre-wrap;
+}
+.small {
+  font-size: 12px;
+  color: var(--mute);
+}
+.s-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+/* ฟุตเตอร์ + ปุ่มลอย (Honda) */
+.s-foot {
+  background: var(--night);
+  color: var(--on-night);
+  padding: clamp(32px, 5cqi, 56px) var(--gut) 26px;
+}
+.s-foot-grid {
+  display: grid;
+  grid-template-columns: 1.5fr repeat(3, minmax(0, 1fr));
+  gap: 28px;
+}
+@container site (max-width:780px) {
+  .s-foot-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .s-foot-grid > :first-child {
+    grid-column: 1/-1;
+  }
+}
+.s-foot h4 {
+  font: 500 12px var(--fd);
+  letter-spacing: 0.12em;
+  color: var(--on-night2);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.s-foot a {
+  display: block;
+  color: var(--on-night);
+  font-size: 14px;
+  padding: 4px 0;
+}
+.s-foot .s-logo {
+  color: #fff;
+}
+.s-foot .tagl {
+  color: var(--on-night2);
+  font-size: 14px;
+  margin-top: 12px;
+  max-width: 34ch;
+}
+.s-foot .copy {
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  margin-top: 32px;
+  padding-top: 18px;
+  color: var(--on-night2);
+  font-size: 13px;
+}
+.s-rail {
+  position: absolute;
+  right: 0;
+  top: 84px;
+  z-index: 4;
+  display: grid;
+  gap: 1px;
+  border-radius: var(--r) 0 0 var(--r);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.s-rail a {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  width: 66px;
+  padding: 12px 6px;
+  background: var(--red);
+  color: #fff;
+  font: 500 10.5px/1.25 var(--fd);
+  text-align: center;
+}
+.s-rail a + a {
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.25);
+}
+.s-rail .ic {
+  width: 22px;
+  height: 22px;
+}
+@container site (max-width:780px) {
+  .s-rail {
+    display: none;
+  }
+}
+
+/* หลังบ้าน (แถบข้างมืด) */
+.s-adm {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  min-height: 680px;
+}
+@container site (max-width:860px) {
+  .s-adm {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.s-side {
+  background: var(--night);
+  color: var(--on-night);
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+@container site (max-width:860px) {
+  .s-side {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 4px 8px;
+  }
+  .s-side .grp,
+  .s-side .who {
+    display: none;
+  }
+  .s-side .s-logo {
+    padding: 0 12px 0 0 !important;
+  }
+}
+.s-side .s-logo {
+  color: #fff;
+  padding: 2px 10px 18px;
+}
+.s-side a {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  color: var(--on-night2);
+  font: 500 14px var(--fd);
+  white-space: nowrap;
+}
+.s-side a[data-sgo] {
+  cursor: pointer;
+}
+.s-side a[data-sgo]:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+.s-side a.on {
+  background: var(--red);
+  color: #fff;
+}
+.s-side .grp {
+  font: 500 11px var(--fd);
+  letter-spacing: 0.14em;
+  color: #7c7f88;
+  padding: 12px 12px 4px;
+  text-transform: uppercase;
+}
+.s-side .who {
+  margin-top: auto;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 14px 12px 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  font: 500 13px var(--fd);
+}
+.s-side .who small {
+  display: block;
+  color: #7c7f88;
+  font-weight: 400;
+}
+.s-adm-main {
+  background: var(--bg2);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.s-adm-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px var(--gut);
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+.s-search {
+  flex: 1;
+  max-width: 440px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-btn);
+  background: var(--bg2);
+  color: var(--mute);
+  font-size: 14px;
+}
+.s-search .ic {
+  width: 18px;
+  height: 18px;
+}
+.s-adm-top .ic {
+  color: var(--ink2);
+}
+.s-adm-main .s-main {
+  flex: 1;
+  padding-top: clamp(20px, 3cqi, 32px);
+  gap: clamp(18px, 2.6cqi, 26px);
+}
