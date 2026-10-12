@@ -1,5 +1,3 @@
-# Carshop — โครงโปรเจกต์ทีม 5 คน
-
 Scaffold สำหรับบริษัทขายรถยนต์ React แอปเดียว + Express 5 microservices ใน monorepo ไม่มี business features สำเร็จปลอม ไม่มี auth/CRUD/orders/payments จริง และยังไม่ deploy
 
 ## เริ่มใช้
@@ -44,3 +42,5 @@ Health ไม่ใช้ฐานข้อมูล ไม่ยืนยัน
 คนที่ 5 (อั้ม) ดูแลการประสาน integration/tooling/UI กลาง เจ้าของแต่ละ service ต้องเชื่อมและแก้ปัญหาของตัวเอง
 VITE_ เปิดเผยต่อ browser ห้ามใส่ secrets; ทุก API base URL รวม /api/v1; .env.example มี placeholders เท่านั้น
 ไม่มีประกัน/warranty, TypeScript, Docker, Kubernetes หรือ broker ในงานนี้
+
+
