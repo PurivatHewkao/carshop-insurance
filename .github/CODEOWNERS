@@ -8,34 +8,40 @@
 # * [รอ GitHub handle จริง]
 
 # โจเซฟ — Auth / Identity
-# /services/identity/ [รอ GitHub handle จริง]
+# /services/identity/ 
 
 # โจเซฟ — Auth / Identity
-# /apps/web/src/features/identity/ [รอ GitHub handle จริง]
+# /apps/web/src/features/identity/ 
+
 
 # กร — Car / Catalog
-# /services/catalog/ [รอ GitHub handle จริง]
+# /services/catalog/ 
 
 # กร — Car / Catalog
-# /apps/web/src/features/catalog/ [รอ GitHub handle จริง]
+# /apps/web/src/features/catalog/ 
+
 
 # เฟียร์ — Sales
-# /services/sales/ [รอ GitHub handle จริง]
+# /services/sales/ 
 
 # เฟียร์ — Sales
-# /apps/web/src/features/sales/ [รอ GitHub handle จริง]
+# /apps/web/src/features/sales/ 
+
+
 
 # ดิว — Payment
-# /services/payment/ [รอ GitHub handle จริง]
+# /services/payment/
 
 # ดิว — Payment
-# /apps/web/src/features/payment/ [รอ GitHub handle จริง]
+# /apps/web/src/features/payment/
 
-# อั้ม — คนที่ 5 เดิม; Reporting ยังต้องตกลง เพราะในภาพเป็น Customer
-# /services/reporting/ [รอ GitHub handle จริง]
 
-# อั้ม — คนที่ 5 เดิม; Reporting ยังต้องตกลง เพราะในภาพเป็น Customer
-# /apps/web/src/features/reporting/ [รอ GitHub handle จริง]
+# อั้ม — Reporting
+# /services/reporting/
+
+# อั้ม — Reporting
+# /apps/web/src/features/reporting/ 
+
 
 # โจเซฟ, กร, เฟียร์, ดิว, อั้ม
-# /docs/api-contracts.md [รอ GitHub handle จริง]
+# /docs/api-contracts.md
