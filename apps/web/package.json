@@ -1,0 +1,26 @@
+{
+  "name": "@carshop/web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "vite --port 5173 --strictPort",
+    "build": "vite build",
+    "preview": "vite preview --port 5173 --strictPort"
+  },
+  "dependencies": {
+    "axios": "^1.13.2",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router-dom": "^7.18.4"
+  },
+  "devDependencies": {
+    "vite": "^8.3.4",
+    "@vitejs/plugin-react": "^6.1.2",
+    "tailwindcss": "^4.1.17",
+    "@tailwindcss/vite": "^4.1.17"
+  }
+}

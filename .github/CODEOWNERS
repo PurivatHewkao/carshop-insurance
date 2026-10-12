@@ -1,0 +1,41 @@
+# Rules ด้านล่างยังไม่เปิดใช้: เติม @GitHubHandle จริงที่มีสิทธิ์ repo แล้วเอา # หน้า rule ออก
+
+# ตัวอย่าง syntax: /path/ @GitHubHandle โดยต้องแทนบัญชีจริงก่อนใช้
+
+# ดูขอบเขต Customer / Reporting ที่ docs/team-ownership.md ก่อนกำหนดเจ้าของถาวร
+
+# อั้ม — ผู้ประสานไฟล์กลางตามโครงเดิม (ต้องตกลงกับทีม; ในภาพเป็น Customer)
+# * [รอ GitHub handle จริง]
+
+# โจเซฟ — Auth / Identity
+# /services/identity/ [รอ GitHub handle จริง]
+
+# โจเซฟ — Auth / Identity
+# /apps/web/src/features/identity/ [รอ GitHub handle จริง]
+
+# กร — Car / Catalog
+# /services/catalog/ [รอ GitHub handle จริง]
+
+# กร — Car / Catalog
+# /apps/web/src/features/catalog/ [รอ GitHub handle จริง]
+
+# เฟียร์ — Sales
+# /services/sales/ [รอ GitHub handle จริง]
+
+# เฟียร์ — Sales
+# /apps/web/src/features/sales/ [รอ GitHub handle จริง]
+
+# ดิว — Payment
+# /services/payment/ [รอ GitHub handle จริง]
+
+# ดิว — Payment
+# /apps/web/src/features/payment/ [รอ GitHub handle จริง]
+
+# อั้ม — คนที่ 5 เดิม; Reporting ยังต้องตกลง เพราะในภาพเป็น Customer
+# /services/reporting/ [รอ GitHub handle จริง]
+
+# อั้ม — คนที่ 5 เดิม; Reporting ยังต้องตกลง เพราะในภาพเป็น Customer
+# /apps/web/src/features/reporting/ [รอ GitHub handle จริง]
+
+# โจเซฟ, กร, เฟียร์, ดิว, อั้ม
+# /docs/api-contracts.md [รอ GitHub handle จริง]

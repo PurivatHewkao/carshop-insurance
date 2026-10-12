@@ -1,0 +1,32 @@
+{
+  "name": "carshop-monorepo",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "concurrently --kill-others --names web,identity,catalog,sales,payment,reporting \"npm:dev:web\" \"npm:dev:identity\" \"npm:dev:catalog\" \"npm:dev:sales\" \"npm:dev:payment\" \"npm:dev:reporting\"",
+    "dev:web": "npm --prefix apps/web run dev",
+    "dev:identity": "npm --prefix services/identity run dev",
+    "dev:catalog": "npm --prefix services/catalog run dev",
+    "dev:sales": "npm --prefix services/sales run dev",
+    "dev:payment": "npm --prefix services/payment run dev",
+    "dev:reporting": "npm --prefix services/reporting run dev",
+    "build": "npm --prefix apps/web run build",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "concurrently": "^9.2.1",
+    "eslint": "^10.12.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.13.0",
+    "prettier": "^3.6.2"
+  }
+}
