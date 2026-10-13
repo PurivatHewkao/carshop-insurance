@@ -19,6 +19,11 @@ package.json และ package-lock.json เป็นไฟล์กลาง �
 
 ## TOYOTY UI
 
+รายการหน้า/เมนู/URL ล่าสุดอ้างอิง Google Docs Page List: [Page List routing](../../docs/page-list-routing.md)
+
+โครง Admin และวิธีเพิ่ม child route ของแต่ละ feature: [คู่มือ Admin routing](../../docs/admin-routing.md)
+Customer/Manager และการเพิ่มหน้าตาม role: [คู่มือ Role layouts](../../docs/role-layouts.md)
+
 Frontend ตามไฟล์อ้างอิง Toyoty UI Design (Copy).html โดยแยกโค้ดออกจากเครื่องมือแก้ไขดีไซน์:
 
 - `/`: หน้าแรก พร้อมโปรโมชัน จุดเด่น และประกัน

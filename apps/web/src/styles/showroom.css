@@ -152,11 +152,17 @@ dd {
   gap: 24px;
   padding-top: 28px;
 }
+.s-adm-main > .admin-content {
+  margin-block: 0;
+}
 .s-adm {
   min-height: 100vh;
 }
 .s-adm-top .sp {
   flex: 1;
+}
+.admin-toolbar-slot {
+  display: contents;
 }
 .s-search input {
   width: 100%;
@@ -301,6 +307,24 @@ button:focus-visible {
 }
 .order-modal::backdrop {
   background: #0009;
+}
+.customer-demo-badge {
+  color: var(--mute);
+  font: 500 12px var(--fd);
+  white-space: nowrap;
+}
+.workspace-header-label {
+  font: 500 15px var(--fd);
+}
+@media (max-width: 860px) {
+  .s-adm > .s-side .who {
+    display: none;
+  }
+}
+@media (max-width: 520px) {
+  .customer-demo-badge {
+    font-size: 11px;
+  }
 }
 .showroom .s-util .login-link {
   display: inline-flex;

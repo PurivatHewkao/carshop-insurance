@@ -46,6 +46,9 @@ export default function LoginPage() {
             {message}
           </p>
         </form>
+        <Link className="s-act" to="/register">
+          ยังไม่มีบัญชี? สมัครสมาชิก
+        </Link>
         <Link className="s-act" to="/">
           ← กลับหน้าแรก
         </Link>
