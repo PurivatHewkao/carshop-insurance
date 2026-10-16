@@ -1,0 +1,272 @@
+/* สไตล์เฉพาะหน้าการเงิน (payment) ต่อยอดจาก token ใน styles/toyoty.css */
+.pay-kpis {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.pay-kpis .s-kpi {
+  container-type: inline-size;
+}
+.pay-kpis .s-kpi .v {
+  font-size: clamp(18px, 10.5cqi, 30px);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.s-pill.t-mute {
+  color: var(--mute);
+  background: var(--chrome);
+}
+.form-message.pay-error {
+  color: var(--bad);
+}
+.s-tbl .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.s-tbl td.acts {
+  white-space: nowrap;
+}
+.s-tbl td.acts .s-act + .s-act {
+  margin-left: 14px;
+}
+.pay-sub {
+  display: block;
+  color: var(--mute);
+  font-size: 12px;
+}
+.pay-progress {
+  height: 6px;
+  min-width: 80px;
+  border-radius: 99px;
+  background: var(--chrome);
+  overflow: hidden;
+}
+.pay-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--good);
+}
+
+/* แท็บ */
+.pay-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--line);
+}
+.pay-tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 10px 14px;
+  font: 500 14px var(--fd);
+  color: var(--mute);
+  margin-bottom: -1px;
+}
+.pay-tabs button.on {
+  color: var(--ink);
+  border-bottom-color: var(--red);
+}
+.pay-tabs .cnt {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 99px;
+  background: var(--red);
+  color: #fff;
+  font-size: 11px;
+}
+
+/* การ์ดบิลที่ต้องชำระ */
+.pay-bills {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+.pay-bill {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+.pay-bill .top {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 8px;
+}
+.pay-bill .amt {
+  font: 600 26px var(--fd);
+  font-variant-numeric: tabular-nums;
+}
+.pay-bill .s-btn {
+  justify-self: start;
+}
+
+/* ตัวเลือกช่องทางชำระ */
+.pay-methods {
+  display: grid;
+  gap: 8px;
+}
+.pay-methods label {
+  display: flex;
+  gap: 10px;
+  align-items: start;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.pay-methods label:has(input:checked) {
+  border-color: var(--red);
+  background: var(--red-soft);
+}
+.pay-methods small {
+  display: block;
+  color: var(--mute);
+}
+.pay-bank {
+  padding: 12px 14px;
+  border-radius: var(--r-sm);
+  background: var(--chrome);
+  font-size: 14px;
+}
+
+/* dialog */
+.pay-dialog {
+  width: min(100%, 620px);
+  display: grid;
+  gap: 16px;
+}
+.pay-dialog-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.pay-dialog-h h2 {
+  margin: 0;
+}
+.pay-dialog .s-btns {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pay-dialog .s-btns .s-btn {
+  margin-top: 0;
+}
+
+/* เอกสารใบแจ้งหนี้ */
+.pay-doc {
+  display: grid;
+  gap: 16px;
+}
+.pay-doc-h {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--red);
+}
+.pay-doc-h > div {
+  display: grid;
+  gap: 2px;
+}
+.pay-doc-no {
+  text-align: right;
+  justify-items: end;
+}
+.pay-doc h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.pay-doc-items tfoot td,
+.pay-doc-items tfoot th {
+  padding: 8px 14px;
+  text-align: left;
+}
+.pay-doc-items tfoot .num {
+  text-align: right;
+}
+.pay-mini {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+.pay-mini li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* คำขอ Seller ↔ การเงิน */
+.pay-thread {
+  display: grid;
+  gap: 12px;
+}
+.pay-msg {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.pay-msg .meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--mute);
+}
+.pay-msg .meta b {
+  color: var(--ink);
+}
+.pay-msg p {
+  margin: 0;
+}
+.pay-reply {
+  padding: 10px 12px;
+  border-left: 3px solid var(--good);
+  background: var(--good-bg);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  font-size: 14px;
+}
+.pay-reply-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pay-reply-form .s-in {
+  flex: 1 1 240px;
+}
+.pay-filter {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+@media print {
+  body.pay-printing * {
+    visibility: hidden;
+  }
+  body.pay-printing .pay-doc,
+  body.pay-printing .pay-doc * {
+    visibility: visible;
+  }
+  body.pay-printing .pay-doc {
+    position: fixed;
+    inset: 0;
+    padding: 24px;
+    background: #fff;
+    color: #000;
+  }
+  body.pay-printing .pay-dialog::backdrop {
+    background: none;
+  }
+}

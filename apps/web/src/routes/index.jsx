@@ -32,6 +32,7 @@ import {
   customerPaymentRoutes,
   sellerPaymentRoutes,
   managerPaymentRoutes,
+  adminPaymentRoutes,
 } from '../features/payment/routes.jsx';
 import {
   reportingRoutes,
@@ -82,6 +83,7 @@ export const router = createBrowserRouter([
       ...adminCatalogRoutes,
       ...adminIdentityRoutes,
       ...adminSalesRoutes,
+      ...adminPaymentRoutes,
       ...plannedRoutes('admin', null),
       { path: '*', element: <NotFoundPage /> },
     ],
