@@ -1,0 +1,333 @@
+.auth-page {
+  max-width: 1280px;
+  padding-top: 48px;
+  padding-bottom: 64px;
+}
+.auth-shell {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.auth-story {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px 36px 28px;
+  background:
+    radial-gradient(ellipse at 80% 60%, #35373f, transparent 60%), #111216;
+  color: #fff;
+  position: relative;
+}
+.auth-story::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 36px;
+  width: 52px;
+  height: 4px;
+  background: var(--red);
+}
+.auth-overline {
+  color: #c5c7ce;
+  letter-spacing: 0.18em;
+  font-size: 11px;
+}
+.auth-story h2 {
+  font: 500 clamp(28px, 3vw, 42px)/1.5 var(--fd);
+  margin: 24px 0 16px;
+}
+.auth-story > p {
+  color: #b9bbc4;
+  font-size: 14px;
+}
+.auth-story .car-art {
+  margin: 32px -16px;
+}
+.auth-story-foot {
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid #363840;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 11px;
+  color: #b9bbc4;
+}
+.auth-story-foot a {
+  color: #fff;
+}
+.auth-form-panel {
+  padding: 36px clamp(24px, 4vw, 56px);
+}
+.auth-back {
+  display: inline-block;
+  margin-bottom: 32px;
+  font-size: 12px;
+  color: var(--mute);
+}
+.auth-form-panel h1 {
+  font: 600 clamp(24px, 2.6vw, 32px) var(--fd);
+  margin: 8px 0 12px;
+}
+.auth-subtitle {
+  color: var(--mute);
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+.auth-mode {
+  border-left: 3px solid var(--red);
+  padding: 8px 12px;
+  background: var(--red-soft);
+  color: var(--ink2);
+  font-size: 12px;
+  margin: 0;
+}
+.auth-form {
+  margin-top: 24px;
+}
+.auth-form fieldset {
+  display: grid;
+  gap: 18px;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  border: 0;
+}
+.auth-form .s-fld {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.auth-form .s-in,
+.auth-filters .s-in {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+}
+.auth-password {
+  position: relative;
+  display: block;
+}
+.auth-password .s-in {
+  padding-right: 66px;
+}
+.auth-password button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  padding: 0 14px;
+  color: var(--mute);
+  border: 0;
+  font-size: 12px;
+}
+.auth-submit {
+  width: 100%;
+  justify-content: center;
+  margin-top: 4px;
+}
+.auth-switch {
+  text-align: center;
+  margin: 24px 0;
+  font-size: 14px;
+  color: var(--mute);
+}
+.auth-switch a {
+  color: var(--red-ink);
+  font-weight: 600;
+}
+.auth-demo {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  font-size: 12px;
+  color: var(--mute);
+  overflow-wrap: anywhere;
+}
+.auth-demo strong {
+  color: var(--ink);
+}
+.auth-demo p {
+  margin: 10px 0;
+  line-height: 1.9;
+}
+.auth-feedback {
+  padding: 12px 16px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.auth-feedback.error {
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+.auth-feedback.success {
+  background: var(--good-bg);
+  color: var(--good);
+}
+.auth-help,
+.auth-form small {
+  color: var(--mute);
+  font-size: 12px;
+}
+.auth-help {
+  margin-top: -12px;
+}
+.auth-form .s-in:read-only {
+  background: var(--bg2);
+  color: var(--mute);
+}
+.auth-workspace {
+  width: 100%;
+}
+.auth-profile-grid {
+  display: grid;
+  grid-template-columns: minmax(230px, 1fr) minmax(0, 2fr);
+  gap: 24px;
+  align-items: start;
+}
+.auth-account {
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.auth-avatar {
+  display: grid;
+  place-items: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--red-soft);
+  color: var(--red-ink);
+  font: 600 32px var(--fd);
+  margin: 8px auto 24px;
+}
+.auth-account hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 24px 0;
+}
+.auth-empty {
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--mute);
+}
+.auth-empty h2,
+.auth-empty h3 {
+  color: var(--ink);
+}
+.auth-empty .s-btn {
+  margin: 20px 4px 0;
+}
+.auth-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.auth-stats span {
+  color: var(--mute);
+  font-size: 13px;
+}
+.auth-stats strong {
+  display: block;
+  margin-top: 10px;
+  font: 600 32px var(--fd);
+}
+.auth-filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+}
+.auth-filters .s-fld {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.auth-user-id {
+  display: block;
+  color: var(--mute);
+  font-size: 10px;
+  margin-top: 4px;
+  max-width: 180px;
+  overflow-wrap: anywhere;
+}
+.auth-table-feedback {
+  padding-inline: 24px;
+}
+.auth-dialog {
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  margin: auto;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.auth-dialog::backdrop {
+  background: #0009;
+  backdrop-filter: blur(3px);
+}
+.auth-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+.auth-workspace button:disabled,
+.auth-form button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.auth-form input:focus-visible,
+.auth-form select:focus-visible,
+.auth-filters input:focus-visible,
+.auth-filters select:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 2px;
+}
+@media (max-width: 760px) {
+  .auth-shell,
+  .auth-profile-grid {
+    grid-template-columns: 1fr;
+  }
+  .auth-story {
+    padding: 28px 24px;
+  }
+  .auth-story h2 {
+    font-size: 28px;
+    margin: 14px 0 0;
+  }
+  .auth-story > p,
+  .auth-story .car-art,
+  .auth-story-foot {
+    display: none;
+  }
+  .auth-form-panel {
+    padding: 28px 24px;
+  }
+  .auth-back {
+    margin-bottom: 24px;
+  }
+  .auth-page {
+    padding-top: 24px;
+  }
+  .auth-stats {
+    gap: 8px;
+  }
+  .auth-stats .s-card {
+    padding: 16px 12px;
+  }
+  .auth-stats span {
+    font-size: 11px;
+  }
+  .auth-filters {
+    grid-template-columns: 1fr 1fr;
+    padding: 16px;
+  }
+  .auth-filters > :first-child {
+    grid-column: 1 / -1;
+  }
+}

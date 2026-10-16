@@ -1,23 +1,36 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { AuthShell, Feedback, PasswordField } from '../components/AuthUI.jsx';
+import { authError, demoAccount, isDemo, login } from '../api/auth.js';
 
 export default function LoginPage() {
-  const [message, setMessage] = useState('');
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  async function submit(event) {
+    event.preventDefault();
+    setBusy(true);
+    setError('');
+    const values = Object.fromEntries(new FormData(event.currentTarget));
+    try {
+      const user = await login({
+        email: values.email.trim().toLowerCase(),
+        password: values.password,
+      });
+      navigate(user.role === 'admin' ? '/admin/users' : '/customer/profile');
+    } catch (err) {
+      setError(authError(err));
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
-    <div className="page-content login-page">
-      <section className="s-card login-card">
-        <p className="s-eyebrow">TOYOTY ACCOUNT</p>
-        <h1>เข้าสู่ระบบ</h1>
-        <p className="small">หน้าฟอร์มตัวอย่าง ยังไม่เชื่อมระบบยืนยันตัวตน</p>
-        <form
-          className="login-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            setMessage(
-              'ระบบเข้าสู่ระบบยังอยู่ระหว่างพัฒนา ข้อมูลนี้ไม่ได้ถูกส่งหรือบันทึก',
-            );
-          }}
-        >
+    <AuthShell
+      title="ยินดีต้อนรับกลับ"
+      subtitle="เข้าสู่ระบบเพื่อดูแลทุกการเดินทางของคุณ"
+    >
+      <form className="auth-form" onSubmit={submit} aria-busy={busy}>
+        <fieldset disabled={busy}>
           <label className="s-fld">
             <span>อีเมล</span>
             <input
@@ -25,34 +38,34 @@ export default function LoginPage() {
               name="email"
               type="email"
               autoComplete="username"
-              placeholder="name@example.com"
+              placeholder="you@example.com"
+              maxLength={254}
               required
             />
           </label>
-          <label className="s-fld">
-            <span>รหัสผ่าน</span>
-            <input
-              className="s-in"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-            />
-          </label>
-          <button className="s-btn pri" type="submit">
-            เข้าสู่ระบบ
+          <PasswordField />
+          <Feedback message={error} error />
+          <button className="s-btn pri auth-submit" disabled={busy}>
+            {busy ? 'กำลังเข้าสู่ระบบ…' : 'เข้าสู่ระบบ →'}
           </button>
-          <p className="small" role="status">
-            {message}
+        </fieldset>
+      </form>
+      <p className="auth-switch">
+        ยังไม่มีบัญชี? <Link to="/register">สมัครสมาชิก</Link>
+      </p>
+      {isDemo && (
+        <div className="auth-demo">
+          <strong>ทดลองใช้งาน</strong>
+          <p>
+            ลูกค้า: {demoAccount.email}
+            <br />
+            ผู้ดูแล: admin@toyoty.demo
+            <br />
+            รหัสผ่านทั้งสองบัญชี: {demoAccount.password}
           </p>
-        </form>
-        <Link className="s-act" to="/register">
-          ยังไม่มีบัญชี? สมัครสมาชิก
-        </Link>
-        <Link className="s-act" to="/">
-          ← กลับหน้าแรก
-        </Link>
-      </section>
-    </div>
+          <small>บัญชีสาธิตใช้ทดสอบหน้าจอ ไม่มีการยืนยันตัวตนจริง</small>
+        </div>
+      )}
+    </AuthShell>
   );
 }

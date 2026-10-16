@@ -1,30 +1,54 @@
-# identity frontend — คนที่ 1 (โจเซฟ)
+# Identity frontend — โจเซฟ
 
-รับผิดชอบ บัญชีผู้ใช้และสิทธิ์ ยังเป็น placeholder ไม่มี business API/auth
+Frontend สำหรับ Auth ใช้ design tokens ของ TOYOTY เดิม (แดง/ดำ, ฟอนต์ไทย, light/dark ตามระบบ) โดย CSS อยู่ใน feature นี้ ไม่เพิ่ม dependencies และไม่แก้ service ของเพื่อน
 
-## ไฟล์เจ้าของ
+| URL                 | การทำงาน                                                                                           |
+| ------------------- | -------------------------------------------------------------------------------------------------- |
+| `/login`            | ตรวจอีเมล/รหัสผ่าน, แสดง/ซ่อนรหัสผ่าน, loading/error, ไปหน้าโปรไฟล์หรือจัดการผู้ใช้ตาม role        |
+| `/register`         | ตรวจชื่อ, อีเมล, เบอร์โทร 9–10 หลัก, password 8–128 ตัวรวมตัวอักษรอังกฤษและตัวเลข, ยืนยัน password |
+| `/customer/profile` | โหลด/แก้ชื่อและเบอร์โทร, อีเมลอ่านอย่างเดียว, ออกจากระบบ                                           |
+| `/admin/users`      | เฉพาะ admin ใน UI, ค้นหา/กรอง role/status, สรุปจำนวน, เปลี่ยนสิทธิ์/ระงับผู้ใช้อื่นผ่าน dialog     |
 
-- routes.jsx: เพิ่ม route ของ feature ที่ export ให้ src/routes/index.jsx; path ปัจจุบัน /identity
-- api/client.js: Axios client ของ identity เท่านั้น base URL รวม /api/v1 และเรียก relative endpoint เช่น health
-- pages/PlaceholderPage.jsx: แทนหรือเพิ่ม pages เมื่อทำ feature จริง
-- README.md: อัปเดตคู่มือและ dependencies
+## รันและทดสอบ
 
-## เพิ่มงาน
+ใช้ Node 24 ตาม root README: `npm run dev:web` แล้วเปิด `/login`
 
-เพิ่ม pages/_.jsx, components/_.jsx, hooks/use*.js และ api/*.js ตามงานที่ใช้จริง ไม่ต้องสร้างไฟล์เปล่าทุก layer
-UI เรียก API ของ service ผ่าน client ไม่เชื่อม DB; src/lib/http.js เก็บ config ร่วมเท่านั้น
+Development ใช้ demo ตามค่าเริ่มต้น บัญชี `customer@toyoty.demo` หรือ `admin@toyoty.demo` รหัสผ่าน `Toyoty123!`
+ข้อมูล/เซสชันเก็บเฉพาะ memory และหายเมื่อ refresh ไม่มีการเก็บ password หรือ token ลง browser storage
+สมัคร demo แล้วเปิดเซสชันทันที แต่ไม่ได้เก็บ password จึงใช้บัญชีที่สมัครใหม่ login ซ้ำไม่ได้ ให้ใช้บัญชีตัวอย่างที่ระบุเท่านั้น
 
-## ประสาน
+เพิ่มใน `apps/web/.env.local` เพื่อเลือกโหมด แล้ว restart Vite:
 
-Layout, common components, routes กลาง, styles, entry point, src/lib/http.js และ apps/web/package.json/package-lock.json ประสานคนที่ 5 (อั้ม) ก่อนแก้
-ไม่แก้ src/features ของเพื่อนหรือ services ของเพื่อนโดยไม่ประสาน ดู docs/team-ownership.md
-รันจาก root: npm run dev:web และ npm run dev:identity; เมื่อติดตั้ง frontend เดี่ยว cd apps/web แล้ว npm install และ npm run dev
+```env
+VITE_IDENTITY_MODE=api
+VITE_IDENTITY_API_URL=http://localhost:3001/api/v1
+```
 
-## งานเริ่มต้น
+Production build ใช้ API เป็นค่าเริ่มต้น; `VITE_IDENTITY_MODE=demo` เปิดสาธิตโดยชัดแจ้งได้
+API ล้มเหลวไม่ fallback เป็นข้อมูล demo
 
-1. ตกลง user ID, roles และ auth contract กับทุกคน
-2. ออกแบบ migrations ของบัญชีผู้ใช้
-3. พัฒนา Register/Login พร้อม bcrypt, validation และ JWT
-4. เชื่อมหน้า Profile และการจัดการสิทธิ์
+## จุดเชื่อม backend — proposed, ยังไม่มี business endpoints จริง
 
-พร้อม integrate เมื่อ routes ไม่มีชนกัน, contract ตรง backend, มี loading/empty/error และ validation/auth จริงตามขอบเขตที่ตกลง, build/lint ผ่าน และไม่มีข้อมูลสำเร็จปลอม
+`api/auth.js` เป็น adapter กลางของ feature; `api/client.js` ใช้ Axios client เดิม
+ทุก success response ใช้ envelope `{ "data": ... }` และ error ใช้ `{ "error": { "code": "...", "message": "..." } }`
+
+User: `{ id: string, name: string, email: string, phone: string, role: "customer"|"seller"|"manager"|"admin", status: "active"|"inactive" }`
+
+| Method/path (relative `/api/v1`) | Body                          | `data`               |
+| -------------------------------- | ----------------------------- | -------------------- |
+| POST `auth/login`                | `{email,password}`            | `{user,accessToken}` |
+| POST `auth/register`             | `{name,email,phone,password}` | `{user,accessToken}` |
+| GET `users/me`                   | —                             | User                 |
+| PATCH `users/me`                 | `{name,phone}`                | User                 |
+| GET `users`                      | —                             | User[]               |
+| PATCH `users/:id`                | `{role,status}`               | User                 |
+
+GET users เป็นรายการทั้งหมดสำหรับ frontend filtering ในเวอร์ชันนี้ หาก backend ใช้ pagination ให้ปรับ adapter และ UI ร่วมกันก่อน integrate
+ทุก endpoint นอกจาก login/register ส่ง `Authorization: Bearer <accessToken>`; token อยู่ memory และ refresh ต้อง login ใหม่ ไม่มี refresh token flow
+Logout ล้างเซสชันฝั่ง frontend; ยังไม่มี revoke endpoint
+401 แสดงให้ login ใหม่, 403 ไม่มีสิทธิ์, 409 อีเมลซ้ำ, network/5xx แสดงข้อผิดพลาดและปุ่ม retry ในหน้ารายการ
+UI guard เฉพาะหน้าใน feature นี้ ไม่ได้เพิ่ม guard ให้ routes ของทีม; backend ต้อง validate payload, hash password, verify JWT, ตรวจ role/status และป้องกันแก้สิทธิ์ตนเอง/ลบ admin คนสุดท้ายจริง
+Register ส่งได้เฉพาะข้อมูลลูกค้า ไม่มี role จากฟอร์ม; backend ต้องกำหนด role customer เอง
+
+ไฟล์หน้าจออยู่ใน `pages/`, shared UI ใน `components/AuthUI.jsx`, loader พร้อม abort ใน `hooks/useAuthData.js`, CSS ใน `styles/auth.css`
+รัน `npm run build`, `npm run lint`, `node apps/web/src/features/identity/check-auth.mjs` (Node 24)
