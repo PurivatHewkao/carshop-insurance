@@ -1,0 +1,224 @@
+/* apps/web/src/features/sales/sales.css */
+.sales-container {
+  padding: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #1e293b;
+}
+
+.sales-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.sales-title-group h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+}
+
+.sales-title-group p {
+  color: #64748b;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.sales-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.sales-stat-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.sales-stat-label {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.sales-stat-value {
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sales-grid-layout {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .sales-grid-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sales-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  margin-bottom: 24px;
+}
+
+.sales-card-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  color: #0f172a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sales-form-group {
+  margin-bottom: 16px;
+}
+
+.sales-form-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.sales-input,
+.sales-select,
+.sales-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.925rem;
+  color: #0f172a;
+  background: #fff;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.sales-input:focus,
+.sales-select:focus,
+.sales-textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.sales-filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.sales-table-wrapper {
+  overflow-x: auto;
+}
+
+.sales-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.sales-table th {
+  text-align: left;
+  padding: 12px 14px;
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.sales-table td {
+  padding: 14px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.sales-table tr:hover td {
+  background: #f8fafc;
+}
+
+.sales-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-pending { background: #fef3c7; color: #b45309; }
+.badge-assigned { background: #e0e7ff; color: #1d4ed8; }
+.badge-progress { background: #dbeafe; color: #0369a1; }
+.badge-approved, .badge-completed { background: #dcfce7; color: #15803d; }
+.badge-rejected, .badge-cancelled { background: #fee2e2; color: #b91c1c; }
+
+.sales-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+
+.sales-btn-primary { background: #2563eb; color: #ffffff; }
+.sales-btn-primary:hover { background: #1d4ed8; }
+
+.sales-btn-success { background: #16a34a; color: #ffffff; }
+.sales-btn-success:hover { background: #15803d; }
+
+.sales-btn-danger { background: #dc2626; color: #ffffff; }
+.sales-btn-danger:hover { background: #b91c1c; }
+
+.sales-btn-outline {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+.sales-btn-outline:hover { background: #f8fafc; }
+
+.sales-btn-sm {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+
+.sales-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sales-empty {
+  text-align: center;
+  padding: 36px;
+  color: #94a3b8;
+}
