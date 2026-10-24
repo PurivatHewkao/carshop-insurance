@@ -1,0 +1,323 @@
+/* Premium black-and-red theme scoped to the showroom homepage only. */
+.home-dark-theme {
+  --red: #e51b32;
+  --red-ink: #ff9ba8;
+  --red-soft: #321117;
+  --ink: #f4f4f6;
+  --ink2: #c7c8cf;
+  --mute: #999ca7;
+  --bg: #090a0d;
+  --bg2: #13151a;
+  --card: #111318;
+  --line: #292b32;
+  --line2: #3b3e48;
+  --night: #07080a;
+  --night2: #13151a;
+  --on-night: #f7f7f9;
+  --on-night2: #b9bbc3;
+  --shadow: 0 12px 34px rgba(0, 0, 0, .35);
+  min-height: 100%;
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(229, 27, 50, .09), transparent 42%),
+    #08090c;
+}
+
+/* The showroom navigation belongs to the shared layout; darken it only when
+   the homepage wrapper is present so teammates' pages keep their own theme. */
+.showroom:has(.home-dark-theme) {
+  --red: #e51b32;
+  --red-ink: #ff9ba8;
+  --red-soft: #321117;
+  --ink: #f4f4f6;
+  --ink2: #c7c8cf;
+  --mute: #999ca7;
+  --bg: #090a0d;
+  --bg2: #13151a;
+  --card: #111318;
+  --line: #292b32;
+  --line2: #3b3e48;
+  --night: #07080a;
+  --night2: #13151a;
+  --on-night: #f7f7f9;
+  --on-night2: #b9bbc3;
+  background: #08090c;
+  color: #f4f4f6;
+}
+.showroom:has(.home-dark-theme) .s-nav {
+  background: #090a0d;
+  border-bottom-color: #272930;
+}
+.showroom:has(.home-dark-theme) .s-logo,
+.showroom:has(.home-dark-theme) .s-user,
+.showroom:has(.home-dark-theme) .s-burger {
+  color: #f4f4f6;
+}
+.showroom:has(.home-dark-theme) .s-links a {
+  color: #b8bac3;
+}
+.showroom:has(.home-dark-theme) .s-links a:hover,
+.showroom:has(.home-dark-theme) .s-links a.on {
+  color: #fff;
+}
+.showroom:has(.home-dark-theme) .s-nav .s-btn.out {
+  border-color: #3b3e48;
+  color: #f4f4f6;
+  background: transparent;
+}
+
+.s-hero.home-photo-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: clamp(520px, 56vw, 700px);
+  padding: clamp(40px, 6vw, 84px) clamp(20px, 5vw, 76px);
+  overflow: hidden;
+  color: #f7f7f9;
+  text-align: left;
+  background: #08090c;
+}
+/* Dark veil: keeps the headline readable and melts the photo into the page. */
+.s-hero.home-photo-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, #08090c 0%, rgba(8, 9, 12, .86) 26%, rgba(8, 9, 12, 0) 62%),
+    linear-gradient(180deg, rgba(8, 9, 12, .55) 0%, transparent 22%, transparent 72%, #08090c 100%);
+}
+.home-dark-theme .home-photo-hero .s-hero-bg {
+  background:
+    radial-gradient(ellipse at 77% 72%, rgba(229, 27, 50, .22), transparent 37%),
+    radial-gradient(ellipse at 40% 5%, rgba(255, 255, 255, .045), transparent 45%),
+    linear-gradient(140deg, #07080a 0%, #0d0e12 55%, #08090c 100%);
+}
+.home-dark-theme .home-photo-hero .s-hero-bg::after {
+  height: 32%;
+  background: linear-gradient(180deg, transparent, #08090c 96%);
+}
+.home-dark-theme .home-hero-copy {
+  align-self: center;
+  max-width: 680px;
+  padding-bottom: 12px;
+}
+.home-dark-theme .home-hero-copy .s-eyebrow {
+  color: #ff9ba8;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .2em;
+}
+.home-dark-theme .home-hero-copy h1 {
+  max-width: 12ch;
+  margin-top: 14px;
+  color: #fff;
+  font-size: clamp(38px, 5.5vw, 74px);
+  font-weight: 750;
+  line-height: 1.08;
+  letter-spacing: -.045em;
+  text-wrap: balance;
+}
+.home-dark-theme .home-hero-copy .s-hero-sub {
+  max-width: 48ch;
+  margin: 18px 0 0;
+  color: #b7bac4;
+  font-size: clamp(14px, 1.5vw, 17px);
+  line-height: 1.9;
+}
+.home-dark-theme .home-hero-copy .s-hero-price {
+  margin-top: 22px;
+  color: #fff;
+  font-size: clamp(17px, 1.7vw, 22px);
+  font-weight: 750;
+}
+.home-dark-theme .home-hero-copy .s-actions {
+  justify-content: flex-start;
+  margin-top: 25px;
+}
+.s-hero.home-photo-hero .home-hero-copy {
+  position: relative;
+  z-index: 2;
+  max-width: 620px;
+  text-align: left;
+}
+.s-hero.home-photo-hero .home-hero-copy h1 {
+  max-width: 14ch;
+}
+.s-hero.home-photo-hero .home-hero-copy .s-hero-sub {
+  margin-inline: 0;
+}
+.s-hero.home-photo-hero .home-hero-copy .s-actions {
+  justify-content: flex-start;
+}
+/* The supercar photo fills the hero as a background layer. */
+.s-hero.home-photo-hero .home-real-hero-car {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  align-self: stretch;
+  width: 70%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  display: block;
+  overflow: hidden;
+  background: none;
+}
+.s-hero.home-photo-hero .home-hero-car-photo {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none;
+  object-fit: cover;
+  object-position: 50% 55%;
+  filter: brightness(.74) contrast(1.1) saturate(1.1);
+  -webkit-mask-image: radial-gradient(ellipse 52% 56% at 50% 54%, #000 34%, transparent 100%);
+  mask-image: radial-gradient(ellipse 52% 56% at 50% 54%, #000 34%, transparent 100%);
+}
+.home-dark-theme .spec-strip {
+  background: #08090c;
+  border-bottom: 1px solid #282a31;
+}
+.home-dark-theme .spec-strip .s-specs {
+  color: #f3f3f5;
+  border-color: #282a31;
+}
+.home-dark-theme .spec-strip .s-spec {
+  border-color: #282a31;
+}
+.home-dark-theme .spec-strip .s-spec span {
+  color: #a5a8b1;
+}
+.home-dark-theme .page-content {
+  background: transparent;
+}
+.home-dark-theme .s-sec-h h2 {
+  color: #f5f5f7;
+}
+.home-dark-theme .s-sec-h .cnt {
+  color: #a3a5af;
+  background: #17191f;
+  border-color: #30323a;
+}
+.home-dark-theme .s-sec-h .lnk {
+  color: #ff9ba8;
+}
+.home-dark-theme .home-real-car-card {
+  padding: 16px 14px 14px;
+  border: 1px solid #272a32;
+  border-radius: 15px;
+  background: linear-gradient(160deg, #13151a, #0e0f13);
+  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+.home-dark-theme .home-real-car-card:hover {
+  border-color: #6f2631;
+  background: #171419;
+  transform: translateY(-3px);
+}
+.home-dark-theme .home-real-car-card h3 {
+  color: #f6f6f8;
+}
+.home-dark-theme .home-real-car-card .pr {
+  color: #d3d4da;
+}
+.home-dark-theme .home-real-car-card .go {
+  color: #ff9ba8;
+}
+.home-dark-theme .home-card-car-photo {
+  background: #111318;
+  border: 1px solid #292b32;
+}
+.home-dark-theme .home-real-promo {
+  border: 1px solid rgba(255, 255, 255, .1);
+  box-shadow: 0 15px 38px rgba(0, 0, 0, .22);
+}
+.home-dark-theme .home-promo-image-wrap {
+  background: #111318;
+}
+.home-dark-theme .s-promo.k2 {
+  color: #f5f5f7;
+  background: linear-gradient(140deg, #191b21, #101115);
+}
+.home-dark-theme .home-no-promotions {
+  background: #12141a;
+  border-color: #343640;
+  color: #f4f4f6;
+}
+.home-dark-theme .home-no-promotions p {
+  color: #a5a8b1;
+}
+.home-dark-theme .s-feat h3 {
+  color: #f4f4f6;
+}
+.home-dark-theme .s-feat p {
+  color: #aeb0b9;
+}
+.home-dark-theme .s-cta {
+  background: linear-gradient(115deg, #8f0719, #df142e 72%, #b70c24);
+  box-shadow: 0 20px 42px rgba(0, 0, 0, .25);
+}
+
+@media (max-width: 760px) {
+  .s-hero.home-photo-hero {
+    align-items: flex-end;
+    min-height: 560px;
+    padding: 40px 20px 36px;
+  }
+  .s-hero.home-photo-hero::after {
+    background: linear-gradient(180deg, rgba(8, 9, 12, .35) 0%, rgba(8, 9, 12, .55) 40%, #08090c 92%);
+  }
+  .s-hero.home-photo-hero .home-real-hero-car {
+    width: 100%;
+  }
+  .s-hero.home-photo-hero .home-hero-copy h1 {
+    max-width: 100%;
+    font-size: clamp(34px, 9vw, 48px);
+  }
+}
+@media (max-width: 520px) {
+  .home-dark-theme .home-content {
+    padding-top: 36px;
+  }
+  .home-dark-theme .home-real-car-card {
+    padding: 12px 9px 12px;
+  }
+}
+
+/* Promotion cards use a graphic panel instead of a car photo. */
+.home-promo-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 124px;
+  margin: -16px -24px 6px;
+  overflow: hidden;
+  color: rgba(255, 255, 255, .92);
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255, 255, 255, .16), transparent 42%),
+    radial-gradient(circle at 85% 90%, rgba(229, 27, 50, .5), transparent 55%),
+    linear-gradient(135deg, #2a0b11, #12131a 70%);
+}
+.home-promo-art::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: .5;
+  background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, .06) 0 1px, transparent 1px 14px);
+}
+.home-promo-art svg {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .45));
+}
+@media (max-width: 760px) {
+  .home-promo-art { margin-inline: -24px; }
+}
