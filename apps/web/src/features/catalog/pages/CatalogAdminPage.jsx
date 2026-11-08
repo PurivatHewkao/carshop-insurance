@@ -4,10 +4,9 @@ import CarPhoto from '../components/CarPhoto.jsx';
 import {
   CATEGORY_LABELS,
   formatBaht,
-  getCars,
-  saveCars,
   stockStatus,
 } from '../data/catalogData.js';
+import { apiErrorMessage, createCarRecord, removeCarRecord, saveCarPhotos, useCars } from '../api/catalogApi.js';
 import './catalog.css';
 
 const MAX_PHOTOS_PER_CAR = 6;
@@ -68,7 +67,8 @@ function getCarPhotos(car) {
 }
 
 export default function CatalogAdminPage() {
-  const [cars, setCars] = useState(() => getCars());
+  const { cars, loading, error: loadError, reload } = useCars({ gallery: true });
+  const [busy, setBusy] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [selectedPhotos, setSelectedPhotos] = useState([]);
   const [query, setQuery] = useState('');
@@ -101,7 +101,7 @@ export default function CatalogAdminPage() {
     }
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     const brand = form.brand.trim();
     const name = form.name.trim();
@@ -115,45 +115,37 @@ export default function CatalogAdminPage() {
       return;
     }
 
-    const slug = `${brand}-${name}`.toLowerCase().normalize('NFKD').replace(/[^a-z0-9ก-๙]+/g, '-').replace(/^-|-$/g, '') || `car-${Date.now()}`;
     const externalImage = form.imageUrl.trim();
     const allPhotos = [...selectedPhotos.map((photo) => photo.dataUrl), ...(externalImage ? [externalImage] : [])]
       .filter((url, index, all) => Boolean(url) && all.indexOf(url) === index)
       .slice(0, MAX_PHOTOS_PER_CAR);
-    const car = {
-      id: `${slug}-${Date.now().toString(36)}`,
-      brand,
-      name,
-      type: form.type,
-      tag: 'เพิ่มใหม่',
-      price,
-      year: Number(form.year) || 2025,
-      color: '#9EA2AA',
-      imageUrl: allPhotos[0] || '',
-      variant: form.variant.trim() || 'รุ่นมาตรฐาน',
-      engine: form.engine.trim() || 'ระบุสเปกภายหลัง',
-      horsepower: Number(form.horsepower) || 0,
-      transmission: 'ตรวจสอบตามรุ่นย่อย',
-      drive: 'ตรวจสอบตามรุ่นย่อย',
-      fuel: form.fuel,
-      seats: Number(form.seats) || 5,
-      stock: Math.max(0, Number(form.stock) || 0),
-      location: 'ยังไม่ระบุสถานที่เก็บรถ',
-      warranty: 'ตรวจสอบเงื่อนไขกับผู้จำหน่าย',
-      description: `${brand} ${name} เพิ่มจากหน้าจัดการรถ สามารถกลับมาใส่รายละเอียดเพิ่มเติมในภายหลังได้`,
-      features: ['เพิ่มข้อมูลสเปกและอุปกรณ์เด่นเพิ่มเติมได้'],
-      gallery: allPhotos.slice(1),
-      featured: false,
-    };
-    const next = [car, ...cars];
-    if (!saveCars(next)) {
-      setNotice('บันทึกไม่สำเร็จ พื้นที่ LocalStorage อาจเต็ม กรุณาลดจำนวนหรือขนาดรูปภาพ');
-      return;
+    setBusy(true);
+    try {
+      await createCarRecord({
+        brand,
+        name,
+        type: form.type,
+        price,
+        year: Number(form.year) || 2025,
+        stock: Math.max(0, Number(form.stock) || 0),
+        fuel: form.fuel,
+        variant: form.variant.trim() || 'รุ่นมาตรฐาน',
+        engine: form.engine.trim(),
+        horsepower: Number(form.horsepower) || 0,
+        seats: Number(form.seats) || 5,
+        description: `${brand} ${name} เพิ่มจากหน้าจัดการรถ สามารถกลับมาใส่รายละเอียดเพิ่มเติมในภายหลังได้`,
+        features: ['เพิ่มข้อมูลสเปกและอุปกรณ์เด่นเพิ่มเติมได้'],
+        photos: allPhotos,
+      });
+      reload();
+      setForm(emptyForm);
+      setSelectedPhotos([]);
+      setNotice(`เพิ่ม ${brand} ${name} แล้ว พร้อมรูปภาพ ${allPhotos.length} รูป — บันทึกในฐานข้อมูล`);
+    } catch (error) {
+      setNotice(apiErrorMessage(error));
+    } finally {
+      setBusy(false);
     }
-    setCars(next);
-    setForm(emptyForm);
-    setSelectedPhotos([]);
-    setNotice(`เพิ่ม ${brand} ${name} แล้ว พร้อมรูปภาพ ${allPhotos.length} รูป — บันทึกในเบราว์เซอร์นี้`);
   }
 
   async function addPhotosToExistingCar(car, event) {
@@ -174,14 +166,8 @@ export default function CatalogAdminPage() {
     try {
       const processed = await Promise.all(chosenFiles.map(compressImageFile));
       const allPhotos = [...currentPhotos, ...processed.map((photo) => photo.dataUrl)].slice(0, MAX_PHOTOS_PER_CAR);
-      const next = cars.map((item) => item.id === car.id
-        ? { ...item, imageUrl: allPhotos[0] || '', gallery: allPhotos.slice(1) }
-        : item);
-      if (!saveCars(next)) {
-        setNotice('บันทึกรูปไม่สำเร็จ พื้นที่ LocalStorage อาจเต็ม กรุณาลดขนาดหรือจำนวนรูปภาพ');
-        return;
-      }
-      setCars(next);
+      await saveCarPhotos(car.id, allPhotos);
+      reload();
       setNotice(`เพิ่มรูป ${processed.length} รูปให้ ${car.brand} ${car.name} แล้ว`);
       if (files.length > slots) setNotice(`เพิ่มให้ ${car.brand} ${car.name} ได้ ${slots} รูปตามขีดจำกัด รูปที่เลือกเกินมาถูกข้ามแล้ว`);
     } catch (error) {
@@ -191,15 +177,18 @@ export default function CatalogAdminPage() {
     }
   }
 
-  function removeCar(car) {
-    if (!window.confirm(`นำ ${car.brand} ${car.name} ออกจากรายการตัวอย่างหรือไม่?`)) return;
-    const next = cars.filter((item) => item.id !== car.id);
-    if (!saveCars(next)) {
-      setNotice('บันทึกไม่สำเร็จ กรุณาลองใหม่');
-      return;
+  async function removeCar(car) {
+    if (!window.confirm(`ลบ ${car.brand} ${car.name} ออกจากฐานข้อมูลหรือไม่? (รถที่มีออเดอร์หรือนัดหมายอ้างอิงอยู่จะลบไม่ได้)`)) return;
+    setBusy(true);
+    try {
+      await removeCarRecord(car.id);
+      reload();
+      setNotice(`ลบ ${car.brand} ${car.name} ออกจากรายการแล้ว`);
+    } catch (error) {
+      setNotice(apiErrorMessage(error));
+    } finally {
+      setBusy(false);
     }
-    setCars(next);
-    setNotice(`นำ ${car.brand} ${car.name} ออกจากรายการแล้ว`);
   }
 
   return (
@@ -209,7 +198,8 @@ export default function CatalogAdminPage() {
         <div className="catalog-admin-nav"><Link className="is-active" to="/admin/cars">จัดการรถ</Link><Link to="/admin/stock">สต็อกสินค้า</Link><Link to="/admin/promotions">โปรโมชัน</Link><Link to="/catalog">ดูหน้าร้าน ↗</Link></div>
       </header>
 
-      <div className="catalog-admin-notice"><span>i</span><p>โหมด Frontend Demo: รายการและรูปภาพบันทึกไว้ใน LocalStorage ของเบราว์เซอร์ ยังไม่เปลี่ยนข้อมูลบนเซิร์ฟเวอร์หรือฐานข้อมูลกลาง รูปจากเครื่องจะถูกย่อขนาดและบันทึกในเบราว์เซอร์นี้</p></div>
+      <div className="catalog-admin-notice"><span>i</span><p>รายการรถ ราคา สต็อก และรูปภาพบันทึกในฐานข้อมูลผ่าน catalog API รูปที่เลือกจากเครื่องจะถูกลดขนาดก่อนบันทึก (สูงสุด 6 รูปต่อรุ่น) การลบรุ่นรถทำไม่ได้ถ้ามีออเดอร์หรือนัดหมายอ้างอิงอยู่</p></div>
+      {loadError && <div className="catalog-form-feedback" role="alert">{loadError}<button type="button" onClick={reload} aria-label="ลองโหลดใหม่">↻</button></div>}
       {notice && <div className="catalog-form-feedback" role="status">{notice}<button type="button" onClick={() => setNotice('')} aria-label="ปิดข้อความ">×</button></div>}
 
       <div className="catalog-admin-layout">
@@ -240,7 +230,7 @@ export default function CatalogAdminPage() {
 
             <label className="catalog-form-wide">URL รูปรถสำรอง (ไม่บังคับ)<input name="imageUrl" type="url" value={form.imageUrl} onChange={updateField} placeholder="https://example.com/car.jpg" /></label>
             <p className="catalog-form-help">ถ้าเลือกไฟล์จากเครื่อง รูปที่เลือกจะเป็นภาพหลักและแกลเลอรีก่อน ส่วน URL ด้านบนจะถูกเพิ่มเป็นภาพต่อท้าย</p>
-            <button className="catalog-primary-button catalog-form-wide" type="submit">＋ เพิ่มรถเข้ารายการ</button>
+            <button className="catalog-primary-button catalog-form-wide" type="submit" disabled={busy}>＋ เพิ่มรถเข้ารายการ</button>
           </form>
         </section>
 
@@ -251,9 +241,10 @@ export default function CatalogAdminPage() {
             {visibleCars.map((car) => {
               const status = stockStatus(car.stock);
               const photoCount = getCarPhotos(car).length;
-              return <article key={car.id} className="catalog-admin-car-row"><div className="catalog-admin-car-thumb"><CarPhoto car={car} className="catalog-admin-thumb-photo" /></div><div className="catalog-admin-car-main"><strong>{car.brand} {car.name}</strong><span>{CATEGORY_LABELS[car.type] || car.type} · {formatBaht(car.price)}</span><small className={`catalog-inline-status ${status.tone}`}>{status.label} · {car.stock} คัน</small><small className="catalog-admin-photo-count">{photoCount} รูปในแกลเลอรี</small></div><div className="catalog-admin-car-actions"><Link to={`/catalog/${encodeURIComponent(car.id)}`} title="ดูรายละเอียด" aria-label={`ดูรายละเอียด ${car.name}`}>↗</Link><label className={`catalog-admin-photo-add ${uploadingCarId === car.id ? 'is-uploading' : ''}`} title="เพิ่มรูปภาพรถ">{uploadingCarId === car.id ? '...' : '+ รูป'}<input type="file" accept="image/*" multiple disabled={uploadingCarId === car.id} onChange={(event) => addPhotosToExistingCar(car, event)} aria-label={`เพิ่มรูปให้ ${car.name}`} /></label><button type="button" title="นำออกจากรายการ" aria-label={`ลบ ${car.name}`} onClick={() => removeCar(car)}>ลบ</button></div></article>;
+              return <article key={car.id} className="catalog-admin-car-row"><div className="catalog-admin-car-thumb"><CarPhoto car={car} className="catalog-admin-thumb-photo" /></div><div className="catalog-admin-car-main"><strong>{car.brand} {car.name}</strong><span>{CATEGORY_LABELS[car.type] || car.type} · {formatBaht(car.price)}</span><small className={`catalog-inline-status ${status.tone}`}>{status.label} · {car.stock} คัน</small><small className="catalog-admin-photo-count">{photoCount} รูปในแกลเลอรี</small></div><div className="catalog-admin-car-actions"><Link to={`/catalog/${encodeURIComponent(car.id)}`} title="ดูรายละเอียด" aria-label={`ดูรายละเอียด ${car.name}`}>↗</Link><label className={`catalog-admin-photo-add ${uploadingCarId === car.id ? 'is-uploading' : ''}`} title="เพิ่มรูปภาพรถ">{uploadingCarId === car.id ? '...' : '+ รูป'}<input type="file" accept="image/*" multiple disabled={uploadingCarId === car.id} onChange={(event) => addPhotosToExistingCar(car, event)} aria-label={`เพิ่มรูปให้ ${car.name}`} /></label><button type="button" title="นำออกจากรายการ" aria-label={`ลบ ${car.name}`} onClick={() => removeCar(car)} disabled={busy}>ลบ</button></div></article>;
             })}
-            {!visibleCars.length && <p className="catalog-muted">ไม่พบรุ่นรถจากคำค้นหานี้</p>}
+            {loading && !loadError && <p className="catalog-muted">กำลังโหลดรายการรถ...</p>}
+            {!loading && !loadError && !visibleCars.length && <p className="catalog-muted">ไม่พบรุ่นรถจากคำค้นหานี้</p>}
           </div>
           <Link className="catalog-admin-secondary-link" to="/admin/stock">ไปจัดการจำนวนสต็อก →</Link>
         </section>

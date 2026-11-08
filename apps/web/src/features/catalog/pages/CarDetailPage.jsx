@@ -5,22 +5,26 @@ import CarPhoto from '../components/CarPhoto.jsx';
 import {
   CATEGORY_LABELS,
   formatBaht,
-  getCars,
   getCarColorOptions,
-  getPromotions,
   stockStatus,
 } from '../data/catalogData.js';
+import { useCar, usePromotions } from '../api/catalogApi.js';
 import './catalog.css';
 
 export default function CarDetailPage() {
   const { name = '' } = useParams();
-  const [cars] = useState(() => getCars());
   const [photoIndex, setPhotoIndex] = useState(0);
   const [selectedColor, setSelectedColor] = useState('');
-  const car = cars.find((item) => item.id === name || item.name === name)
-    || (name === 'Corolla Cross' ? cars.find((item) => item.id === 'corolla-cross') : null)
-    || cars.find((item) => `${item.brand} ${item.name}`.toLowerCase() === decodeURIComponent(name).toLowerCase());
-  const promotions = useMemo(() => getPromotions().filter((promo) => promo.active), []);
+  const { car, loading, error, notFound } = useCar(name === 'Corolla Cross' ? 'corolla-cross' : name);
+  const { promotions: allPromotions } = usePromotions();
+  const promotions = useMemo(() => allPromotions.filter((promo) => promo.active), [allPromotions]);
+
+  if (loading) {
+    return <div className="page-content"><div className="catalog-empty-state"><h1>กำลังโหลดข้อมูลรถ...</h1></div></div>;
+  }
+  if (error && !notFound) {
+    return <div className="page-content"><div className="catalog-empty-state" role="alert"><h1>โหลดข้อมูลรถไม่สำเร็จ</h1><p>{error}</p><Link className="s-btn pri" to="/catalog">กลับไปเลือกรถ</Link></div></div>;
+  }
 
   if (!car) {
     return <div className="page-content"><div className="catalog-empty-state"><h1>ไม่พบรุ่นรถที่เลือก</h1><p>รุ่นรถอาจถูกนำออกจากรายการหรือไม่มีอยู่ในข้อมูลตัวอย่าง</p><Link className="s-btn pri" to="/catalog">กลับไปดูรถทั้งหมด</Link></div></div>;
