@@ -31,6 +31,7 @@ export async function findById(id, db = getMysqlPool()) {
 export async function transaction(action) {
   const db = await getMysqlPool().getConnection();
   try {
+    await db.query('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
     await db.beginTransaction();
     const result = await action(db);
     await db.commit();
@@ -119,6 +120,7 @@ export async function changeUser(actorId, id, values) {
     await assertAdmin(actorId, db);
     if (actorId === id)
       fail(403, 'SELF_UPDATE', 'ไม่สามารถแก้สิทธิ์บัญชีตนเอง');
+    await db.execute('SELECT id FROM users WHERE id=? FOR UPDATE', [id]);
     const user = await findById(id, db);
     if (!user) fail(404, 'NOT_FOUND', 'ไม่พบผู้ใช้');
     if (

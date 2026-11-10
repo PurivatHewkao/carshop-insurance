@@ -1,4 +1,4 @@
-โปรเจกต์บริษัทขายรถยนต์ React แอปเดียว + Express 5 microservices ใน monorepo มี JWT Login/Register และโปรไฟล์ผ่าน Identity API แบบเก็บบัญชีชั่วคราวใน memory ยังไม่เชื่อมฐานข้อมูลสำหรับ Auth ดู [Identity](services/identity/README.md)
+โปรเจกต์บริษัทขายรถยนต์ React แอปเดียว + Express 5 microservices ใน monorepo มี JWT Login/Register และโปรไฟล์ผ่าน Identity API พร้อม Admin และโปรไฟล์ที่ใช้ MySQL carshop_sql ดู [Identity](services/identity/README.md)
 
 ## เริ่มใช้
 

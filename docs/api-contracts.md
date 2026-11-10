@@ -17,9 +17,9 @@ Error envelope: {"error":{"code":"NOT_FOUND","message":"Route not found"}} ส�
 Malformed JSON ตอบ 400 BAD_REQUEST, payload ใหญ่เกินตอบ 413, unhandled exception ตอบ 500 INTERNAL_ERROR โดยไม่เผยรายละเอียด
 CORS อนุญาตเฉพาะ origins ตาม CORS_ORIGINS; origin ที่ไม่อนุญาตไม่มี Access-Control-Allow-Origin header แต่ CORS ไม่ใช่ authentication
 
-## Implemented: Identity JWT (in-memory)
+## Implemented: Identity JWT (MySQL)
 
-Owner: โจเซฟ; Frontend adapter: `apps/web/src/features/identity/api/auth.js` ไม่มีฐานข้อมูล บัญชีและ revocations หายเมื่อรีสตาร์ต Backend
+Owner: โจเซฟ; Frontend adapter: `apps/web/src/features/identity/api/auth.js` ใช้ฐานข้อมูลกลาง carshop_sql บัญชีและ revocations คงอยู่หลังรีสตาร์ต Backend
 
 | Method/path (base `/api/v1`) | Request                       | Response                        | Auth       |
 | ---------------------------- | ----------------------------- | ------------------------------- | ---------- |
@@ -35,7 +35,7 @@ JWT: HS256, `sub=user.id`, `role`, `jti`, `iat`, `exp` (1 ชั่วโมง)
 
 Validation: name trim 1–100, email trim/lowercase สูงสุด 254, phone `0[0-9]{8,9}`, password 8–128 รวมอังกฤษ+ตัวเลขตอนสมัคร; unknown fields ไม่ถูกบันทึก Errors envelope `{error:{code,message}}`: 400 VALIDATION_ERROR, 401 INVALID_CREDENTIALS/UNAUTHORIZED/INVALID_TOKEN, 409 EMAIL_EXISTS, 429 TOO_MANY_REQUESTS จำกัด auth รวม 30 ครั้ง/IP/15 นาที ทุก auth response ไม่ cache
 
-Frontend เก็บ JWT ใน memory; refresh ต้อง Login ใหม่ ไม่ fallback เข้า demo เมื่อ API ล้มเหลว GET `/users` และ PATCH `/users/:id` ยังไม่ implement
+Frontend เก็บ JWT ใน memory; refresh ต้อง Login ใหม่ ไม่ fallback เข้า demo เมื่อ API ล้มเหลว Admin ใช้ GET/POST `/users` และ PATCH `/users/:id` ได้แล้ว รองรับ roles customer/seller/manager/admin/finance/stock ดูรายละเอียด request และข้อจำกัดใน services/identity/README.md
 
 ## Planned: business endpoints อื่น
 

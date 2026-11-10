@@ -1,7 +1,9 @@
-# ฐานข้อมูลของ identity
+# Identity database
 
-เจ้าของ: คนที่ 1 (โจเซฟ)
-MySQL: carshop_identity; เพิ่ม migrations/*.sql และคู่มือ migration/rollback เมื่อเริ่มออกแบบ schema ยังไม่มี migrations ใน scaffold
+ใช้ฐานข้อมูลกลาง carshop_sql และ schema ที่ db schema/01_mysql_schema.sql ดูวิธี migration/seed/test ใน ../README.md
 
-ห้าม FK ข้าม service หรือข้าม MySQL/MongoDB; อ้างอิง ID ผ่าน API ตาม docs/database-ownership.md
-ไม่รัน migration อัตโนมัติเมื่อ import app และไม่ใช้ credentials ร่วมกับ service อื่น
+Identity อ่านและเขียน users, customers, employees สำหรับบัญชี/โปรไฟล์ และเพิ่ม identity_revoked_tokens กับ identity_admin_lock
+
+Migration เป็น additive และ idempotent ต้องมีตารางจาก schema กลางก่อน ใช้ npm run migrate จาก services/identity สำรองฐานข้อมูลก่อนเปลี่ยน schema จริง
+
+ไม่ลบตาราง support ระหว่างมี token ที่ยังใช้งานได้ การ rollback application ต้องพิจารณารายการ token ที่ยกเลิกแล้วด้วย

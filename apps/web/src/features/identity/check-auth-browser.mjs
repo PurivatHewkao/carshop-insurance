@@ -63,8 +63,8 @@ try {
     'Browser Updated',
   );
   await page.evaluate(() => {
-    history.pushState({}, '', '/admin/users');
-    dispatchEvent(new PopStateEvent('popstate'));
+    globalThis.history.pushState({}, '', '/admin/users');
+    globalThis.dispatchEvent(new globalThis.PopStateEvent('popstate'));
   });
   await page
     .getByRole('heading', { name: 'ไม่มีสิทธิ์เข้าถึงหน้านี้' })

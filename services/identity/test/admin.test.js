@@ -15,12 +15,42 @@ import {
 import { closeMysqlPool, getMysqlPool } from '../src/config/mysql.js';
 import jwt from 'jsonwebtoken';
 import app from '../src/app.js';
+import { execFileSync } from 'node:child_process';
 
 if (
   !/^carshop_identity_[a-f0-9]{12}_test$/.test(process.env.MYSQL_DATABASE || '')
 )
   throw new Error('Use npm test');
 after(closeMysqlPool);
+test('database failure returns a generic error without opening a session', () => {
+  execFileSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      `
+    import assert from 'node:assert/strict';
+    import app from './src/app.js';
+    import {closeMysqlPool} from './src/config/mysql.js';
+    const server=app.listen(0,'127.0.0.1');
+    await new Promise(resolve=>server.once('listening',resolve));
+    try {
+      const response=await fetch('http://127.0.0.1:'+server.address().port+'/api/v1/auth/login',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:'outage@example.test',password:'Password123'})
+      });
+      assert.equal(response.status,500);
+      assert.deepEqual(await response.json(),{error:{code:'INTERNAL_ERROR',message:'Internal server error'}});
+    } finally {await new Promise(resolve=>server.close(resolve));await closeMysqlPool();}
+  `,
+    ],
+    {
+      cwd: new URL('../', import.meta.url),
+      env: { ...process.env, MYSQL_PORT: '1' },
+      stdio: 'pipe',
+    },
+  );
+});
 test('Admin bootstrap, permissions, persistence, concurrent updates and role records', async () => {
   const body = {
     name: 'Admin One',
@@ -84,6 +114,31 @@ test('Admin bootstrap, permissions, persistence, concurrent updates and role rec
   await logout(claims);
   await closeMysqlPool();
   assert.equal(await isRevoked(claims.jti), true);
+  // A fresh Node process must see the persisted account and revoked token.
+  execFileSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      `
+    import assert from 'node:assert/strict';
+    import {findById,isRevoked} from './src/modules/auth/repository.js';
+    import {closeMysqlPool} from './src/config/mysql.js';
+    assert.equal((await findById(process.env.PROBE_USER)).name,'Updated');
+    assert.equal(await isRevoked(process.env.PROBE_TOKEN),true);
+    await closeMysqlPool();
+  `,
+    ],
+    {
+      cwd: new URL('../', import.meta.url),
+      env: {
+        ...process.env,
+        PROBE_USER: customer.user.id,
+        PROBE_TOKEN: claims.jti,
+      },
+      stdio: 'pipe',
+    },
+  );
   const server = app.listen(0, '127.0.0.1');
   await new Promise((r) => server.once('listening', r));
   const url = `http://127.0.0.1:${server.address().port}/api/v1`;

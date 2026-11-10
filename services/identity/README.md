@@ -1,46 +1,57 @@
-# identity service — คนที่ 1 (โจเซฟ)
+# Identity / MySQL
 
-รับผิดชอบ: บัญชีผู้ใช้และสิทธิ์ ดูคู่มือหลัก [team ownership](../../docs/team-ownership.md)
+Register, Login, Logout, Profile และ Admin ใช้ฐานข้อมูลกลาง carshop_sql ตาม db schema/01_mysql_schema.sql
 
-## JWT Auth แบบไม่ใช้ฐานข้อมูล
+## เริ่มใช้งาน
 
-ทำงานแล้ว: POST `/api/v1/auth/register` (201), POST `/api/v1/auth/login` (200), POST `/api/v1/auth/logout` (204), GET/PATCH `/api/v1/users/me` (200)
+ใช้ Node.js 24 ตามโครงการ คัดลอก .env.example เป็น .env และใส่ค่าจริง จาก root รัน
 
-Register รับ `{name,email,phone,password}` และ Login รับ `{email,password}`; ตอบ `{data:{user,accessToken}}` ทุก protected endpoint ใช้ `Authorization: Bearer <accessToken>` อ่าน/แก้โปรไฟล์ตอบ `{data:user}` และ Logout ยกเลิก JWT ปัจจุบัน ไม่มี refresh token
+    npm --prefix services/identity run migrate
+    npm --prefix services/identity run seed:admin
+    npm run dev:identity
+    npm run dev:web
 
-เก็บบัญชีใน Map เฉพาะ process ใช้ scrypt พร้อม random salt แฮชรหัสผ่าน ไม่เก็บ password จริงและไม่เชื่อม MySQL รีสตาร์ตแล้วบัญชีทั้งหมดหาย ใช้สำหรับพัฒนาเครื่องเดียว ยังไม่รองรับหลาย instances/serverless แบบถาวร
+เครื่องนี้ทดสอบด้วย Node 22.20.0 ที่ติดตั้งอยู่ หาก shell ยังเป็น Node 20 ให้เลือก Node 24 หรือ Node 22.20 ขึ้นไปก่อนรัน Vite
 
-JWT ใช้ HS256 อายุ 1 ชั่วโมง ตรวจ signature, expiry, issuer, audience และสถานะบัญชี ทุกคนสมัครเป็น customer เท่านั้น ไม่มี seed admin; API รายการ/เปลี่ยนสิทธิ์ผู้ใช้ยังไม่ implement Profile เปลี่ยนได้เฉพาะชื่อและเบอร์โทร
+Migration ต้องมี users/customers/employees จาก schema กลางก่อน เพิ่มเฉพาะ identity_revoked_tokens และ identity_admin_lock รันซ้ำได้ ไม่มี DROP ตารางเดิม Migration ไม่รันอัตโนมัติตอนเปิด API
 
-Validation: ชื่อ 1–100 ตัว, email ไม่เกิน 254 ตัวและไม่ซ้ำโดยไม่แยกตัวพิมพ์, โทร 9–10 หลักขึ้นต้น 0, password 8–128 ตัวรวมอังกฤษและตัวเลข; จำกัด Login/Register รวม 30 ครั้ง/IP/15 นาที คืน 400/401/409/429 ตามกรณี
+Seed อ่าน ADMIN_NAME, ADMIN_EMAIL, ADMIN_PHONE, ADMIN_PASSWORD จาก .env ใช้สำหรับ Admin คนแรก รันซ้ำด้วย email เดิมจะไม่เปลี่ยนรหัสผ่าน หากมี Admin แล้วให้สร้างเพิ่มผ่าน /admin/users
 
-Development เริ่มได้โดยไม่มี `.env` โดยสุ่ม signing key ต่อ process; ตั้ง `JWT_SECRET` อย่างน้อย 32 bytes เมื่อจะใช้ key คงที่ Production ต้องมี key นี้และไม่อนุญาตให้ว่าง สร้างด้วย `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"` แล้วใส่ใน `services/identity/.env` ห้ามใส่ใน VITE_ หรือ commit key
+## API
 
-ทดสอบ Backend: `npm --prefix services/identity test` จาก root; Frontend/API integration: `node apps/web/src/features/identity/check-auth-api.mjs` (Node 24 ตามโครงการ)
+Base /api/v1 ใช้ success envelope {data: ...} และ error {error:{code,message}}
 
-## รันแยก
+| Method | Path           | สิทธิ์ / ข้อมูล                                           |
+| ------ | -------------- | --------------------------------------------------------- |
+| POST   | /auth/register | public; name,email,phone,password; 201 user + accessToken |
+| POST   | /auth/login    | public; email,password; 200 user + accessToken            |
+| POST   | /auth/logout   | Bearer JWT; 204 ยกเลิก token ใบปัจจุบัน                   |
+| GET    | /users/me      | Bearer JWT; โปรไฟล์                                       |
+| PATCH  | /users/me      | Bearer JWT; name,phone                                    |
+| GET    | /users         | Admin; รายการผู้ใช้                                       |
+| POST   | /users         | Admin; name,email,phone,password,role,status; 201 user    |
+| PATCH  | /users/:id     | Admin; role,status                                        |
 
-ใช้ Node.js 24 LTS: cd services/identity แล้ว npm install และ npm run dev (port 3001); npm start สำหรับรันโดยไม่ watch
-คัดลอก .env.example เป็น .env เมื่อจะตั้งค่าฐานข้อมูล; health ทำงานได้แม้ไม่มี .env หรือ credentials
-GET http://localhost:3001/api/v1/health ตอบ {"service":"identity","status":"ok"}; เป็น liveness ไม่รับรอง database
+Roles API เป็นตัวพิมพ์เล็ก customer/seller/manager/admin/finance/stock แปลงเป็นตัวพิมพ์ใหญ่ใน MySQL สมัครสาธารณะเป็น customer เสมอ
 
-## ไฟล์ที่แก้และตำแหน่งเพิ่มงาน
+รหัสผ่านใช้ scrypt พร้อม random salt ใน password_hash รูปแบบ scrypt$salt$hash JWT HS256 อายุ 1 ชั่วโมง ใช้ JWT_SECRET คงที่ใน .env ทุก protected request ตรวจบัญชีและสถานะล่าสุดจาก MySQL และรายการ revoked tokens การเปลี่ยน role มีผลต่อ API ครั้งถัดไป
 
-- src/app.js: mount routes เมื่อ implement จริง; ห้ามเปิด port ที่นี่
-- src/server.js: local listener; Vercel ใช้ default export จาก src/app.js
-- src/config/env.js และ src/config/mysql.js: config และ lazy database connections
-- src/modules/README.md: เพิ่ม module ของตัวเองเมื่อเริ่มงาน โดยแยก routes/controller/service/repository/validation ตามความจำเป็น
-- src/middleware/errors.js: error และ 404 handlers; เพิ่ม auth middleware เมื่อ Identity contract พร้อม
-- database/README.md: แนวทาง migrations/models; src/utils/README.md: helper ของ service
-- package.json, package-lock.json, .env.example และ README.md: เจ้าของ service ดูแลเอง; ห้าม commit .env
+Admin เปลี่ยนสิทธิ์ตัวเองไม่ได้ งานจัดการสิทธิ์ใช้ transaction และแถว lock ร่วมเพื่อป้องกันการแก้พร้อมกันจนไม่มี Admin เหลือ เก็บ customers/employees IDs เดิมเมื่อเปลี่ยน role เพื่อรักษา foreign keys
 
-## ลำดับเริ่มงาน
+Register สร้าง customers ส่วนพนักงานสร้าง employees ใน transaction เดียวกับ users ช่องชื่อเต็มของ UI เก็บใน first_name และ last_name ว่าง ชื่อจากข้อมูลเดิมอ่านโดยรวม first_name/last_name ส่วน username ของบัญชีใหม่เป็น UUID เพราะ Login ใช้ email
 
-1. ตกลง user ID, roles และ auth contract กับทุกคน
-2. ออกแบบ migrations ของบัญชีผู้ใช้
-3. พัฒนา Register/Login พร้อม bcrypt, validation และ JWT
-4. เชื่อมหน้า Profile และการจัดการสิทธิ์
+ฐานข้อมูลจริงที่ตรวจครั้งนี้ไม่มีบัญชีเดิม ระบบรองรับ hash แบบ scrypt ที่สร้างโดย Identity นี้ หากนำบัญชีจากระบบอื่นเข้ามา ต้องเพิ่มการย้ายรูปแบบ password hash ตามระบบต้นทางก่อน
 
-ประสานคนที่ 5 (อั้ม) ก่อนแก้ tooling หรือ contract กลาง และประสานเจ้าของ service ที่เกี่ยวข้องก่อนเปลี่ยน API
-ก่อนส่ง integrate: อัปเดต OpenAPI/contract, validation/auth ตามที่ตกลง, tests กรณีสำเร็จและผิดพลาด, .env.example และคู่มือ; health/lint/build ต้องผ่าน ไม่มี success ปลอม
-เจ้าของ service ต้องเชื่อมและแก้ปัญหาของตัวเอง คนที่ 5 (อั้ม) ประสาน integration ไม่ทำแทนทุกคน
+JWT ฝั่ง Browser เก็บใน memory รีเฟรชต้อง Login ใหม่ บัญชีและ revoked tokens คงอยู่หลังรีสตาร์ต Backend การ Logout ตอน API ติดต่อไม่ได้ล้าง local token แต่ token ฝั่ง server ยังมีอายุจนหมดเวลา
+
+## Test
+
+    npm --prefix services/identity test
+
+ต้องมี MySQL ที่ credentials ใน .env สร้าง/ลบฐานข้อมูลทดสอบได้ Runner สุ่มชื่อ carshop_identity_<random>_test สร้าง schema แยก รัน migration ซ้ำ ทดสอบ Backend, frontend adapter และ headless Edge จากนั้นลบเฉพาะฐานข้อมูลที่สร้างเอง ไม่รับชื่อฐานข้อมูลที่จะลบจาก environment
+
+Browser test ใช้ Microsoft Edge ค่าเริ่มต้น ตั้ง PLAYWRIGHT_CHANNEL=chrome หากใช้ Chrome มีการตรวจ Register/Profile/Login/Logout, route guards และ Admin สร้างผู้ใช้/เปลี่ยน role/ระงับบัญชี
+
+Admin test ตรวจ seed ซ้ำ อีเมลซ้ำ สิทธิ์ล่าสุด การแก้พร้อมกัน และข้อมูลหลังปิด/เปิด connection ใหม่ Auth test ตรวจ JWT ปลอม/หมดอายุ/issuer/audience ผิด Logout, validation และ rate limit
+
+Login/Register รวม 30 requests/IP/15 นาที รายการผู้ใช้เป็นรายการทั้งหมดสำหรับงานขนาดเล็ก UI กรองข้อมูลใน Browser
