@@ -1,7 +1,9 @@
 # ฐานข้อมูลของ payment
 
 เจ้าของ: คนที่ 4 (ดิว)
-MySQL: carshop_payment; เพิ่ม migrations/*.sql และคู่มือ migration/rollback เมื่อเริ่มออกแบบ schema ยังไม่มี migrations ใน scaffold
+ใช้ MySQL `carshop_sql` ร่วมกับทีมตาม `db schema/01_mysql_schema.sql` (ตาราง `payments`, `invoices`)
 
-ห้าม FK ข้าม service หรือข้าม MySQL/MongoDB; อ้างอิง ID ผ่าน API ตาม docs/database-ownership.md
-ไม่รัน migration อัตโนมัติเมื่อ import app และไม่ใช้ credentials ร่วมกับ service อื่น
+- `migrations/001_refunds_and_idempotency.sql` เพิ่มตาราง `refunds` และ `payment_idempotency_keys` (ไม่แก้ตารางกลาง)
+- รัน: `npm run db:migrate` หลังสร้าง schema กลางแล้ว (รันซ้ำได้)
+- Rollback ในเครื่อง: `DROP TABLE refunds; DROP TABLE payment_idempotency_keys;`
+- ไม่รัน migration อัตโนมัติเมื่อ import app

@@ -1,6 +1,5 @@
-# HTTP clients ที่วางแผนไว้
+# Clients ของ service อื่น
 
-- payment → sales: เพิ่ม sales.js เมื่อ contract พร้อม ใช้ SALES_API_URL ซึ่งรวม /api/v1
-
-ใช้ fetch ของ Node.js พร้อม timeout, ตรวจ HTTP status, validation, authentication และ error mapping ตาม contract ห้าม query database หรือ import logic ของอีก service
-ยังไม่มีการเรียก business API ปลายทางที่ไม่ได้พัฒนา เพิ่ม INTERNAL_API_SECRET ใน backend เมื่อทีมตกลง internal authentication เท่านั้น
+- `orders.js` — **ชั่วคราว**: อ่าน/แก้ `orders` (Sales/เฟียร์) และ `cars` (Catalog/กร) ตรงใน `carshop_sql`
+  เพราะ Sales ยังไม่มี order API. เมื่อมี API แล้วให้เปลี่ยนไฟล์นี้ไปเรียก `SALES_API_URL` ด้วย fetch
+  (timeout, ตรวจ status, map error) โดยไม่ต้องแก้ module อื่น
