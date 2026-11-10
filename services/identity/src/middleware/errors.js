@@ -10,8 +10,18 @@ export function errorHandler(error, _req, res, _next) {
       : 500;
   const payload = {
     error: {
-      code: status === 500 ? 'INTERNAL_ERROR' : 'BAD_REQUEST',
-      message: status === 500 ? 'Internal server error' : 'Invalid request',
+      code:
+        error.expose && status < 500
+          ? error.code
+          : status === 500
+            ? 'INTERNAL_ERROR'
+            : 'BAD_REQUEST',
+      message:
+        error.expose && status < 500
+          ? error.message
+          : status === 500
+            ? 'Internal server error'
+            : 'Invalid request',
     },
   };
   res.status(status).json(payload);

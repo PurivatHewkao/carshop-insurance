@@ -126,7 +126,12 @@ try {
         malformed = false;
         fail = true;
         await assert.rejects(auth.listUsers(), /network/);
-        await auth.logout();
+        await assert.rejects(auth.logout(), /network/);
+        assert.equal(
+          auth.getSession(),
+          null,
+          'Logout must clear local credentials even when API fails',
+        );
         await assert.rejects(
           auth.login({ email: user.email, password: 'Test12345' }),
         );

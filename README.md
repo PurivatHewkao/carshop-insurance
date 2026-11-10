@@ -1,4 +1,4 @@
-Scaffold สำหรับบริษัทขายรถยนต์ React แอปเดียว + Express 5 microservices ใน monorepo ไม่มี business features สำเร็จปลอม ไม่มี auth/CRUD/orders/payments จริง และยังไม่ deploy
+โปรเจกต์บริษัทขายรถยนต์ React แอปเดียว + Express 5 microservices ใน monorepo มี JWT Login/Register และโปรไฟล์ผ่าน Identity API แบบเก็บบัญชีชั่วคราวใน memory ยังไม่เชื่อมฐานข้อมูลสำหรับ Auth ดู [Identity](services/identity/README.md)
 
 ## เริ่มใช้
 

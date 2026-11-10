@@ -1,8 +1,6 @@
 import { identityClient } from './client.js';
 
-export const isDemo = import.meta.env.VITE_IDENTITY_MODE
-  ? import.meta.env.VITE_IDENTITY_MODE === 'demo'
-  : import.meta.env.DEV;
+export const isDemo = import.meta.env.VITE_IDENTITY_MODE === 'demo';
 export const demoAccount = {
   email: 'customer@toyoty.demo',
   password: 'Toyoty123!',
@@ -46,14 +44,23 @@ function setSession(user) {
   listeners.forEach((listener) => listener());
 }
 async function request(method, url, data, signal) {
-  const response = await identityClient.request({
-    method,
-    url,
-    data,
-    signal,
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
-  return response.data.data;
+  let response;
+  try {
+    response = await identityClient.request({
+      method,
+      url,
+      data,
+      signal,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  } catch (error) {
+    if (error.response?.status === 401) {
+      token = null;
+      setSession(null);
+    }
+    throw error;
+  }
+  return response.data?.data;
 }
 function acceptSession(result) {
   if (
@@ -102,8 +109,12 @@ export async function register(values) {
   return user;
 }
 export async function logout() {
-  token = null;
-  setSession(null);
+  try {
+    if (!isDemo && token) await request('post', 'auth/logout');
+  } finally {
+    token = null;
+    setSession(null);
+  }
 }
 export async function getProfile(signal) {
   if (!session) throw new Error('กรุณาเข้าสู่ระบบก่อนดูข้อมูลบัญชี');
@@ -169,6 +180,10 @@ export function authError(error) {
     return 'เซสชันหมดอายุหรือข้อมูลเข้าสู่ระบบไม่ถูกต้อง กรุณาเข้าสู่ระบบอีกครั้ง';
   if (error.response?.status === 403) return 'บัญชีนี้ไม่มีสิทธิ์ดำเนินการ';
   if (error.response?.status === 409) return 'อีเมลนี้มีบัญชีอยู่แล้ว';
+  if ([400, 429].includes(error.response?.status))
+    return (
+      error.response.data?.error?.message || 'กรุณาตรวจสอบข้อมูลแล้วลองอีกครั้ง'
+    );
   if (error.response || error.code)
     return 'ไม่สามารถติดต่อระบบบัญชีได้ กรุณาลองอีกครั้ง';
   return error.message || 'เกิดข้อผิดพลาด กรุณาลองอีกครั้ง';

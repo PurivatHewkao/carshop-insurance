@@ -127,8 +127,13 @@ export default function ProfilePage() {
           <button
             className="s-btn out"
             onClick={async () => {
-              await logout();
-              navigate('/login');
+              try {
+                await logout();
+              } catch {
+                // Local credentials are cleared even if the server is unavailable.
+              } finally {
+                navigate('/login');
+              }
             }}
           >
             ออกจากระบบ

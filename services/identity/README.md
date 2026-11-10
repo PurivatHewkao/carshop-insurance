@@ -2,6 +2,22 @@
 
 รับผิดชอบ: บัญชีผู้ใช้และสิทธิ์ ดูคู่มือหลัก [team ownership](../../docs/team-ownership.md)
 
+## JWT Auth แบบไม่ใช้ฐานข้อมูล
+
+ทำงานแล้ว: POST `/api/v1/auth/register` (201), POST `/api/v1/auth/login` (200), POST `/api/v1/auth/logout` (204), GET/PATCH `/api/v1/users/me` (200)
+
+Register รับ `{name,email,phone,password}` และ Login รับ `{email,password}`; ตอบ `{data:{user,accessToken}}` ทุก protected endpoint ใช้ `Authorization: Bearer <accessToken>` อ่าน/แก้โปรไฟล์ตอบ `{data:user}` และ Logout ยกเลิก JWT ปัจจุบัน ไม่มี refresh token
+
+เก็บบัญชีใน Map เฉพาะ process ใช้ scrypt พร้อม random salt แฮชรหัสผ่าน ไม่เก็บ password จริงและไม่เชื่อม MySQL รีสตาร์ตแล้วบัญชีทั้งหมดหาย ใช้สำหรับพัฒนาเครื่องเดียว ยังไม่รองรับหลาย instances/serverless แบบถาวร
+
+JWT ใช้ HS256 อายุ 1 ชั่วโมง ตรวจ signature, expiry, issuer, audience และสถานะบัญชี ทุกคนสมัครเป็น customer เท่านั้น ไม่มี seed admin; API รายการ/เปลี่ยนสิทธิ์ผู้ใช้ยังไม่ implement Profile เปลี่ยนได้เฉพาะชื่อและเบอร์โทร
+
+Validation: ชื่อ 1–100 ตัว, email ไม่เกิน 254 ตัวและไม่ซ้ำโดยไม่แยกตัวพิมพ์, โทร 9–10 หลักขึ้นต้น 0, password 8–128 ตัวรวมอังกฤษและตัวเลข; จำกัด Login/Register รวม 30 ครั้ง/IP/15 นาที คืน 400/401/409/429 ตามกรณี
+
+Development เริ่มได้โดยไม่มี `.env` โดยสุ่ม signing key ต่อ process; ตั้ง `JWT_SECRET` อย่างน้อย 32 bytes เมื่อจะใช้ key คงที่ Production ต้องมี key นี้และไม่อนุญาตให้ว่าง สร้างด้วย `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"` แล้วใส่ใน `services/identity/.env` ห้ามใส่ใน VITE_ หรือ commit key
+
+ทดสอบ Backend: `npm --prefix services/identity test` จาก root; Frontend/API integration: `node apps/web/src/features/identity/check-auth-api.mjs` (Node 24 ตามโครงการ)
+
 ## รันแยก
 
 ใช้ Node.js 24 LTS: cd services/identity แล้ว npm install และ npm run dev (port 3001); npm start สำหรับรันโดยไม่ watch

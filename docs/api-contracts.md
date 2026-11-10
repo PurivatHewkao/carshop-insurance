@@ -1,6 +1,6 @@
 # API contracts
 
-## Implemented: Health เท่านั้น
+## Implemented: Health
 
 Base URL ทุกตัวรวม /api/v1 เช่น http://localhost:3001/api/v1; client ใช้ relative path health และ normalize trailing slash
 
@@ -17,7 +17,27 @@ Error envelope: {"error":{"code":"NOT_FOUND","message":"Route not found"}} ส�
 Malformed JSON ตอบ 400 BAD_REQUEST, payload ใหญ่เกินตอบ 413, unhandled exception ตอบ 500 INTERNAL_ERROR โดยไม่เผยรายละเอียด
 CORS อนุญาตเฉพาะ origins ตาม CORS_ORIGINS; origin ที่ไม่อนุญาตไม่มี Access-Control-Allow-Origin header แต่ CORS ไม่ใช่ authentication
 
-## Planned: ยังไม่มี business endpoints
+## Implemented: Identity JWT (in-memory)
+
+Owner: โจเซฟ; Frontend adapter: `apps/web/src/features/identity/api/auth.js` ไม่มีฐานข้อมูล บัญชีและ revocations หายเมื่อรีสตาร์ต Backend
+
+| Method/path (base `/api/v1`) | Request                       | Response                        | Auth       |
+| ---------------------------- | ----------------------------- | ------------------------------- | ---------- |
+| POST `/auth/register`        | `{name,email,phone,password}` | 201 `{data:{user,accessToken}}` | public     |
+| POST `/auth/login`           | `{email,password}`            | 200 `{data:{user,accessToken}}` | public     |
+| POST `/auth/logout`          | —                             | 204; revoke current JWT         | Bearer JWT |
+| GET `/users/me`              | —                             | 200 `{data:user}`               | Bearer JWT |
+| PATCH `/users/me`            | `{name,phone}`                | 200 `{data:user}`               | Bearer JWT |
+
+User: `{id,name,email,phone,role,status}`; id เป็น UUID string, role สมัครใหม่เป็น `customer`, status `active` ไม่ตอบ password/hash/salt และไม่รับ role/status จาก Register/Profile
+
+JWT: HS256, `sub=user.id`, `role`, `jti`, `iat`, `exp` (1 ชั่วโมง), `iss=carshop-identity`, `aud=carshop-web`; validate signature/algorithm/issuer/audience/expiry และสถานะผู้ใช้ ไม่ใช้ claims role แทนการตรวจสิทธิ์ฝั่ง server
+
+Validation: name trim 1–100, email trim/lowercase สูงสุด 254, phone `0[0-9]{8,9}`, password 8–128 รวมอังกฤษ+ตัวเลขตอนสมัคร; unknown fields ไม่ถูกบันทึก Errors envelope `{error:{code,message}}`: 400 VALIDATION_ERROR, 401 INVALID_CREDENTIALS/UNAUTHORIZED/INVALID_TOKEN, 409 EMAIL_EXISTS, 429 TOO_MANY_REQUESTS จำกัด auth รวม 30 ครั้ง/IP/15 นาที ทุก auth response ไม่ cache
+
+Frontend เก็บ JWT ใน memory; refresh ต้อง Login ใหม่ ไม่ fallback เข้า demo เมื่อ API ล้มเหลว GET `/users` และ PATCH `/users/:id` ยังไม่ implement
+
+## Planned: business endpoints อื่น
 
 | งาน                                         | เจ้าของ | คู่เชื่อม                               | ข้อตกลงก่อนพัฒนา                                         |
 | ------------------------------------------- | ------- | --------------------------------------- | -------------------------------------------------------- |
