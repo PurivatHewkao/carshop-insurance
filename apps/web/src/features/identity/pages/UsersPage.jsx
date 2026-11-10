@@ -9,12 +9,15 @@ import {
 } from '../api/auth.js';
 import { Feedback, ModeNotice } from '../components/AuthUI.jsx';
 import { useAuthData } from '../hooks/useAuthData.js';
+import CreateUserForm from '../components/CreateUserForm.jsx';
 
 const roles = {
   customer: 'ลูกค้า',
   seller: 'พนักงานขาย',
   manager: 'ผู้จัดการ',
   admin: 'ผู้ดูแลระบบ',
+  finance: 'การเงิน',
+  stock: 'คลังสินค้า',
 };
 function UserDialog({ user, onClose, onSaved }) {
   const ref = useRef(null);
@@ -91,6 +94,7 @@ function UserDialog({ user, onClose, onSaved }) {
   );
 }
 function UsersTable({ session }) {
+  const [creating, setCreating] = useState(false);
   const { data, loading, error, reload } = useAuthData(listUsers);
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('');
@@ -107,6 +111,23 @@ function UsersTable({ session }) {
   );
   return (
     <>
+      <button
+        className="s-btn pri"
+        onClick={() => setCreating(true)}
+        disabled={creating}
+      >
+        เพิ่มผู้ใช้
+      </button>
+      {creating && (
+        <CreateUserForm
+          onClose={() => setCreating(false)}
+          onSaved={() => {
+            setCreating(false);
+            setMessage('สร้างบัญชีผู้ใช้แล้ว');
+            reload();
+          }}
+        />
+      )}
       <div className="auth-stats">
         {[
           ['ผู้ใช้ทั้งหมด', data?.length ?? '—'],
@@ -282,7 +303,7 @@ export default function UsersPage() {
           <h1>จัดการผู้ใช้</h1>
           <p>ดูแลบัญชี บทบาท และสิทธิ์การใช้งานของทีม</p>
         </div>
-        <Link className="s-btn out" to="/customer/profile">
+        <Link className="s-btn out" to="/account">
           บัญชีของฉัน ↗
         </Link>
       </header>

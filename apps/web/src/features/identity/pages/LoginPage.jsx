@@ -17,7 +17,15 @@ export default function LoginPage() {
         email: values.email.trim().toLowerCase(),
         password: values.password,
       });
-      navigate(user.role === 'admin' ? '/admin/users' : '/customer/profile');
+      const destinations = {
+        admin: '/admin/users',
+        customer: '/customer/profile',
+        seller: '/seller/tasks',
+        manager: '/manager',
+        finance: '/account',
+        stock: '/account',
+      };
+      navigate(destinations[user.role] || '/account');
     } catch (err) {
       setError(authError(err));
     } finally {

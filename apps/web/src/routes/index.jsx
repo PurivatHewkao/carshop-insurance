@@ -1,3 +1,5 @@
+import RequireRole from '../features/identity/components/RequireRole.jsx';
+import ProfilePage from '../features/identity/pages/ProfilePage.jsx';
 import { createBrowserRouter } from 'react-router-dom';
 import AppLayout from '../layouts/AppLayout.jsx';
 import AdminLayout from '../layouts/AdminLayout.jsx';
@@ -41,7 +43,11 @@ import {
 export const router = createBrowserRouter([
   {
     path: 'customer',
-    element: <CustomerLayout />,
+    element: (
+      <RequireRole roles={['customer']}>
+        <CustomerLayout />
+      </RequireRole>
+    ),
     children: [
       {
         index: true,
@@ -56,7 +62,11 @@ export const router = createBrowserRouter([
   },
   {
     path: 'seller',
-    element: <SellerLayout />,
+    element: (
+      <RequireRole roles={['seller']}>
+        <SellerLayout />
+      </RequireRole>
+    ),
     children: [
       { index: true, element: <PreserveLocationRedirect to="/seller/tasks" /> },
       ...sellerSalesRoutes,
@@ -66,7 +76,11 @@ export const router = createBrowserRouter([
   },
   {
     path: 'manager',
-    element: <ManagerLayout />,
+    element: (
+      <RequireRole roles={['manager']}>
+        <ManagerLayout />
+      </RequireRole>
+    ),
     children: [
       { index: true, element: <ManagerPage /> },
       ...managerSalesRoutes,
@@ -77,7 +91,11 @@ export const router = createBrowserRouter([
   },
   {
     path: 'admin',
-    element: <AdminLayout />,
+    element: (
+      <RequireRole roles={['admin']}>
+        <AdminLayout />
+      </RequireRole>
+    ),
     children: [
       { index: true, element: <AdminPage /> },
       ...adminCatalogRoutes,
@@ -93,6 +111,14 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       ...identityRoutes,
+      {
+        path: 'account',
+        element: (
+          <RequireRole>
+            <ProfilePage />
+          </RequireRole>
+        ),
+      },
       ...catalogRoutes,
       ...salesRoutes,
       ...paymentRoutes,

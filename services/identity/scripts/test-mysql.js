@@ -43,8 +43,14 @@ try {
     await connection.query(statement);
   await run(['scripts/migrate.js']);
   await run(['scripts/migrate.js']);
-  await run(['--test', '--test-concurrency=1', 'test/admin.test.js', 'test/auth.test.js']);
+  await run([
+    '--test',
+    '--test-concurrency=1',
+    'test/admin.test.js',
+    'test/auth.test.js',
+  ]);
   await run(['../../apps/web/src/features/identity/check-auth-api.mjs']);
+  await run(['../../apps/web/src/features/identity/check-auth-browser.mjs']);
 } catch (error) {
   console.error(error.code || error.message);
   process.exitCode = 1;

@@ -144,6 +144,11 @@ export async function listUsers(signal) {
     throw new Error('รูปแบบรายการผู้ใช้ไม่ตรงกับ contract');
   return result.map(validateUser);
 }
+export async function createUser(values) {
+  requireAdmin();
+  if (isDemo) throw new Error('การสร้างผู้ใช้ต้องใช้โหมด API');
+  return validateUser(await request('post', 'users', values));
+}
 export async function updateUser(id, values) {
   requireAdmin();
   if (id === session.id)
@@ -168,7 +173,9 @@ function validateUser(user) {
     !['id', 'name', 'email', 'phone'].every(
       (key) => typeof user[key] === 'string',
     ) ||
-    !['customer', 'seller', 'manager', 'admin'].includes(user.role) ||
+    !['customer', 'seller', 'manager', 'admin', 'finance', 'stock'].includes(
+      user.role,
+    ) ||
     !['active', 'inactive'].includes(user.status)
   ) {
     throw new Error('รูปแบบข้อมูลผู้ใช้ไม่ตรงกับ contract');
@@ -179,7 +186,8 @@ export function authError(error) {
   if (error.response?.status === 401)
     return 'เซสชันหมดอายุหรือข้อมูลเข้าสู่ระบบไม่ถูกต้อง กรุณาเข้าสู่ระบบอีกครั้ง';
   if (error.response?.status === 403) return 'บัญชีนี้ไม่มีสิทธิ์ดำเนินการ';
-  if (error.response?.status === 409) return 'อีเมลนี้มีบัญชีอยู่แล้ว';
+  if (error.response?.status === 409)
+    return error.response.data?.error?.message || 'ข้อมูลขัดแย้ง กรุณาโหลดใหม่';
   if ([400, 429].includes(error.response?.status))
     return (
       error.response.data?.error?.message || 'กรุณาตรวจสอบข้อมูลแล้วลองอีกครั้ง'
