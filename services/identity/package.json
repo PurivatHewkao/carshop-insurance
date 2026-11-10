@@ -9,7 +9,9 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "test": "node --test"
+    "test": "node scripts/test-mysql.js",
+    "migrate": "node scripts/migrate.js",
+    "seed:admin": "node scripts/seed-admin.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

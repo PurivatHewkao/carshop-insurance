@@ -2,11 +2,20 @@ import { randomBytes, randomUUID, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import jwt from 'jsonwebtoken';
 import { env } from '../../config/env.js';
-import { findByEmail, findById, insertUser, publicUser } from './repository.js';
+import {
+  findByEmail,
+  findById,
+  insertUser,
+  publicUser,
+  isRevoked,
+  revoke,
+  transaction,
+  lockAdministration,
+  assertAdmin,
+} from './repository.js';
 import { credentials, profile, fail } from './validation.js';
 
 const deriveKey = promisify(scrypt);
-const revoked = new Map();
 const dummySalt = randomBytes(16).toString('hex');
 const dummyHash = Buffer.alloc(64);
 
@@ -31,7 +40,8 @@ export async function register(body) {
   const details = profile(body);
   if (!/[a-zA-Z]/.test(password) || !/\d/.test(password))
     fail(400, 'VALIDATION_ERROR', 'รหัสผ่านต้องมีตัวอักษรอังกฤษและตัวเลข');
-  if (findByEmail(email)) fail(409, 'EMAIL_EXISTS', 'อีเมลนี้มีบัญชีอยู่แล้ว');
+  if (await findByEmail(email))
+    fail(409, 'EMAIL_EXISTS', 'อีเมลนี้มีบัญชีอยู่แล้ว');
   const secret = await hashPassword(password);
   const user = {
     id: randomUUID(),
@@ -41,20 +51,25 @@ export async function register(body) {
     role: 'customer',
     status: 'active',
   };
-  if (!insertUser(user)) fail(409, 'EMAIL_EXISTS', 'อีเมลนี้มีบัญชีอยู่แล้ว');
+  if (!(await insertUser(user)))
+    fail(409, 'EMAIL_EXISTS', 'อีเมลนี้มีบัญชีอยู่แล้ว');
   return session(user);
 }
 export async function login(body) {
   const { email, password } = credentials(body);
-  const user = findByEmail(email);
+  const user = await findByEmail(email);
   const actual = await deriveKey(password, user?.salt || dummySalt, 64);
-  const expected = user ? Buffer.from(user.passwordHash, 'hex') : dummyHash;
+  const expected =
+    user?.encodedPassword?.startsWith('scrypt$') &&
+    /^[a-f0-9]{128}$/.test(user.passwordHash)
+      ? Buffer.from(user.passwordHash, 'hex')
+      : dummyHash;
   const matches = timingSafeEqual(actual, expected);
   if (!user || !matches || user.status !== 'active')
     fail(401, 'INVALID_CREDENTIALS', 'อีเมลหรือรหัสผ่านไม่ถูกต้อง');
   return session(user);
 }
-export function authenticate(req, _res, next) {
+export async function authenticate(req, _res, next) {
   const match = /^Bearer ([^\s]+)$/i.exec(req.get('authorization') || '');
   if (!match) fail(401, 'UNAUTHORIZED', 'กรุณาเข้าสู่ระบบ');
   let claims;
@@ -71,20 +86,71 @@ export function authenticate(req, _res, next) {
       'เซสชันหมดอายุหรือไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่',
     );
   }
-  for (const [id, expiry] of revoked)
-    if (expiry <= Date.now() / 1000) revoked.delete(id);
-  const user = findById(claims.sub);
+  const user = await findById(claims.sub);
   if (
     !user ||
     user.status !== 'active' ||
     !claims.jti ||
     !claims.exp ||
-    revoked.has(claims.jti)
+    (await isRevoked(claims.jti))
   )
     fail(401, 'INVALID_TOKEN', 'เซสชันไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่');
   req.auth = { user, claims };
   next();
 }
-export function logout(claims) {
-  revoked.set(claims.jti, claims.exp);
+export async function logout(claims) {
+  await revoke(claims);
+}
+
+export const roles = [
+  'customer',
+  'seller',
+  'manager',
+  'admin',
+  'finance',
+  'stock',
+];
+export function permissions(body) {
+  if (
+    !roles.includes(body?.role) ||
+    !['active', 'inactive'].includes(body?.status)
+  )
+    fail(400, 'VALIDATION_ERROR', 'บทบาทหรือสถานะไม่ถูกต้อง');
+  return { role: body.role, status: body.status };
+}
+export async function createUser(body, actorId, bootstrap = false) {
+  const { email, password } = credentials(body);
+  const details = profile(body);
+  const access = permissions(body);
+  if (!/[a-zA-Z]/.test(password) || !/\d/.test(password))
+    fail(400, 'VALIDATION_ERROR', 'รหัสผ่านต้องมีตัวอักษรอังกฤษและตัวเลข');
+  const secret = await hashPassword(password);
+  return transaction(async (db) => {
+    await lockAdministration(db);
+    if (bootstrap) {
+      const existing = await findByEmail(email, db);
+      if (existing) {
+        if (existing.role !== 'admin' || existing.status !== 'active')
+          fail(409, 'SEED_CONFLICT', 'บัญชีเดิมไม่ใช่ Admin ที่ใช้งานได้');
+        return publicUser(existing);
+      }
+      const [[{ count }]] = await db.query(
+        "SELECT COUNT(*) AS count FROM users WHERE role='ADMIN' AND status='ACTIVE'",
+      );
+      if (count)
+        fail(
+          409,
+          'ADMIN_EXISTS',
+          'มี Admin แล้ว ให้สร้างบัญชีผ่านหน้าจัดการผู้ใช้',
+        );
+    } else await assertAdmin(actorId, db);
+    const user = { id: randomUUID(), email, ...details, ...secret, ...access };
+    if (!(await insertUser(user, db)))
+      fail(409, 'EMAIL_EXISTS', 'อีเมลนี้มีบัญชีอยู่แล้ว');
+    return publicUser(user);
+  });
+}
+export async function requireAdmin(req, _res, next) {
+  await assertAdmin(req.auth.user.id);
+  next();
 }

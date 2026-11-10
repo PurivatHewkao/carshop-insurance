@@ -2,6 +2,11 @@ import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { createServer } from '../../../node_modules/vite/dist/node/index.js';
 import app from '../../../../../services/identity/src/app.js';
+import { closeMysqlPool } from '../../../../../services/identity/src/config/mysql.js';
+if (
+  !/^carshop_identity_[a-f0-9]{12}_test$/.test(process.env.MYSQL_DATABASE || '')
+)
+  throw new Error('Run npm --prefix services/identity test');
 
 const listener = app.listen(0, '127.0.0.1');
 await new Promise((resolve) => listener.once('listening', resolve));
@@ -52,6 +57,7 @@ try {
 } finally {
   await vite?.close();
   await new Promise((resolve) => listener.close(resolve));
+  await closeMysqlPool();
   for (const [key, value] of [
     ['VITE_IDENTITY_MODE', saved.mode],
     ['VITE_IDENTITY_API_URL', saved.url],

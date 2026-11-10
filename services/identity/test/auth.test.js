@@ -3,6 +3,12 @@ import { after, before, test } from 'node:test';
 import jwt from 'jsonwebtoken';
 import app from '../src/app.js';
 import { env } from '../src/config/env.js';
+import { closeMysqlPool } from '../src/config/mysql.js';
+
+if (
+  !/^carshop_identity_[a-f0-9]{12}_test$/.test(process.env.MYSQL_DATABASE || '')
+)
+  throw new Error('Use npm test to create an isolated database');
 
 let server;
 let base;
@@ -11,7 +17,10 @@ before(async () => {
   await new Promise((resolve) => server.once('listening', resolve));
   base = `http://127.0.0.1:${server.address().port}/api/v1`;
 });
-after(() => new Promise((resolve) => server.close(resolve)));
+after(async () => {
+  await new Promise((resolve) => server.close(resolve));
+  await closeMysqlPool();
+});
 async function request(path, { token, body, method = 'GET' } = {}) {
   const response = await fetch(base + path, {
     method,
