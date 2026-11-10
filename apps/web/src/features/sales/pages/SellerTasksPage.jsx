@@ -1,23 +1,30 @@
 // apps/web/src/features/sales/pages/SellerTasksPage.jsx
 import React, { useState } from 'react';
-import { salesStore } from '../api/mockSalesData';
+import { fetchAppointments, fetchSellers, setAppointmentStatus } from '../api/salesApi.js';
+import { useAction, useActorChoice, useSalesData } from '../hooks/useSalesData.js';
+import { ActionError, ActorSwitcher, LoadStatus } from '../components/SalesState.jsx';
 import '../sales.css';
 
 export default function SellerTasksPage() {
-  const [tasks, setTasks] = useState(() => salesStore.getTasks());
+  const actor = useActorChoice('SELLER', fetchSellers, (a) => a.employeeId);
+  const list = useSalesData(
+    (signal) =>
+      actor.actorId
+        ? fetchAppointments({ sellerId: actor.actorId }, signal)
+        : Promise.resolve([]),
+    [actor.actorId],
+  );
+  const action = useAction();
   const [filter, setFilter] = useState('ALL');
+  // A task is an appointment assigned to this seller; taskStatus is derived by the API.
+  const tasks = (list.data ?? [])
+    .filter((a) => a.taskStatus !== 'CANCELLED')
+    .map((a) => ({ ...a, status: a.taskStatus, taskTitle: `${a.type} - ${a.carModel}` }));
 
-  const handleStatusChange = (taskId, nextStatus) => {
-    const updated = tasks.map((t) =>
-      t.id === taskId ? { ...t, status: nextStatus } : t
-    );
-    setTasks(updated);
-    salesStore.saveTasks(updated);
-  };
-
-  const handleResetData = () => {
-    localStorage.removeItem('carshop_sales_tasks_v1');
-    setTasks(salesStore.getTasks());
+  const handleStatusChange = async (taskId, nextStatus) => {
+    const dbStatus = nextStatus === 'IN_PROGRESS' ? 'CONFIRMED' : 'COMPLETED';
+    const result = await action.run(() => setAppointmentStatus(taskId, dbStatus));
+    if (result.ok) list.reload();
   };
 
   const visibleTasks = tasks.filter((t) =>
@@ -39,26 +46,29 @@ export default function SellerTasksPage() {
           <p>จัดการเคสลูกค้าที่ได้รับมอบหมาย ติดตามผล และอัปเดตสถานะงานขาย</p>
         </div>
         <button
-          onClick={handleResetData}
-          style={{
-            background: '#f1f5f9',
-            border: '1px solid #cbd5e1',
-            color: '#334155',
-            padding: '8px 14px',
-            borderRadius: '8px',
-            fontSize: '0.825rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            transition: 'all 0.15s'
-          }}
-          title="รีเซ็ตสถานะงานทั้งหมดกลับค่าเริ่มต้น"
+          onClick={list.reload}
+          disabled={list.loading}
+          className="sales-btn sales-btn-outline sales-btn-sm"
+          title="โหลดข้อมูลล่าสุดจากระบบ"
         >
-          🔄 รีเซ็ตข้อมูลจำลอง
+          🔄 รีเฟรช
         </button>
       </div>
+
+      <ActionError message={action.error} onClose={action.clearError} />
+      <LoadStatus
+        loading={list.loading || actor.loading}
+        error={list.error || actor.error}
+        hasData={list.data !== null}
+        onRetry={() => { list.reload(); actor.reload(); }}
+      />
+      <ActorSwitcher
+        label="Seller"
+        options={actor.options}
+        value={actor.actorId}
+        onChange={actor.pick}
+        isStandIn={actor.isStandIn}
+      />
 
       <div className="sales-stats-grid">
         <div className="sales-stat-card">
@@ -152,7 +162,7 @@ export default function SellerTasksPage() {
               ) : (
                 visibleTasks.map((task) => (
                   <tr key={task.id}>
-                    <td><strong style={{ color: '#0f172a' }}>{task.id}</strong></td>
+                    <td><strong style={{ color: '#0f172a' }}>{task.code}</strong></td>
                     <td>
                       <div style={{ fontWeight: 600 }}>{task.customerName}</div>
                       <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{task.phone}</div>
@@ -180,6 +190,7 @@ export default function SellerTasksPage() {
                       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}>
                         {task.status === 'PENDING' && (
                           <button
+                            disabled={action.busy}
                             onClick={() => handleStatusChange(task.id, 'IN_PROGRESS')}
                             style={{
                               background: '#2563eb',
@@ -199,6 +210,7 @@ export default function SellerTasksPage() {
                         )}
                         {task.status === 'IN_PROGRESS' && (
                           <button
+                            disabled={action.busy}
                             onClick={() => handleStatusChange(task.id, 'COMPLETED')}
                             style={{
                               background: '#16a34a',

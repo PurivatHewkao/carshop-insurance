@@ -1,46 +1,19 @@
 // apps/web/src/features/sales/pages/SellerOrdersPage.jsx
-import React, { useState } from 'react';
-import { salesStore, CAR_MODELS, INSURANCE_PLANS, SELLERS_LIST } from '../api/mockSalesData';
+import React from 'react';
+import { fetchOrders } from '../api/salesApi.js';
+import { useOrderForm } from '../hooks/useOrderForm.js';
+import { useSalesData } from '../hooks/useSalesData.js';
+import { ActionError, LoadStatus } from '../components/SalesState.jsx';
 import '../sales.css';
 
 export default function SellerOrdersPage() {
-  const [orders, setOrders] = useState(() => salesStore.getOrders());
-  const [form, setForm] = useState({
-    customerName: '',
-    carModel: CAR_MODELS[0],
-    insurancePlan: INSURANCE_PLANS[0],
-    carPrice: 1199000,
-    insurancePrice: 24000,
-    discount: 15000,
-    sellerName: SELLERS_LIST[0].name,
-  });
-
-  const netTotal =
-    Number(form.carPrice || 0) +
-    Number(form.insurancePrice || 0) -
-    Number(form.discount || 0);
-
-  const handleCreateOrder = (e) => {
-    e.preventDefault();
-    if (!form.customerName) return;
-
-    const newOrder = {
-      id: `ORD-2026-${Math.floor(883 + orders.length)}`,
-      ...form,
-      carPrice: Number(form.carPrice),
-      insurancePrice: Number(form.insurancePrice),
-      discount: Number(form.discount),
-      totalAmount: netTotal,
-      createdAt: '2026-10-16',
-      status: 'PENDING_APPROVAL',
-      managerComment: 'รอผู้จัดการตรวจสอบส่วนลดและของแถม',
-    };
-
-    const updated = [newOrder, ...orders];
-    setOrders(updated);
-    salesStore.saveOrders(updated);
-    setForm({ ...form, customerName: '' });
-  };
+  const orderList = useSalesData((signal) => fetchOrders({}, signal), []);
+  const order = useOrderForm({ onCreated: () => orderList.reload() });
+  const orders = orderList.data ?? [];
+  const {
+    form, setForm, customers, cars, insurances, sellers,
+    customerId, carId, sellerId, carPrice, insurancePrice, netTotal,
+  } = order;
 
   return (
     <div className="sales-container">
@@ -51,32 +24,57 @@ export default function SellerOrdersPage() {
         </div>
       </div>
 
+      <ActionError message={order.action.error} onClose={order.action.clearError} />
+      <LoadStatus
+        loading={orderList.loading || order.lookups.loading}
+        error={orderList.error || order.lookups.error}
+        hasData={orderList.data !== null}
+        onRetry={() => { orderList.reload(); order.lookups.reload(); }}
+      />
+
       <div className="sales-grid-layout">
         {/* ฟอร์มสร้างใบจอง */}
         <div className="sales-card">
           <h2 className="sales-card-title">ออกใบสั่งซื้อ / ใบจองใหม่</h2>
-          <form onSubmit={handleCreateOrder}>
+          <form onSubmit={order.submit}>
             <div className="sales-form-group">
-              <label>ชื่อลูกค้าผู้จอง *</label>
-              <input
-                type="text"
-                className="sales-input"
-                placeholder="ชื่อ-นามสกุลลูกค้า"
-                value={form.customerName}
-                onChange={(e) => setForm({ ...form, customerName: e.target.value })}
+              <label>ลูกค้าผู้จอง *</label>
+              <select
+                className="sales-select"
+                value={customerId}
+                onChange={(e) => setForm({ ...form, customerId: e.target.value })}
                 required
-              />
+              >
+                {customers.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
             </div>
 
             <div className="sales-form-group">
-              <label>รุ่นรถยนต์</label>
+              <label>พนักงานขายผู้รับผิดชอบ</label>
               <select
                 className="sales-select"
-                value={form.carModel}
-                onChange={(e) => setForm({ ...form, carModel: e.target.value })}
+                value={sellerId}
+                onChange={(e) => setForm({ ...form, sellerId: e.target.value })}
+                required
               >
-                {CAR_MODELS.map((m) => (
-                  <option key={m} value={m}>{m}</option>
+                {sellers.map((x) => (
+                  <option key={x.id} value={x.id}>{x.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="sales-form-group">
+              <label>รถยนต์ที่จอง (เฉพาะคันที่ยังว่าง)</label>
+              <select
+                className="sales-select"
+                value={carId}
+                onChange={(e) => setForm({ ...form, carId: e.target.value })}
+                required
+              >
+                {cars.map((c) => (
+                  <option key={c.id} value={c.id}>{c.label}</option>
                 ))}
               </select>
             </div>
@@ -85,32 +83,33 @@ export default function SellerOrdersPage() {
               <label>แพ็กเกจประกันภัยรถยนต์</label>
               <select
                 className="sales-select"
-                value={form.insurancePlan}
-                onChange={(e) => setForm({ ...form, insurancePlan: e.target.value })}
+                value={form.insuranceId}
+                onChange={(e) => setForm({ ...form, insuranceId: e.target.value })}
               >
-                {INSURANCE_PLANS.map((p) => (
-                  <option key={p} value={p}>{p}</option>
+                <option value="">ไม่รับประกันภัยเพิ่มเติม</option>
+                {insurances.map((p) => (
+                  <option key={p.id} value={p.id}>{p.label}</option>
                 ))}
               </select>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div className="sales-form-group">
-                <label>ราคารถยนต์ (บาท)</label>
+                <label>ราคารถยนต์ (บาท) — จากระบบ</label>
                 <input
                   type="number"
                   className="sales-input"
-                  value={form.carPrice}
-                  onChange={(e) => setForm({ ...form, carPrice: e.target.value })}
+                  value={carPrice}
+                  readOnly
                 />
               </div>
               <div className="sales-form-group">
-                <label>เบี้ยประกันภัย (บาท)</label>
+                <label>เบี้ยประกันภัย (บาท) — จากระบบ</label>
                 <input
                   type="number"
                   className="sales-input"
-                  value={form.insurancePrice}
-                  onChange={(e) => setForm({ ...form, insurancePrice: e.target.value })}
+                  value={insurancePrice}
+                  readOnly
                 />
               </div>
             </div>
@@ -120,6 +119,7 @@ export default function SellerOrdersPage() {
               <input
                 type="number"
                 className="sales-input"
+                min="0"
                 value={form.discount}
                 onChange={(e) => setForm({ ...form, discount: e.target.value })}
               />
@@ -138,7 +138,7 @@ export default function SellerOrdersPage() {
               </div>
             </div>
 
-            <button type="submit" className="sales-btn sales-btn-primary" style={{ width: '100%' }}>
+            <button type="submit" disabled={order.action.busy || !order.canSubmit} className="sales-btn sales-btn-primary" style={{ width: '100%' }}>
               สร้าง Order และส่งขออนุมัติ
             </button>
           </form>
@@ -162,7 +162,7 @@ export default function SellerOrdersPage() {
               <tbody>
                 {orders.map((ord) => (
                   <tr key={ord.id}>
-                    <td><strong>{ord.id}</strong></td>
+                    <td><strong>{ord.code}</strong></td>
                     <td>
                       <div style={{ fontWeight: 600 }}>{ord.customerName}</div>
                       <div style={{ fontSize: '0.8rem', color: '#475569' }}>{ord.carModel}</div>
