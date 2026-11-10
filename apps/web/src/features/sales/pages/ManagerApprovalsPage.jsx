@@ -1,26 +1,24 @@
 // apps/web/src/features/sales/pages/ManagerApprovalsPage.jsx
 import React, { useState } from 'react';
-import { salesStore } from '../api/mockSalesData';
+import { decideOrder, fetchOrders } from '../api/salesApi.js';
+import { useAction, useSalesData } from '../hooks/useSalesData.js';
+import { ActionError, LoadStatus } from '../components/SalesState.jsx';
 import '../sales.css';
 
 export default function ManagerApprovalsPage() {
-  const [orders, setOrders] = useState(() => salesStore.getOrders());
+  const list = useSalesData((signal) => fetchOrders({}, signal), []);
+  const action = useAction();
+  const orders = list.data ?? [];
   const [comments, setComments] = useState({});
 
-  const handleDecision = (orderId, decision) => {
+  const handleDecision = async (orderId, decision) => {
     const commentText =
       comments[orderId] ||
       (decision === 'APPROVED'
         ? 'อนุมัติรายการขายและส่วนลดตามเสนอ'
         : 'ไม่อนุมัติ เนื่องจากส่วนลดเกินเพดานแคมเปญ');
-
-    const updated = orders.map((ord) =>
-      ord.id === orderId
-        ? { ...ord, status: decision, managerComment: commentText }
-        : ord
-    );
-    setOrders(updated);
-    salesStore.saveOrders(updated);
+    const result = await action.run(() => decideOrder(orderId, decision, commentText));
+    if (result.ok) list.reload();
   };
 
   return (
@@ -31,6 +29,14 @@ export default function ManagerApprovalsPage() {
           <p>ตรวจสอบใบจองรถยนต์ แคมเปญประกันภัย และอนุมัติวงเงินส่วนลดของทีม Seller</p>
         </div>
       </div>
+
+      <ActionError message={action.error} onClose={action.clearError} />
+      <LoadStatus
+        loading={list.loading}
+        error={list.error}
+        hasData={list.data !== null}
+        onRetry={list.reload}
+      />
 
       <div className="sales-stats-grid">
         <div className="sales-stat-card">
@@ -71,7 +77,7 @@ export default function ManagerApprovalsPage() {
             <tbody>
               {orders.map((ord) => (
                 <tr key={ord.id}>
-                  <td><strong>{ord.id}</strong></td>
+                  <td><strong>{ord.code}</strong></td>
                   <td>
                     <div style={{ fontWeight: 600 }}>{ord.customerName}</div>
                     <div style={{ fontSize: '0.8rem', color: '#64748b' }}>ผู้ขาย: {ord.sellerName}</div>
@@ -109,12 +115,14 @@ export default function ManagerApprovalsPage() {
                     <div className="sales-actions">
                       <button
                         onClick={() => handleDecision(ord.id, 'APPROVED')}
+                        disabled={action.busy || ord.status !== 'PENDING_APPROVAL'}
                         className="sales-btn sales-btn-success sales-btn-sm"
                       >
                         อนุมัติ
                       </button>
                       <button
                         onClick={() => handleDecision(ord.id, 'REJECTED')}
+                        disabled={action.busy || ord.status !== 'PENDING_APPROVAL'}
                         className="sales-btn sales-btn-danger sales-btn-sm"
                       >
                         ไม่อนุมัติ

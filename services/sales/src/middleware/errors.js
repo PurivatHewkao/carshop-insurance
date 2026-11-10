@@ -8,11 +8,21 @@ export function errorHandler(error, _req, res, _next) {
     Number.isInteger(error.status) && error.status >= 400 && error.status < 600
       ? error.status
       : 500;
-  const payload = {
+  // Only errors created with httpError() (apiSafe: true) show their own message.
+  const exposed = error.apiSafe === true && status < 500;
+  if (status === 500) console.error(error);
+  res.status(status).json({
     error: {
-      code: status === 500 ? 'INTERNAL_ERROR' : 'BAD_REQUEST',
-      message: status === 500 ? 'Internal server error' : 'Invalid request',
+      code: exposed
+        ? error.code
+        : status === 500
+          ? 'INTERNAL_ERROR'
+          : 'BAD_REQUEST',
+      message: exposed
+        ? error.message
+        : status === 500
+          ? 'Internal server error'
+          : 'Invalid request',
     },
-  };
-  res.status(status).json(payload);
+  });
 }

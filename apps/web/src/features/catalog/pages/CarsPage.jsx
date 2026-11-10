@@ -5,19 +5,19 @@ import CarPhoto from '../components/CarPhoto.jsx';
 import {
   CATEGORY_LABELS,
   formatBaht,
-  getCars,
-  getPromotions,
   stockStatus,
 } from '../data/catalogData.js';
+import { useCars, usePromotions } from '../api/catalogApi.js';
 import './catalog.css';
 
 export default function CarsPage() {
-  const [cars] = useState(() => getCars());
+  const { cars, loading, error: loadError } = useCars();
   const [category, setCategory] = useState('');
   const [search, setSearch] = useState('');
   const [budget, setBudget] = useState('');
   const [sort, setSort] = useState('recommended');
-  const promotions = useMemo(() => getPromotions().filter((item) => item.active).slice(0, 3), []);
+  const { promotions: allPromotions } = usePromotions();
+  const promotions = useMemo(() => allPromotions.filter((item) => item.active).slice(0, 3), [allPromotions]);
   const categories = [...new Set(cars.map((car) => car.type))];
   const heroCar = cars.find((car) => car.id === 'lamborghini-huracan') || cars.find((car) => car.type === 'supercar') || cars[0];
 
@@ -120,7 +120,11 @@ export default function CarsPage() {
           </label>
         </div>
 
-        {filteredCars.length ? (
+        {loading ? (
+          <div className="catalog-empty-state"><h3>กำลังโหลดรายการรถ...</h3></div>
+        ) : loadError ? (
+          <div className="catalog-empty-state" role="alert"><h3>โหลดรายการรถไม่สำเร็จ</h3><p>{loadError}</p></div>
+        ) : filteredCars.length ? (
           <div className="catalog-car-grid">
             {filteredCars.map((car) => {
               const status = stockStatus(car.stock);
@@ -148,7 +152,7 @@ export default function CarsPage() {
           <div className="catalog-empty-state"><span>⌕</span><h3>ไม่พบรถที่ตรงกับการค้นหา</h3><p>ลองเปลี่ยนคำค้นหา ประเภทรถ หรือช่วงราคา</p><button type="button" onClick={() => { setCategory(''); setSearch(''); setBudget(''); }}>ล้างตัวกรอง</button></div>
         )}
       </section>
-      <p className="catalog-demo-note">หมายเหตุ: ราคา สเปก สต็อก และโปรโมชันเป็นข้อมูลสาธิตสำหรับ Frontend Prototype โปรดตรวจสอบข้อมูลจริงกับผู้จำหน่ายก่อนตัดสินใจ</p>
+      <p className="catalog-demo-note">หมายเหตุ: ราคา สเปก สต็อก และโปรโมชันเป็นข้อมูลสาธิต อ่านจากฐานข้อมูลผ่าน catalog API</p>
     </div>
   );
 }

@@ -1,13 +1,12 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import './HomePage.css';
 import { Link } from 'react-router-dom';
 import design from '../design/toyoty.json';
 import { Action, Pill, Specs } from '../components/common/Showroom.jsx';
+import { useCars, usePromotions } from '../features/catalog/api/catalogApi.js';
 import CarPhoto from '../features/catalog/components/CarPhoto.jsx';
 import {
   formatBaht,
-  getCars,
-  getPromotions,
 } from '../features/catalog/data/catalogData.js';
 
 const blocks = design.roles[0].pages[0].blocks;
@@ -63,9 +62,10 @@ function HomePromotionCard({ promotion, index }) {
 }
 
 export default function HomePage() {
-  const [hero, specs, carsBlock, _promoBlock, features, cta] = blocks;
-  const [catalogCars] = useState(() => getCars());
-  const [activePromotions] = useState(() => getPromotions().filter((promotion) => promotion.active));
+  const [hero, specs, carsBlock, , features, cta] = blocks;
+  const { cars: catalogCars, loading: carsLoading } = useCars();
+  const { promotions: allPromotions, loading: promotionsLoading, error: promotionsError } = usePromotions();
+  const activePromotions = useMemo(() => allPromotions.filter((promotion) => promotion.active), [allPromotions]);
   const heroCar = catalogCars.find((car) => car.id === 'ferrari-296-gtb')
     || catalogCars.find((car) => car.type === 'supercar')
     || catalogCars[0];
@@ -75,8 +75,8 @@ export default function HomePage() {
       <section className="s-hero home-photo-hero">
         <div className="s-hero-bg" />
         <div className="home-hero-copy">
-          <p className="s-eyebrow on-dark">{heroCar ? 'ซูเปอร์คาร์ · รุ่นเด่น' : hero.eyebrow}</p>
-          <h1>{heroCar ? `${heroCar.brand} ${heroCar.name}` : hero.title}</h1>
+          <p className="s-eyebrow on-dark">{heroCar ? 'ซูเปอร์คาร์ · รุ่นเด่น' : carsLoading ? '\u00A0' : hero.eyebrow}</p>
+          <h1>{heroCar ? `${heroCar.brand} ${heroCar.name}` : carsLoading ? '\u00A0' : hero.title}</h1>
           <p className="s-hero-sub">{heroCar ? 'สัมผัสสมรรถนะระดับซูเปอร์คาร์ พร้อมประกันภัยชั้น 1 และทีมงานดูแลตลอดการเป็นเจ้าของ' : hero.sub}</p>
           <p className="s-hero-price">เริ่มต้น {heroCar ? formatBaht(heroCar.price) : hero.price}</p>
           <div className="s-actions">
@@ -104,6 +104,10 @@ export default function HomePage() {
                 return <HomePromotionCard key={promotion.id} promotion={promotion} index={index} />;
               })}
             </div>
+          ) : promotionsLoading ? (
+            <div className="home-no-promotions"><strong>กำลังโหลดโปรโมชัน...</strong></div>
+          ) : promotionsError ? (
+            <div className="home-no-promotions"><strong>โหลดโปรโมชันไม่สำเร็จ</strong><p>{promotionsError}</p></div>
           ) : (
             <div className="home-no-promotions"><strong>ขณะนี้ยังไม่มีโปรโมชันที่เปิดแสดง</strong><p>สามารถกลับมาดูข้อเสนอใหม่ได้ภายหลัง</p><Link to="/promotions">ดูหน้าโปรโมชัน →</Link></div>
           )}
