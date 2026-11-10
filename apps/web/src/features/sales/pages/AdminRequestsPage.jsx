@@ -1,31 +1,32 @@
 // apps/web/src/features/sales/pages/AdminRequestsPage.jsx
 import React, { useState } from 'react';
-import { salesStore } from '../api/mockSalesData';
+import { deleteAppointment, fetchAppointments, setAppointmentStatus } from '../api/salesApi.js';
+import { useAction, useSalesData } from '../hooks/useSalesData.js';
+import { ActionError, LoadStatus } from '../components/SalesState.jsx';
 import '../sales.css';
 
 export default function AdminRequestsPage() {
-  const [requests, setRequests] = useState(() => salesStore.getRequests());
+  const list = useSalesData((signal) => fetchAppointments({}, signal), []);
+  const action = useAction();
+  const requests = list.data ?? [];
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
-  const updateStatus = (id, newStatus) => {
-    const updated = requests.map((item) =>
-      item.id === id ? { ...item, status: newStatus } : item
-    );
-    setRequests(updated);
-    salesStore.saveRequests(updated);
+  const updateStatus = async (id, newStatus) => {
+    const result = await action.run(() => setAppointmentStatus(id, newStatus));
+    if (result.ok) list.reload();
   };
 
-  const deleteRequest = (id) => {
-    const updated = requests.filter((item) => item.id !== id);
-    setRequests(updated);
-    salesStore.saveRequests(updated);
+  const deleteRequest = async (id) => {
+    if (!window.confirm('ลบคำขอนี้ถาวรหรือไม่?')) return;
+    const result = await action.run(() => deleteAppointment(id));
+    if (result.ok) list.reload();
   };
 
   const filtered = requests.filter((r) => {
     const matchText =
       r.customerName.toLowerCase().includes(search.toLowerCase()) ||
-      r.id.toLowerCase().includes(search.toLowerCase()) ||
+      r.code.toLowerCase().includes(search.toLowerCase()) ||
       r.carModel.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'ALL' || r.status === statusFilter;
     return matchText && matchStatus;
@@ -39,6 +40,14 @@ export default function AdminRequestsPage() {
           <p>ตรวจสอบ คัดกรอง และอัปเดตสถานะคำขอนัดหมายจากลูกค้าทุกช่องทาง</p>
         </div>
       </div>
+
+      <ActionError message={action.error} onClose={action.clearError} />
+      <LoadStatus
+        loading={list.loading}
+        error={list.error}
+        hasData={list.data !== null}
+        onRetry={list.reload}
+      />
 
       <div className="sales-stats-grid">
         <div className="sales-stat-card">
@@ -110,7 +119,7 @@ export default function AdminRequestsPage() {
               ) : (
                 filtered.map((req) => (
                   <tr key={req.id}>
-                    <td><strong>{req.id}</strong></td>
+                    <td><strong>{req.code}</strong></td>
                     <td>
                       <div style={{ fontWeight: 600 }}>{req.customerName}</div>
                       <div style={{ fontSize: '0.8rem', color: '#64748b' }}>โทร: {req.phone}</div>
@@ -133,14 +142,27 @@ export default function AdminRequestsPage() {
                     </td>
                     <td>
                       <div className="sales-actions">
-                        <button
-                          onClick={() => updateStatus(req.id, 'COMPLETED')}
-                          className="sales-btn sales-btn-success sales-btn-sm"
-                        >
-                          ปิดงาน
-                        </button>
+                        {req.dbStatus === 'CONFIRMED' && (
+                          <button
+                            onClick={() => updateStatus(req.id, 'COMPLETED')}
+                            disabled={action.busy}
+                            className="sales-btn sales-btn-success sales-btn-sm"
+                          >
+                            ปิดงาน
+                          </button>
+                        )}
+                        {['PENDING', 'CONFIRMED'].includes(req.dbStatus) && (
+                          <button
+                            onClick={() => updateStatus(req.id, 'CANCELLED')}
+                            disabled={action.busy}
+                            className="sales-btn sales-btn-outline sales-btn-sm"
+                          >
+                            ยกเลิก
+                          </button>
+                        )}
                         <button
                           onClick={() => deleteRequest(req.id)}
+                          disabled={action.busy}
                           className="sales-btn sales-btn-outline sales-btn-sm"
                         >
                           ลบ

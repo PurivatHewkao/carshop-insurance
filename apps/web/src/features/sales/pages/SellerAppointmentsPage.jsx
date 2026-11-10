@@ -1,13 +1,23 @@
 // apps/web/src/features/sales/pages/SellerAppointmentsPage.jsx
-import React, { useState } from 'react';
-import { salesStore } from '../api/mockSalesData';
+import React from 'react';
+import { fetchAppointments, fetchSellers } from '../api/salesApi.js';
+import { useActorChoice, useSalesData } from '../hooks/useSalesData.js';
+import { ActorSwitcher, LoadStatus } from '../components/SalesState.jsx';
 import '../sales.css';
 
-export default function SellerAppointmentsPage() {
-  const [requests, setRequests] = useState(() => salesStore.getRequests());
+const today = () =>
+  new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' });
 
-  // กรองเฉพาะนัดหมายที่มีการนัดวันเวลา
-  const appointments = requests.filter(r => r.preferredDate);
+export default function SellerAppointmentsPage() {
+  const actor = useActorChoice('SELLER', fetchSellers, (a) => a.employeeId);
+  const list = useSalesData(
+    (signal) =>
+      actor.actorId
+        ? fetchAppointments({ sellerId: actor.actorId }, signal)
+        : Promise.resolve([]),
+    [actor.actorId],
+  );
+  const appointments = list.data ?? [];
 
   return (
     <div className="sales-container">
@@ -18,6 +28,20 @@ export default function SellerAppointmentsPage() {
         </div>
       </div>
 
+      <LoadStatus
+        loading={list.loading || actor.loading}
+        error={list.error || actor.error}
+        hasData={list.data !== null}
+        onRetry={() => { list.reload(); actor.reload(); }}
+      />
+      <ActorSwitcher
+        label="Seller"
+        options={actor.options}
+        value={actor.actorId}
+        onChange={actor.pick}
+        isStandIn={actor.isStandIn}
+      />
+
       <div className="sales-stats-grid">
         <div className="sales-stat-card">
           <div className="sales-stat-label">นัดหมายทั้งหมด</div>
@@ -26,13 +50,13 @@ export default function SellerAppointmentsPage() {
         <div className="sales-stat-card">
           <div className="sales-stat-label">วันนี้</div>
           <div className="sales-stat-value" style={{ color: '#2563eb' }}>
-            {appointments.filter(a => a.preferredDate === '2026-10-20').length} คิว
+            {appointments.filter((a) => a.preferredDate === today() && a.status !== 'CANCELLED').length} คิว
           </div>
         </div>
         <div className="sales-stat-card">
           <div className="sales-stat-label">รอยืนยัน / มอบหมาย</div>
           <div className="sales-stat-value" style={{ color: '#d97706' }}>
-            {appointments.filter(a => a.status === 'PENDING').length}
+            {appointments.filter((a) => a.taskStatus === 'PENDING').length}
           </div>
         </div>
       </div>
@@ -59,7 +83,7 @@ export default function SellerAppointmentsPage() {
               ) : (
                 appointments.map((item) => (
                   <tr key={item.id}>
-                    <td><strong style={{ color: '#2563eb' }}>{item.id}</strong></td>
+                    <td><strong style={{ color: '#2563eb' }}>{item.code}</strong></td>
                     <td>
                       <div style={{ fontWeight: 600 }}>{item.customerName}</div>
                       <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{item.phone}</div>
@@ -75,7 +99,8 @@ export default function SellerAppointmentsPage() {
                     <td style={{ textAlign: 'center' }}>
                       <span className={`sales-badge ${
                         item.status === 'PENDING' ? 'badge-pending' :
-                        item.status === 'ASSIGNED' ? 'badge-assigned' : 'badge-completed'
+                        item.status === 'ASSIGNED' ? 'badge-assigned' :
+                        item.status === 'CANCELLED' ? 'badge-cancelled' : 'badge-completed'
                       }`}>
                         {item.status}
                       </span>

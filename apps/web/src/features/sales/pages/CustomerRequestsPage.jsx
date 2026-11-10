@@ -1,49 +1,63 @@
 // apps/web/src/features/sales/pages/CustomerRequestsPage.jsx
 import React, { useState } from 'react';
-import { salesStore, CAR_MODELS } from '../api/mockSalesData';
+import {
+  createAppointment,
+  fetchAppointments,
+  fetchCars,
+  fetchCustomers,
+  setAppointmentStatus,
+} from '../api/salesApi.js';
+import { useAction, useActorChoice, useSalesData } from '../hooks/useSalesData.js';
+import { ActionError, ActorSwitcher, LoadStatus } from '../components/SalesState.jsx';
 import '../sales.css';
 
+const today = () =>
+  new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' });
+
 export default function CustomerRequestsPage() {
-  const [requests, setRequests] = useState(() => salesStore.getRequests());
+  const actor = useActorChoice('CUSTOMER', fetchCustomers, (a) => a.customerId);
+  const cars = useSalesData((signal) => fetchCars(signal), []);
+  const list = useSalesData(
+    (signal) =>
+      actor.actorId
+        ? fetchAppointments({ customerId: actor.actorId }, signal)
+        : Promise.resolve([]),
+    [actor.actorId],
+  );
+  const action = useAction();
+  const requests = list.data ?? [];
+  const carOptions = cars.data ?? [];
   const [form, setForm] = useState({
-    customerName: '',
-    phone: '',
-    type: 'ทดลองขับ (Test Drive)',
-    carModel: CAR_MODELS[0],
-    preferredDate: '2026-10-25',
-    preferredTime: '10:00',
+    carId: '',
+    appointmentType: 'TEST_DRIVE',
+    appointmentDate: today(),
+    appointmentTime: '10:00',
     note: '',
   });
+  const selectedCarId = form.carId || carOptions[0]?.id || '';
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.customerName || !form.phone) return;
-
-    const newReq = {
-      id: `REQ-2026-00${requests.length + 1}`,
-      ...form,
-      status: 'PENDING',
-      assignedSeller: null,
-    };
-
-    const updated = [newReq, ...requests];
-    setRequests(updated);
-    salesStore.saveRequests(updated);
-
-    setForm({
-      ...form,
-      customerName: '',
-      phone: '',
-      note: '',
-    });
+    if (!actor.actorId || !selectedCarId) return;
+    const result = await action.run(() =>
+      createAppointment({
+        customerId: actor.actorId,
+        carId: selectedCarId,
+        appointmentType: form.appointmentType,
+        appointmentDate: form.appointmentDate,
+        appointmentTime: form.appointmentTime,
+        note: form.note,
+      }),
+    );
+    if (result.ok) {
+      setForm({ ...form, note: '' });
+      list.reload();
+    }
   };
 
-  const handleCancel = (id) => {
-    const updated = requests.map((r) =>
-      r.id === id ? { ...r, status: 'CANCELLED' } : r
-    );
-    setRequests(updated);
-    salesStore.saveRequests(updated);
+  const handleCancel = async (id) => {
+    const result = await action.run(() => setAppointmentStatus(id, 'CANCELLED'));
+    if (result.ok) list.reload();
   };
 
   return (
@@ -55,6 +69,21 @@ export default function CustomerRequestsPage() {
         </div>
       </div>
 
+      <ActionError message={action.error} onClose={action.clearError} />
+      <LoadStatus
+        loading={list.loading || actor.loading || cars.loading}
+        error={list.error || actor.error || cars.error}
+        hasData={list.data !== null}
+        onRetry={() => { list.reload(); actor.reload(); cars.reload(); }}
+      />
+      <ActorSwitcher
+        label="ลูกค้า"
+        options={actor.options}
+        value={actor.actorId}
+        onChange={actor.pick}
+        isStandIn={actor.isStandIn}
+      />
+
       <div className="sales-grid-layout">
         {/* ฟอร์มสร้างนัดหมาย */}
         <div className="sales-card">
@@ -63,52 +92,27 @@ export default function CustomerRequestsPage() {
           </h2>
           <form onSubmit={handleSubmit}>
             <div className="sales-form-group">
-              <label>ชื่อ - นามสกุลลูกค้า *</label>
-              <input
-                type="text"
-                className="sales-input"
-                placeholder="ระบุชื่อของคุณ"
-                value={form.customerName}
-                onChange={(e) => setForm({ ...form, customerName: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="sales-form-group">
-              <label>เบอร์โทรศัพท์ติดต่อ *</label>
-              <input
-                type="tel"
-                className="sales-input"
-                placeholder="08X-XXX-XXXX"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="sales-form-group">
               <label>ประเภทบริการ</label>
               <select
                 className="sales-select"
-                value={form.type}
-                onChange={(e) => setForm({ ...form, type: e.target.value })}
+                value={form.appointmentType}
+                onChange={(e) => setForm({ ...form, appointmentType: e.target.value })}
               >
-                <option value="ทดลองขับ (Test Drive)">ทดลองขับ (Test Drive)</option>
-                <option value="ปรึกษาประกันภัยและไฟแนนซ์">ปรึกษาประกันภัยและไฟแนนซ์</option>
-                <option value="ขอใบเสนอราคารถใหม่">ขอใบเสนอราคารถใหม่</option>
-                <option value="นัดรับรถ / ตรวจเช็คเอกสาร">นัดรับรถ / ตรวจเช็คเอกสาร</option>
+                <option value="TEST_DRIVE">ทดลองขับ (Test Drive)</option>
+                <option value="VIEW_CAR">นัดดูรถ</option>
               </select>
             </div>
 
             <div className="sales-form-group">
-              <label>รุ่นรถที่สนใจ</label>
+              <label>รถที่สนใจ</label>
               <select
                 className="sales-select"
-                value={form.carModel}
-                onChange={(e) => setForm({ ...form, carModel: e.target.value })}
+                value={selectedCarId}
+                onChange={(e) => setForm({ ...form, carId: e.target.value })}
+                required
               >
-                {CAR_MODELS.map((model) => (
-                  <option key={model} value={model}>{model}</option>
+                {carOptions.map((car) => (
+                  <option key={car.id} value={car.id}>{car.label}</option>
                 ))}
               </select>
             </div>
@@ -119,8 +123,9 @@ export default function CustomerRequestsPage() {
                 <input
                   type="date"
                   className="sales-input"
-                  value={form.preferredDate}
-                  onChange={(e) => setForm({ ...form, preferredDate: e.target.value })}
+                  min={today()}
+                  value={form.appointmentDate}
+                  onChange={(e) => setForm({ ...form, appointmentDate: e.target.value })}
                 />
               </div>
               <div className="sales-form-group">
@@ -128,8 +133,8 @@ export default function CustomerRequestsPage() {
                 <input
                   type="time"
                   className="sales-input"
-                  value={form.preferredTime}
-                  onChange={(e) => setForm({ ...form, preferredTime: e.target.value })}
+                  value={form.appointmentTime}
+                  onChange={(e) => setForm({ ...form, appointmentTime: e.target.value })}
                 />
               </div>
             </div>
@@ -145,7 +150,7 @@ export default function CustomerRequestsPage() {
               />
             </div>
 
-            <button type="submit" className="sales-btn sales-btn-primary" style={{ width: '100%', padding: '12px' }}>
+            <button type="submit" disabled={action.busy || !actor.actorId || !selectedCarId} className="sales-btn sales-btn-primary" style={{ width: '100%', padding: '12px' }}>
               + บันทึกการนัดหมาย
             </button>
           </form>
@@ -172,7 +177,7 @@ export default function CustomerRequestsPage() {
                 {requests.map((req) => (
                   <tr key={req.id}>
                     <td>
-                      <strong style={{ color: '#2563eb' }}>{req.id}</strong>
+                      <strong style={{ color: '#2563eb' }}>{req.code}</strong>
                       <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{req.type}</div>
                     </td>
                     <td>
@@ -193,9 +198,10 @@ export default function CustomerRequestsPage() {
                       </span>
                     </td>
                     <td style={{ textAlign: 'center' }}>
-                      {req.status === 'PENDING' ? (
+                      {['PENDING', 'ASSIGNED'].includes(req.status) ? (
                         <button
                           onClick={() => handleCancel(req.id)}
+                          disabled={action.busy}
                           className="sales-btn sales-btn-outline sales-btn-sm"
                           style={{ color: '#dc2626', borderColor: '#fca5a5' }}
                         >

@@ -25,6 +25,14 @@ export function getMysqlPool() {
       ? { ssl: { rejectUnauthorized: true } }
       : {}),
     decimalNumbers: false,
+    // DATETIME columns are stored in UTC (see db schema/01_mysql_schema.sql).
+    timezone: 'Z',
+    // DATE columns stay plain 'YYYY-MM-DD' strings (no timezone shifting).
+    dateStrings: ['DATE'],
+  });
+  // Make CURRENT_TIMESTAMP defaults UTC for every pooled connection.
+  pool.pool.on('connection', (connection) => {
+    connection.query("SET time_zone = '+00:00'");
   });
   return pool;
 }

@@ -222,3 +222,34 @@
   padding: 36px;
   color: #94a3b8;
 }
+/* Loading / error blocks (components/SalesState.jsx) */
+.sales-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 0.9rem;
+}
+.sales-alert-error {
+  border-color: #fca5a5;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+/* styles/showroom.css sets `button:not(.s-btn):not(.s-var):not(.s-sw) { background-color: transparent }`
+   which is more specific than the plain .sales-btn-* rules, so white button text
+   ended up on a transparent (white) background. These repeat the same :not()s to win. */
+button.sales-btn-primary:not(.s-btn):not(.s-var):not(.s-sw) { background-color: #2563eb; color: #ffffff; }
+button.sales-btn-primary:not(.s-btn):not(.s-var):not(.s-sw):hover:not(:disabled) { background-color: #1d4ed8; }
+button.sales-btn-success:not(.s-btn):not(.s-var):not(.s-sw) { background-color: #16a34a; color: #ffffff; }
+button.sales-btn-success:not(.s-btn):not(.s-var):not(.s-sw):hover:not(:disabled) { background-color: #15803d; }
+button.sales-btn-danger:not(.s-btn):not(.s-var):not(.s-sw) { background-color: #dc2626; color: #ffffff; }
+button.sales-btn-danger:not(.s-btn):not(.s-var):not(.s-sw):hover:not(:disabled) { background-color: #b91c1c; }
+button.sales-btn-outline:not(.s-btn):not(.s-var):not(.s-sw) { background-color: #ffffff; }
+button.sales-btn:disabled { opacity: 0.5; cursor: not-allowed; }
