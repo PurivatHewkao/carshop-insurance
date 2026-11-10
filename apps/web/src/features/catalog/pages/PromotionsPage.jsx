@@ -1,6 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getPromotions, savePromotions } from '../data/catalogData.js';
+import {
+  apiErrorMessage,
+  createPromotionRecord,
+  removePromotionRecord,
+  setPromotionActive,
+  updatePromotionRecord,
+  usePromotions,
+} from '../api/catalogApi.js';
 import './catalog.css';
 
 const icons = ['↗', '✦', '◈', '◆', '◉'];
@@ -76,7 +83,9 @@ function PromotionImage({ promotion, index, className = '' }) {
 }
 
 export default function PromotionsPage({ adminMode = false }) {
-  const [promotions, setPromotions] = useState(() => getPromotions());
+  const { promotions: remotePromotions, loading, error: loadError, reload } = usePromotions();
+  const promotions = remotePromotions;
+  const [busy, setBusy] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [editingId, setEditingId] = useState('');
   const [notice, setNotice] = useState('');
@@ -84,14 +93,20 @@ export default function PromotionsPage({ adminMode = false }) {
   const activeCount = promotions.filter((promotion) => promotion.active).length;
   const visiblePromotions = useMemo(() => adminMode ? promotions : promotions.filter((item) => item.active), [adminMode, promotions]);
 
-  function persist(next, successMessage) {
-    if (!savePromotions(next)) {
-      setNotice('บันทึกไม่สำเร็จ พื้นที่ LocalStorage อาจเต็ม กรุณาลดขนาดรูปภาพแล้วลองอีกครั้ง');
+  // Runs one API request, then reloads the list. Returns true when it worked.
+  async function runRequest(task, successMessage) {
+    setBusy(true);
+    try {
+      await task();
+      reload();
+      setNotice(successMessage);
+      return true;
+    } catch (error) {
+      setNotice(apiErrorMessage(error));
       return false;
+    } finally {
+      setBusy(false);
     }
-    setPromotions(next);
-    setNotice(successMessage);
-    return true;
   }
 
   function resetForm() {
@@ -123,7 +138,7 @@ export default function PromotionsPage({ adminMode = false }) {
     }
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     const title = form.title.trim();
     if (!title || !form.value.trim() || !form.description.trim()) {
@@ -140,15 +155,11 @@ export default function PromotionsPage({ adminMode = false }) {
       conditions: form.conditions.trim() || 'โปรดสอบถามเงื่อนไขเพิ่มเติม',
       appliesTo: form.appliesTo.trim() || 'รถทุกรุ่น',
     };
-
-    let next;
-    if (editingId) {
-      next = promotions.map((item) => item.id === editingId ? { ...item, ...record, id: editingId } : item);
-    } else {
-      const slug = title.toLowerCase().normalize('NFKD').replace(/[^a-z0-9ก-๙]+/g, '-').replace(/^-|-$/g, '') || 'promotion';
-      next = [{ ...record, id: `${slug}-${Date.now().toString(36)}` }, ...promotions];
-    }
-    if (persist(next, editingId ? `แก้ไขโปรโมชัน “${title}” แล้ว` : `เพิ่มโปรโมชัน “${title}” แล้ว`)) resetForm();
+    const saved = await runRequest(async () => {
+      if (editingId) await updatePromotionRecord(editingId, record);
+      else await createPromotionRecord(record);
+    }, editingId ? `แก้ไขโปรโมชัน “${title}” แล้ว` : `เพิ่มโปรโมชัน “${title}” แล้ว`);
+    if (saved) resetForm();
   }
 
   function startEditing(promotion) {
@@ -159,15 +170,16 @@ export default function PromotionsPage({ adminMode = false }) {
   }
 
   function togglePromotion(id) {
-    const next = promotions.map((item) => item.id === id ? { ...item, active: !item.active } : item);
-    const changed = next.find((item) => item.id === id);
-    persist(next, `เปลี่ยนสถานะโปรโมชัน “${changed.title}” เป็น${changed.active ? 'เปิด' : 'ปิด'}แสดงแล้ว`);
+    const target = promotions.find((item) => item.id === id);
+    if (!target) return;
+    const nextActive = !target.active;
+    runRequest(() => setPromotionActive(id, nextActive), `เปลี่ยนสถานะโปรโมชัน “${target.title}” เป็น${nextActive ? 'เปิด' : 'ปิด'}แสดงแล้ว`);
   }
 
-  function deletePromotion(promotion) {
+  async function deletePromotion(promotion) {
     if (!window.confirm(`ต้องการลบโปรโมชัน “${promotion.title}” หรือไม่?`)) return;
-    const next = promotions.filter((item) => item.id !== promotion.id);
-    if (persist(next, `ลบโปรโมชัน “${promotion.title}” แล้ว`) && editingId === promotion.id) resetForm();
+    const removed = await runRequest(() => removePromotionRecord(promotion.id), `ลบโปรโมชัน “${promotion.title}” แล้ว`);
+    if (removed && editingId === promotion.id) resetForm();
   }
 
   return (
@@ -185,7 +197,8 @@ export default function PromotionsPage({ adminMode = false }) {
       )}
 
       {notice && <div className="catalog-form-feedback" role="status">{notice}<button type="button" onClick={() => setNotice('')} aria-label="ปิดข้อความ">×</button></div>}
-      <div className="catalog-promotion-notice"><span>i</span><p>โปรโมชันทั้งหมดเป็นข้อมูลตัวอย่างสำหรับ Frontend รูปภาพและรายการจะเก็บใน LocalStorage ของเบราว์เซอร์นี้เท่านั้น ยังไม่ได้เชื่อม Backend หรือฐานข้อมูลกลาง</p></div>
+      {loadError && <div className="catalog-form-feedback" role="alert">{loadError}<button type="button" onClick={reload} aria-label="ลองโหลดใหม่">↻</button></div>}
+      <div className="catalog-promotion-notice"><span>i</span><p>โปรโมชันและรูปภาพประกอบเก็บในฐานข้อมูลผ่าน catalog API รูปที่เลือกจากเครื่องจะถูกย่อขนาดก่อนบันทึก</p></div>
 
       {adminMode && (
         <section className="catalog-admin-panel catalog-promotion-editor">
@@ -208,7 +221,7 @@ export default function PromotionsPage({ adminMode = false }) {
               <p className="catalog-form-help">ภาพจะถูกย่อขนาดก่อนบันทึก เพื่อลดการใช้พื้นที่ในเบราว์เซอร์</p>
             </div>
             <label className="catalog-promo-active-toggle"><input type="checkbox" name="active" checked={Boolean(form.active)} onChange={updateField} /><span>เปิดแสดงโปรโมชันบนหน้าร้าน</span></label>
-            <div className="catalog-promo-form-actions catalog-promo-form-wide"><button type="submit" className="catalog-primary-button">{editingId ? 'บันทึกการแก้ไข' : 'เพิ่มโปรโมชัน'}</button>{editingId && <button type="button" className="catalog-promo-cancel-button" onClick={resetForm}>ยกเลิกการแก้ไข</button>}</div>
+            <div className="catalog-promo-form-actions catalog-promo-form-wide"><button type="submit" className="catalog-primary-button" disabled={busy || savingImage}>{editingId ? 'บันทึกการแก้ไข' : 'เพิ่มโปรโมชัน'}</button>{editingId && <button type="button" className="catalog-promo-cancel-button" onClick={resetForm}>ยกเลิกการแก้ไข</button>}</div>
           </form>
         </section>
       )}
@@ -237,8 +250,8 @@ export default function PromotionsPage({ adminMode = false }) {
                 <p className="catalog-promotion-conditions">เงื่อนไข: {promotion.conditions || 'โปรดสอบถามเงื่อนไขเพิ่มเติม'}</p>
                 {adminMode ? (
                   <>
-                    <div className="catalog-promo-admin-actions"><span className={`catalog-status-chip ${promotion.active ? 'in' : 'out'}`}><i />{promotion.active ? 'เปิดแสดง' : 'ปิดแสดง'}</span><button type="button" className={promotion.active ? 'catalog-disable-button' : 'catalog-enable-button'} onClick={() => togglePromotion(promotion.id)}>{promotion.active ? 'ปิดโปรโมชัน' : 'เปิดโปรโมชัน'}</button></div>
-                    <div className="catalog-promo-manage-actions"><button type="button" onClick={() => startEditing(promotion)}>แก้ไข</button><button type="button" onClick={() => deletePromotion(promotion)}>ลบโปรโมชัน</button></div>
+                    <div className="catalog-promo-admin-actions"><span className={`catalog-status-chip ${promotion.active ? 'in' : 'out'}`}><i />{promotion.active ? 'เปิดแสดง' : 'ปิดแสดง'}</span><button type="button" className={promotion.active ? 'catalog-disable-button' : 'catalog-enable-button'} onClick={() => togglePromotion(promotion.id)} disabled={busy}>{promotion.active ? 'ปิดโปรโมชัน' : 'เปิดโปรโมชัน'}</button></div>
+                    <div className="catalog-promo-manage-actions"><button type="button" onClick={() => startEditing(promotion)}>แก้ไข</button><button type="button" onClick={() => deletePromotion(promotion)} disabled={busy}>ลบโปรโมชัน</button></div>
                   </>
                 ) : (
                   <Link className="catalog-promotion-link" to="/catalog">เลือกรถที่ร่วมรายการ <span>↗</span></Link>
@@ -247,7 +260,8 @@ export default function PromotionsPage({ adminMode = false }) {
             </article>
           ))}
         </div>
-        {!visiblePromotions.length && <div className="catalog-empty-state"><h3>ยังไม่มีโปรโมชันที่เปิดแสดง</h3><p>ผู้ดูแลสามารถเพิ่มหรือเปิดแคมเปญได้จากหน้าจัดการโปรโมชัน</p>{!adminMode && <Link className="s-btn pri" to="/catalog">เลือกรถทั้งหมด</Link>}</div>}
+        {loading && !loadError && <div className="catalog-empty-state"><p>กำลังโหลดโปรโมชัน...</p></div>}
+        {!loading && !loadError && !visiblePromotions.length && <div className="catalog-empty-state"><h3>ยังไม่มีโปรโมชันที่เปิดแสดง</h3><p>ผู้ดูแลสามารถเพิ่มหรือเปิดแคมเปญได้จากหน้าจัดการโปรโมชัน</p>{!adminMode && <Link className="s-btn pri" to="/catalog">เลือกรถทั้งหมด</Link>}</div>}
       </section>
       {!adminMode && <section className="catalog-promo-contact"><div><p className="catalog-eyebrow">NEED MORE DETAILS?</p><h2>อยากได้ข้อเสนอที่เหมาะกับคุณ?</h2><p>เลือกรุ่นรถที่สนใจแล้วส่งคำขอให้ทีมขายช่วยอธิบายค่าใช้จ่ายและเงื่อนไข</p></div><Link to="/catalog" className="catalog-promotions-cta">เลือกรถยนต์ <span>→</span></Link></section>}
       {adminMode && <p className="catalog-demo-note">เมื่อต่อ Backend ควรเพิ่มสิทธิ์ผู้ดูแล การตั้งวันเริ่ม/สิ้นสุด เงื่อนไขรุ่นรถที่ร่วมรายการ และประวัติผู้แก้ไขแคมเปญ</p>}
