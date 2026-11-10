@@ -331,3 +331,8 @@
     grid-column: 1 / -1;
   }
 }
+.auth-role-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

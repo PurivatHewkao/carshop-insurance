@@ -27,6 +27,8 @@ export function PasswordField({
   label = 'รหัสผ่าน',
   name = 'password',
   autoComplete = 'current-password',
+  value,
+  onChange,
 }) {
   const [visible, setVisible] = useState(false);
   return (
@@ -38,6 +40,8 @@ export function PasswordField({
           name={name}
           type={visible ? 'text' : 'password'}
           autoComplete={autoComplete}
+          value={value}
+          onChange={onChange}
           minLength={8}
           maxLength={128}
           required

@@ -15,6 +15,12 @@ const backend = app.listen(0, '127.0.0.1');
 await new Promise((resolve) => backend.once('listening', resolve));
 process.env.VITE_IDENTITY_MODE = 'api';
 process.env.VITE_IDENTITY_API_URL = `http://127.0.0.1:${backend.address().port}/api/v1`;
+const checkRoleButtons = ['127.0.0.1', 'localhost', '::1'].includes(
+  process.env.MYSQL_HOST,
+);
+process.env.VITE_IDENTITY_ROLE_TEST_PASSWORD = checkRoleButtons
+  ? process.env.ROLE_TEST_PASSWORD
+  : '';
 let vite;
 let browser;
 try {
@@ -102,6 +108,35 @@ try {
   assert.equal(new URL(page.url()).pathname, '/login');
   await page.goto(url + '/admin/users');
   await page.waitForURL('**/login');
+  if (checkRoleButtons) {
+    for (const [role, destination] of Object.entries({
+      CUSTOMER: '/customer/profile',
+      SELLER: '/seller/tasks',
+      ADMIN: '/admin/users',
+      MANAGER: '/manager',
+      FINANCE: '/account',
+      STOCK: '/account',
+    })) {
+      await page.goto(url + '/login');
+      await page.getByRole('button', { name: role, exact: true }).click();
+      assert.equal(
+        await page.locator('[name=email]').inputValue(),
+        `role-${role.toLowerCase()}@carshop.test`,
+      );
+      assert.ok(
+        (await page.locator('[name=password]').inputValue()) ===
+          process.env.ROLE_TEST_PASSWORD,
+      );
+      assert.equal(new URL(page.url()).pathname, '/login');
+      await page
+        .getByRole('button', { name: 'เข้าสู่ระบบ →', exact: true })
+        .click();
+      await page.waitForURL(url + destination);
+    }
+    console.log(
+      'Role fixtures passed: all six buttons fill the form and sign in on submit.',
+    );
+  }
   assert.deepEqual(errors, []);
   console.log(
     'Browser flows passed: registration, profile, login errors, logout, guards, admin creation and suspension.',
