@@ -1,0 +1,29 @@
+
+C:\SPU\CSI400\project\apps\web\src\features\catalog\components\CarPhoto.jsx
+  22:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  20 |
+  21 |   useEffect(() => {
+> 22 |     setSource(preferredSource);
+     |     ^^^^^^^^^ Avoid calling setState() directly within an effect
+  23 |     setFailed(false);
+  24 |   }, [preferredSource]);
+  25 |  react-hooks/set-state-in-effect
+
+C:\SPU\CSI400\project\apps\web\src\features\catalog\pages\CarsPage.jsx
+  22:9  error  'heroCar' is assigned a value but never used. Allowed unused vars must match /^[A-Z]/u  no-unused-vars
+
+C:\SPU\CSI400\project\db schema\02_mongodb_schema.js
+   3:16  error  'db' is not defined         no-undef
+  28:3   error  'print' is not defined      no-undef
+  34:1   error  'print' is not defined      no-undef
+  35:1   error  'printjson' is not defined  no-undef
+
+✖ 6 problems (6 errors, 0 warnings)
+

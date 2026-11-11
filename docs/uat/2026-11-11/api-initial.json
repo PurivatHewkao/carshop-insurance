@@ -1,0 +1,126 @@
+[
+  {
+    "port": 3001,
+    "path": "health",
+    "status": 200
+  },
+  {
+    "port": 3001,
+    "path": "users/me",
+    "status": 401,
+    "error": {
+      "code": "UNAUTHORIZED",
+      "message": "กรุณาเข้าสู่ระบบ"
+    }
+  },
+  {
+    "port": 3001,
+    "path": "users",
+    "status": 401,
+    "error": {
+      "code": "UNAUTHORIZED",
+      "message": "กรุณาเข้าสู่ระบบ"
+    }
+  },
+  {
+    "port": 3002,
+    "path": "health",
+    "status": 200
+  },
+  {
+    "port": 3002,
+    "path": "cars",
+    "status": 500,
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "Internal server error"
+    }
+  },
+  {
+    "port": 3002,
+    "path": "promotions",
+    "status": 500,
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "Internal server error"
+    }
+  },
+  {
+    "port": 3002,
+    "path": "cars/stock",
+    "status": 500,
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "Internal server error"
+    }
+  },
+  {
+    "port": 3003,
+    "path": "health",
+    "status": 200
+  },
+  {
+    "port": 3003,
+    "path": "appointments",
+    "status": 200,
+    "count": 0
+  },
+  {
+    "port": 3003,
+    "path": "orders",
+    "status": 500,
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "Internal server error"
+    }
+  },
+  {
+    "port": 3003,
+    "path": "lookups/customers",
+    "status": 200,
+    "count": 1
+  },
+  {
+    "port": 3003,
+    "path": "lookups/sellers",
+    "status": 200,
+    "count": 1
+  },
+  {
+    "port": 3004,
+    "path": "health",
+    "status": 200
+  },
+  {
+    "port": 3004,
+    "path": "payments",
+    "status": 500,
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "Internal server error"
+    }
+  },
+  {
+    "port": 3004,
+    "path": "invoices",
+    "status": 500,
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "Internal server error"
+    }
+  },
+  {
+    "port": 3004,
+    "path": "refunds",
+    "status": 500,
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "Internal server error"
+    }
+  },
+  {
+    "port": 3005,
+    "path": "health",
+    "status": 200
+  }
+]

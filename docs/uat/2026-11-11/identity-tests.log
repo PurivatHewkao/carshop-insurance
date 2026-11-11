@@ -1,0 +1,63 @@
+Identity migration complete.
+Identity migration complete.
+TAP version 13
+# Subtest: database failure returns a generic error without opening a session
+ok 1 - database failure returns a generic error without opening a session
+  ---
+  duration_ms: 438.0602
+  type: 'test'
+  ...
+# Subtest: Admin bootstrap, permissions, persistence, concurrent updates and role records
+ok 2 - Admin bootstrap, permissions, persistence, concurrent updates and role records
+  ---
+  duration_ms: 847.4243
+  type: 'test'
+  ...
+# Subtest: register, login, protected profile, validation and logout
+ok 3 - register, login, protected profile, validation and logout
+  ---
+  duration_ms: 344.4088
+  type: 'test'
+  ...
+# Subtest: concurrent duplicate registration creates one account
+ok 4 - concurrent duplicate registration creates one account
+  ---
+  duration_ms: 60.9059
+  type: 'test'
+  ...
+# Subtest: browser session cookie is protected, reusable after reload, and revoked on logout
+ok 5 - browser session cookie is protected, reusable after reload, and revoked on logout
+  ---
+  duration_ms: 68.8536
+  type: 'test'
+  ...
+# Subtest: authentication attempts are rate limited
+ok 6 - authentication attempts are rate limited
+  ---
+  duration_ms: 42.882
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2608.9946
+Real Identity API: registration, JWT profile, update, logout, login and failures passed.
+Created: customer role-customer@carshop.test
+Created: seller role-seller@carshop.test
+Created: manager role-manager@carshop.test
+Created: admin role-admin@carshop.test
+Created: finance role-finance@carshop.test
+Created: stock role-stock@carshop.test
+Ready: customer role-customer@carshop.test
+Ready: seller role-seller@carshop.test
+Ready: manager role-manager@carshop.test
+Ready: admin role-admin@carshop.test
+Ready: finance role-finance@carshop.test
+Ready: stock role-stock@carshop.test
+Role fixtures passed: all six buttons fill the form and sign in on submit.
+Browser flows passed: registration, profile, login errors, logout, guards, admin creation and suspension.

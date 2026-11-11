@@ -1,0 +1,850 @@
+[
+  {
+    "role": "public",
+    "path": "/",
+    "url": "http://localhost:5173/",
+    "text": "ข้ามไปเนื้อหาหลัก\nTOYOTY\nหน้าแรก\nรายการรถ\nโปรโมชัน\nติดต่อเรา\nเข้าสู่ระบบ\nค\nคำขอของฉัน\nนัดทดลองขับ\n\nใหม่ · ไฮบริดรุ่นล่าสุด\n\nCorolla Cross Hybrid\n\nขับสบาย ประหยัดน้ำมัน พร้อมประกันชั้น 1 ฟรีปีแรก เมื่อออกรถภายในเดือนนี้\n\nเริ่มต้น เริ่มต้น ฿ 889,000\n\nจองรถออนไลน์\nนัดทดลองขับ\n25.6กม./ล.\nอัตราสิ้นเปลืองเชื้อเพลิง\n5ดาว\nความปลอดภัย ASEAN NCAP\n10ปี\nรับประกันแบตเตอรี่ไฮบริด\n1วัน\nทีมขายตอบกลับภายใน\nรุ่นแนะนำ\n0 รุ่น\nดูรถทั้งหมด →\nโปรโมชันที่เปิดใช้งาน\nดูโปรโมชันทั้งหมด →\nโหลดโปรโมชันไม่สำเร็จ\n\nInternal server error\n\n◇\nเลือกรถที่ใช่\n\nดูรุ่น สี และราคาของรถในสต็อก พร้อมโปรโมชันที่ใช้ได้กับรุ่นนั้น\n\n◷\nนัดทดลองขับออนไลน์\n\nส่งคำขอครั้งเดียว ทีมขายติดต่อกลับภายใน 1 วันทำการ\n\n✓\nประกันครบในที่เดียว\n\nเลือกแพ็กเกจตอนจอง แล้วดูกรมธรรม์ของแต่ละคันได้ในบัญชีของคุณ\n\nซื้อรถพร้อมทำประกันในที่เดียว\n\nเลือกประกันชั้น 1 หรือ 2+ ตอนจองรถ ทีมขายส่งข้อมูลให้บริษัทประกันให้อัตโนมัติ ไม่ต้องกรอกซ้ำ\n\nเริ่มจองรถ\n◉\nทดลองขับ\n▤\nใบเสนอราคา\n◇\nประกันรถ\nTOYOTY\n\nศูนย์รถยนต์ขายรถพร้อมประกัน ครบจบในที่เดียว\n\nรถยนต์\nรุ่นรถทั้งหมด\nโปรโมชัน\nขอใบเสนอราคา\nบริการ\nนัดทดลองขับ\nประกันรถยนต์\nสถานะคำขอ\nติดต่อ\n\n02-xxx-xxxx\n\nจ–ส 09:00–18:00\n\nDashboard ผู้ดูแล (ตัวอย่าง)\nพื้นที่ผู้จัดการ (ตัวอย่าง)\nพื้นที่พนักงานขาย (ตัวอย่าง)\nSystem Status\n© 2569 TOYOTY · งานกลุ่มวิชา CSI400 · ไม่ใช่เว็บไซต์ของโตโยต้าจริง ราคาและข้อมูลเป็นตัวอย่าง",
+    "responses": [
+      {
+        "url": "http://localhost:3002/api/v1/cars?pageSize=100",
+        "status": 500
+      },
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 401
+      },
+      {
+        "url": "http://localhost:3002/api/v1/promotions",
+        "status": 500
+      }
+    ],
+    "errors": [],
+    "screenshot": "public-_.png"
+  },
+  {
+    "role": "public",
+    "path": "/catalog",
+    "url": "http://localhost:5173/catalog",
+    "text": "ข้ามไปเนื้อหาหลัก\nTOYOTY\nหน้าแรก\nรายการรถ\nโปรโมชัน\nติดต่อเรา\nเข้าสู่ระบบ\nค\nคำขอของฉัน\nนัดทดลองขับ\n\nTOYOTY · CAR COLLECTION\n\nค้นหารถที่ใช่สำหรับคุณ\n\nตั้งแต่รถใช้งานประจำวัน รถครอบครัว รถยนต์ไฟฟ้า ไปจนถึงสปอร์ตและซูเปอร์คาร์\n\n0 รุ่นในแคตตาล็อก\n0 รุ่นมีสต็อก\nดูโปรโมชันทั้งหมด ↗\n\nFIND YOUR MATCH\n\nรถยนต์ทั้งหมด\nพบ 0 รุ่น\n▦\nทุกรุ่น\n⌕\nค้นหารุ่นรถ ยี่ห้อ หรือเครื่องยนต์\nช่วงราคา\nทุกช่วงราคา\nไม่เกิน ฿800,000\nไม่เกิน ฿1,500,000\nไม่เกิน ฿5,000,000\nไม่เกิน ฿15,000,000\nเรียงรายการ\nเรียงตามแนะนำ\nราคาต่ำไปสูง\nราคาสูงไปต่ำ\nชื่อรุ่น A–Z\nโหลดรายการรถไม่สำเร็จ\n\nInternal server error\n\nหมายเหตุ: ราคา สเปก สต็อก และโปรโมชันเป็นข้อมูลสาธิต อ่านจากฐานข้อมูลผ่าน catalog API\n\n◉\nทดลองขับ\n▤\nใบเสนอราคา\n◇\nประกันรถ\nTOYOTY\n\nศูนย์รถยนต์ขายรถพร้อมประกัน ครบจบในที่เดียว\n\nรถยนต์\nรุ่นรถทั้งหมด\nโปรโมชัน\nขอใบเสนอราคา\nบริการ\nนัดทดลองขับ\nประกันรถยนต์\nสถานะคำขอ\nติดต่อ\n\n02-xxx-xxxx\n\nจ–ส 09:00–18:00\n\nDashboard ผู้ดูแล (ตัวอย่าง)\nพื้นที่ผู้จัดการ (ตัวอย่าง)\nพื้นที่พนักงานขาย (ตัวอย่าง)\nSystem Status\n© 2569 TOYOTY · งานกลุ่มวิชา CSI400 · ไม่ใช่เว็บไซต์ของโตโยต้าจริง ราคาและข้อมูลเป็นตัวอย่าง",
+    "responses": [
+      {
+        "url": "http://localhost:3002/api/v1/cars?pageSize=100",
+        "status": 500
+      },
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 401
+      },
+      {
+        "url": "http://localhost:3002/api/v1/promotions",
+        "status": 500
+      }
+    ],
+    "errors": [],
+    "screenshot": "public-_catalog.png"
+  },
+  {
+    "role": "public",
+    "path": "/catalog/corolla-cross",
+    "url": "http://localhost:5173/catalog/corolla-cross",
+    "text": "ข้ามไปเนื้อหาหลัก\nTOYOTY\nหน้าแรก\nรายการรถ\nโปรโมชัน\nติดต่อเรา\nเข้าสู่ระบบ\nค\nคำขอของฉัน\nนัดทดลองขับ\nโหลดข้อมูลรถไม่สำเร็จ\n\nInternal server error\n\nกลับไปเลือกรถ\n◉\nทดลองขับ\n▤\nใบเสนอราคา\n◇\nประกันรถ\nTOYOTY\n\nศูนย์รถยนต์ขายรถพร้อมประกัน ครบจบในที่เดียว\n\nรถยนต์\nรุ่นรถทั้งหมด\nโปรโมชัน\nขอใบเสนอราคา\nบริการ\nนัดทดลองขับ\nประกันรถยนต์\nสถานะคำขอ\nติดต่อ\n\n02-xxx-xxxx\n\nจ–ส 09:00–18:00\n\nDashboard ผู้ดูแล (ตัวอย่าง)\nพื้นที่ผู้จัดการ (ตัวอย่าง)\nพื้นที่พนักงานขาย (ตัวอย่าง)\nSystem Status\n© 2569 TOYOTY · งานกลุ่มวิชา CSI400 · ไม่ใช่เว็บไซต์ของโตโยต้าจริง ราคาและข้อมูลเป็นตัวอย่าง",
+    "responses": [
+      {
+        "url": "http://localhost:3002/api/v1/cars/corolla-cross",
+        "status": 500
+      },
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 401
+      },
+      {
+        "url": "http://localhost:3002/api/v1/promotions",
+        "status": 500
+      }
+    ],
+    "errors": [],
+    "screenshot": "public-_catalog_corolla-cross.png"
+  },
+  {
+    "role": "public",
+    "path": "/promotions",
+    "url": "http://localhost:5173/promotions",
+    "text": "ข้ามไปเนื้อหาหลัก\nTOYOTY\nหน้าแรก\nรายการรถ\nโปรโมชัน\nติดต่อเรา\nเข้าสู่ระบบ\nค\nคำขอของฉัน\nนัดทดลองขับ\n\nSPECIAL OFFERS · TOYOTY\n\nข้อเสนอที่ทำให้การออกรถง่ายขึ้น\n\nรวมแคมเปญแนะนำสำหรับรถใช้งานประจำวัน รถไฮบริด รถสปอร์ต และซูเปอร์คาร์\n\nเลือกรถที่สนใจ\n→\nสิทธิพิเศษ\n00\nแคมเปญที่เปิดอยู่\nInternal server error\n↻\ni\n\nโปรโมชันและรูปภาพประกอบเก็บในฐานข้อมูลผ่าน catalog API รูปที่เลือกจากเครื่องจะถูกย่อขนาดก่อนบันทึก\n\nCURRENT CAMPAIGNS\n\nโปรโมชันที่เปิดให้ดู\n0 รายการ\n\nNEED MORE DETAILS?\n\nอยากได้ข้อเสนอที่เหมาะกับคุณ?\n\nเลือกรุ่นรถที่สนใจแล้วส่งคำขอให้ทีมขายช่วยอธิบายค่าใช้จ่ายและเงื่อนไข\n\nเลือกรถยนต์\n→\n◉\nทดลองขับ\n▤\nใบเสนอราคา\n◇\nประกันรถ\nTOYOTY\n\nศูนย์รถยนต์ขายรถพร้อมประกัน ครบจบในที่เดียว\n\nรถยนต์\nรุ่นรถทั้งหมด\nโปรโมชัน\nขอใบเสนอราคา\nบริการ\nนัดทดลองขับ\nประกันรถยนต์\nสถานะคำขอ\nติดต่อ\n\n02-xxx-xxxx\n\nจ–ส 09:00–18:00\n\nDashboard ผู้ดูแล (ตัวอย่าง)\nพื้นที่ผู้จัดการ (ตัวอย่าง)\nพื้นที่พนักงานขาย (ตัวอย่าง)\nSystem Status\n© 2569 TOYOTY · งานกลุ่มวิชา CSI400 · ไม่ใช่เว็บไซต์ของโตโยต้าจริง ราคาและข้อมูลเป็นตัวอย่าง",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 401
+      },
+      {
+        "url": "http://localhost:3002/api/v1/promotions",
+        "status": 500
+      }
+    ],
+    "errors": [],
+    "screenshot": "public-_promotions.png"
+  },
+  {
+    "role": "public",
+    "path": "/contact",
+    "url": "http://localhost:5173/contact",
+    "text": "ข้ามไปเนื้อหาหลัก\nTOYOTY\nหน้าแรก\nรายการรถ\nโปรโมชัน\nติดต่อเรา\nเข้าสู่ระบบ\nค\nคำขอของฉัน\nนัดทดลองขับ\n\nTOYOTY / ติดต่อเรา\n\nติดต่อเรา\nยังไม่เปิดใช้งาน\n\nหน้านี้เป็นโครงตามรายการหน้าของระบบ ยังไม่มีข้อมูลหรือการดำเนินรายการจริง\n\n◉\nทดลองขับ\n▤\nใบเสนอราคา\n◇\nประกันรถ\nTOYOTY\n\nศูนย์รถยนต์ขายรถพร้อมประกัน ครบจบในที่เดียว\n\nรถยนต์\nรุ่นรถทั้งหมด\nโปรโมชัน\nขอใบเสนอราคา\nบริการ\nนัดทดลองขับ\nประกันรถยนต์\nสถานะคำขอ\nติดต่อ\n\n02-xxx-xxxx\n\nจ–ส 09:00–18:00\n\nDashboard ผู้ดูแล (ตัวอย่าง)\nพื้นที่ผู้จัดการ (ตัวอย่าง)\nพื้นที่พนักงานขาย (ตัวอย่าง)\nSystem Status\n© 2569 TOYOTY · งานกลุ่มวิชา CSI400 · ไม่ใช่เว็บไซต์ของโตโยต้าจริง ราคาและข้อมูลเป็นตัวอย่าง",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 401
+      }
+    ],
+    "errors": [],
+    "screenshot": "public-_contact.png"
+  },
+  {
+    "role": "public",
+    "path": "/register",
+    "url": "http://localhost:5173/register",
+    "text": "ข้ามไปเนื้อหาหลัก\nTOYOTY\nหน้าแรก\nรายการรถ\nโปรโมชัน\nติดต่อเรา\nเข้าสู่ระบบ\nค\nคำขอของฉัน\nนัดทดลองขับ\nYOUR NEXT CHAPTER\nทุกการเดินทาง\nเริ่มต้นที่คุณ\n\nบัญชีเดียวสำหรับค้นหารถที่ใช่\nนัดทดลองขับ และติดตามคำขอของคุณ\n\n01 / บัญชี TOYOTY\nค้นหารถของคุณ ↗\n← กลับหน้าเว็บไซต์\n\nTOYOTY ACCOUNT\n\nเริ่มต้นการเดินทาง\n\nสร้างบัญชี TOYOTY และค้นหารถที่เป็นคุณ\n\nเซสชันเข้าสู่ระบบมีอายุ 1 ชั่วโมง\n\nชื่อ–นามสกุล\nอีเมล\nเบอร์โทรศัพท์\nรหัสผ่าน\nแสดง\nอย่างน้อย 8 ตัวอักษร รวมตัวอักษรและตัวเลข\nยืนยันรหัสผ่าน\nแสดง\nสร้างบัญชี →\n\nมีบัญชีแล้ว? เข้าสู่ระบบ\n\n◉\nทดลองขับ\n▤\nใบเสนอราคา\n◇\nประกันรถ\nTOYOTY\n\nศูนย์รถยนต์ขายรถพร้อมประกัน ครบจบในที่เดียว\n\nรถยนต์\nรุ่นรถทั้งหมด\nโปรโมชัน\nขอใบเสนอราคา\nบริการ\nนัดทดลองขับ\nประกันรถยนต์\nสถานะคำขอ\nติดต่อ\n\n02-xxx-xxxx\n\nจ–ส 09:00–18:00\n\nDashboard ผู้ดูแล (ตัวอย่าง)\nพื้นที่ผู้จัดการ (ตัวอย่าง)\nพื้นที่พนักงานขาย (ตัวอย่าง)\nSystem Status\n© 2569 TOYOTY · งานกลุ่มวิชา CSI400 · ไม่ใช่เว็บไซต์ของโตโยต้าจริง ราคาและข้อมูลเป็นตัวอย่าง",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 401
+      }
+    ],
+    "errors": [],
+    "screenshot": "public-_register.png"
+  },
+  {
+    "role": "public",
+    "path": "/login",
+    "url": "http://localhost:5173/login",
+    "text": "ข้ามไปเนื้อหาหลัก\nTOYOTY\nหน้าแรก\nรายการรถ\nโปรโมชัน\nติดต่อเรา\nเข้าสู่ระบบ\nค\nคำขอของฉัน\nนัดทดลองขับ\nYOUR NEXT CHAPTER\nทุกการเดินทาง\nเริ่มต้นที่คุณ\n\nบัญชีเดียวสำหรับค้นหารถที่ใช่\nนัดทดลองขับ และติดตามคำขอของคุณ\n\n01 / บัญชี TOYOTY\nค้นหารถของคุณ ↗\n← กลับหน้าเว็บไซต์\n\nTOYOTY ACCOUNT\n\nยินดีต้อนรับกลับ\n\nเข้าสู่ระบบเพื่อดูแลทุกการเดินทางของคุณ\n\nเซสชันเข้าสู่ระบบมีอายุ 1 ชั่วโมง\n\nอีเมล\nรหัสผ่าน\nแสดง\nเข้าสู่ระบบ →\nบัญชีทดสอบในเครื่อง\n\nเลือกบทบาทเพื่อกรอกข้อมูล แล้วกดเข้าสู่ระบบ\n\nCUSTOMER\nSELLER\nADMIN\nMANAGER\nFINANCE\nSTOCK\n\nยังไม่มีบัญชี? สมัครสมาชิก\n\n◉\nทดลองขับ\n▤\nใบเสนอราคา\n◇\nประกันรถ\nTOYOTY\n\nศูนย์รถยนต์ขายรถพร้อมประกัน ครบจบในที่เดียว\n\nรถยนต์\nรุ่นรถทั้งหมด\nโปรโมชัน\nขอใบเสนอราคา\nบริการ\nนัดทดลองขับ\nประกันรถยนต์\nสถานะคำขอ\nติดต่อ\n\n02-xxx-xxxx\n\nจ–ส 09:00–18:00\n\nDashboard ผู้ดูแล (ตัวอย่าง)\nพื้นที่ผู้จัดการ (ตัวอย่าง)\nพื้นที่พนักงานขาย (ตัวอย่าง)\nSystem Status\n© 2569 TOYOTY · งานกลุ่มวิชา CSI400 · ไม่ใช่เว็บไซต์ของโตโยต้าจริง ราคาและข้อมูลเป็นตัวอย่าง",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 401
+      }
+    ],
+    "errors": [],
+    "screenshot": "public-_login.png"
+  },
+  {
+    "role": "public",
+    "path": "/system-status",
+    "url": "http://localhost:5173/system-status",
+    "text": "ข้ามไปเนื้อหาหลัก\nTOYOTY\nหน้าแรก\nรายการรถ\nโปรโมชัน\nติดต่อเรา\nเข้าสู่ระบบ\nค\nคำขอของฉัน\nนัดทดลองขับ\n\nINTEGRATION / LIVENESS\n\nSystem Status\n\nตรวจ health ของแต่ละ service โดยไม่เชื่อมฐานข้อมูล สถานะ online ไม่ยืนยันว่า business API หรือฐานข้อมูลพร้อมใช้งาน\n\nIdentity\nonline\nCatalog\nonline\nSales\nonline\nPayment\nonline\nReporting\nonline\nตรวจอีกครั้ง\n◉\nทดลองขับ\n▤\nใบเสนอราคา\n◇\nประกันรถ\nTOYOTY\n\nศูนย์รถยนต์ขายรถพร้อมประกัน ครบจบในที่เดียว\n\nรถยนต์\nรุ่นรถทั้งหมด\nโปรโมชัน\nขอใบเสนอราคา\nบริการ\nนัดทดลองขับ\nประกันรถยนต์\nสถานะคำขอ\nติดต่อ\n\n02-xxx-xxxx\n\nจ–ส 09:00–18:00\n\nDashboard ผู้ดูแล (ตัวอย่าง)\nพื้นที่ผู้จัดการ (ตัวอย่าง)\nพื้นที่พนักงานขาย (ตัวอย่าง)\nSystem Status\n© 2569 TOYOTY · งานกลุ่มวิชา CSI400 · ไม่ใช่เว็บไซต์ของโตโยต้าจริง ราคาและข้อมูลเป็นตัวอย่าง",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/health",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3002/api/v1/health",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/health",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3005/api/v1/health",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3004/api/v1/health",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 401
+      }
+    ],
+    "errors": [],
+    "screenshot": "public-_system-status.png"
+  },
+  {
+    "role": "public",
+    "path": "/nonexistent-uat",
+    "url": "http://localhost:5173/nonexistent-uat",
+    "text": "ข้ามไปเนื้อหาหลัก\nTOYOTY\nหน้าแรก\nรายการรถ\nโปรโมชัน\nติดต่อเรา\nเข้าสู่ระบบ\nค\nคำขอของฉัน\nนัดทดลองขับ\nไม่พบหน้านี้\nกลับหน้า Home\n◉\nทดลองขับ\n▤\nใบเสนอราคา\n◇\nประกันรถ\nTOYOTY\n\nศูนย์รถยนต์ขายรถพร้อมประกัน ครบจบในที่เดียว\n\nรถยนต์\nรุ่นรถทั้งหมด\nโปรโมชัน\nขอใบเสนอราคา\nบริการ\nนัดทดลองขับ\nประกันรถยนต์\nสถานะคำขอ\nติดต่อ\n\n02-xxx-xxxx\n\nจ–ส 09:00–18:00\n\nDashboard ผู้ดูแล (ตัวอย่าง)\nพื้นที่ผู้จัดการ (ตัวอย่าง)\nพื้นที่พนักงานขาย (ตัวอย่าง)\nSystem Status\n© 2569 TOYOTY · งานกลุ่มวิชา CSI400 · ไม่ใช่เว็บไซต์ของโตโยต้าจริง ราคาและข้อมูลเป็นตัวอย่าง",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 401
+      }
+    ],
+    "errors": [],
+    "screenshot": "public-_nonexistent-uat.png"
+  },
+  {
+    "role": "customer",
+    "test": "login",
+    "url": "http://localhost:5173/customer/profile",
+    "httpOnly": true
+  },
+  {
+    "role": "customer",
+    "path": "/customer/profile",
+    "url": "http://localhost:5173/customer/profile",
+    "text": "ข้ามไปเนื้อหาหลัก\nTOYOTY\nส่งคำขอ\nประวัติธุรกรรม\nประกันของฉัน\nโปรไฟล์\nรถทั้งหมด\nกลับหน้าเว็บไซต์\nบัญชีของฉัน\nค\nคำขอของฉัน\nนัดทดลองขับ\n\nMY TOYOTY / บัญชีของฉัน\n\nโปรไฟล์ของฉัน\n\nจัดการข้อมูลของคุณ เพื่อให้ทุกการติดต่อราบรื่น\n\nออกจากระบบ\n\nเซสชันเข้าสู่ระบบมีอายุ 1 ชั่วโมง\n\nT\nTest customer\n\nrole-customer@carshop.test\n\ncustomer\n\nข้อมูลส่วนตัวใช้สำหรับการติดต่อและนัดหมายกับทีม TOYOTY\n\nดูคำขอของฉัน →\nข้อมูลส่วนตัว\nชื่อ–นามสกุล\nอีเมล\nอีเมลใช้เป็นบัญชีเข้าสู่ระบบ\nเบอร์โทรศัพท์\nบันทึกการเปลี่ยนแปลง\n◉\nทดลองขับ\n▤\nใบเสนอราคา\n◇\nประกันรถ\nTOYOTY\n\nศูนย์รถยนต์ขายรถพร้อมประกัน ครบจบในที่เดียว\n\nรถยนต์\nรุ่นรถทั้งหมด\nโปรโมชัน\nขอใบเสนอราคา\nบริการ\nนัดทดลองขับ\nประกันรถยนต์\nสถานะคำขอ\nติดต่อ\n\n02-xxx-xxxx\n\nจ–ส 09:00–18:00\n\nDashboard ผู้ดูแล (ตัวอย่าง)\nพื้นที่ผู้จัดการ (ตัวอย่าง)\nพื้นที่พนักงานขาย (ตัวอย่าง)\nSystem Status\n© 2569 TOYOTY · งานกลุ่มวิชา CSI400 · ไม่ใช่เว็บไซต์ของโตโยต้าจริง ราคาและข้อมูลเป็นตัวอย่าง",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "customer-_customer_profile.png"
+  },
+  {
+    "role": "customer",
+    "path": "/account",
+    "url": "http://localhost:5173/account",
+    "text": "ข้ามไปเนื้อหาหลัก\nTOYOTY\nหน้าแรก\nรายการรถ\nโปรโมชัน\nติดต่อเรา\nบัญชีของฉัน\nค\nคำขอของฉัน\nนัดทดลองขับ\n\nMY TOYOTY / บัญชีของฉัน\n\nโปรไฟล์ของฉัน\n\nจัดการข้อมูลของคุณ เพื่อให้ทุกการติดต่อราบรื่น\n\nออกจากระบบ\n\nเซสชันเข้าสู่ระบบมีอายุ 1 ชั่วโมง\n\nT\nTest customer\n\nrole-customer@carshop.test\n\ncustomer\n\nข้อมูลส่วนตัวใช้สำหรับการติดต่อและนัดหมายกับทีม TOYOTY\n\nดูคำขอของฉัน →\nข้อมูลส่วนตัว\nชื่อ–นามสกุล\nอีเมล\nอีเมลใช้เป็นบัญชีเข้าสู่ระบบ\nเบอร์โทรศัพท์\nบันทึกการเปลี่ยนแปลง\n◉\nทดลองขับ\n▤\nใบเสนอราคา\n◇\nประกันรถ\nTOYOTY\n\nศูนย์รถยนต์ขายรถพร้อมประกัน ครบจบในที่เดียว\n\nรถยนต์\nรุ่นรถทั้งหมด\nโปรโมชัน\nขอใบเสนอราคา\nบริการ\nนัดทดลองขับ\nประกันรถยนต์\nสถานะคำขอ\nติดต่อ\n\n02-xxx-xxxx\n\nจ–ส 09:00–18:00\n\nDashboard ผู้ดูแล (ตัวอย่าง)\nพื้นที่ผู้จัดการ (ตัวอย่าง)\nพื้นที่พนักงานขาย (ตัวอย่าง)\nSystem Status\n© 2569 TOYOTY · งานกลุ่มวิชา CSI400 · ไม่ใช่เว็บไซต์ของโตโยต้าจริง ราคาและข้อมูลเป็นตัวอย่าง",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "customer-_account.png"
+  },
+  {
+    "role": "customer",
+    "path": "/customer/requests",
+    "url": "http://localhost:5173/customer/requests",
+    "text": "ข้ามไปเนื้อหาหลัก\nTOYOTY\nส่งคำขอ\nประวัติธุรกรรม\nประกันของฉัน\nโปรไฟล์\nรถทั้งหมด\nกลับหน้าเว็บไซต์\nบัญชีของฉัน\nค\nคำขอของฉัน\nนัดทดลองขับ\nระบบนัดหมายโชว์รูม (Customer Appointments)\n\nจัดการคิวทดลองขับ จองรถ และนัดหมายปรึกษาเจ้าหน้าที่ฝ่ายขาย\n\n📅 สร้างรายการนัดหมาย\nประเภทบริการ\nทดลองขับ (Test Drive)\nนัดดูรถ\nรถที่สนใจ\nBMW M4 Competition (#2867B5, 2025)\nBMW M4 Competition (#2867B5, 2025)\nBYD SEAL Premium (#2B5A92, 2025)\nBYD SEAL Premium (#2B5A92, 2025)\nBYD SEAL Premium (#2B5A92, 2025)\nFerrari 296 GTB (#C8102E, 2025)\nPorsche 911 Carrera (#F0F0EC, 2025)\nToyota Camry (#E8E8E4, 2025)\nToyota Camry (#E8E8E4, 2025)\nToyota Corolla Altis Hybrid (#202126, 2025)\nToyota Corolla Altis Hybrid (#202126, 2025)\nToyota Corolla Altis Hybrid (#202126, 2025)\nToyota Corolla Altis Hybrid (#202126, 2025)\nToyota Corolla Cross Hybrid (#B8BBC2, 2025)\nToyota Corolla Cross Hybrid (#B8BBC2, 2025)\nToyota Corolla Cross Hybrid (#B8BBC2, 2025)\nToyota Corolla Cross Hybrid (#B8BBC2, 2025)\nToyota Corolla Cross Hybrid (#B8BBC2, 2025)\nToyota Corolla Cross Hybrid (#B8BBC2, 2025)\nToyota Fortuner (#F2F0E9, 2025)\nToyota Fortuner (#F2F0E9, 2025)\nToyota GR Supra (#D9E0E7, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Yaris (#F2F0E9, 2025)\nToyota Yaris (#F2F0E9, 2025)\nToyota Yaris (#F2F0E9, 2025)\nToyota Yaris (#F2F0E9, 2025)\nToyota Yaris (#F2F0E9, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Cross HEV (#C8102E, 2025)\nToyota Yaris Cross HEV (#C8102E, 2025)\nToyota Yaris Cross HEV (#C8102E, 2025)\nวันที่นัดหมาย\nเวลานัดหมาย\nหมายเหตุเพิ่มเติม\n+ บันทึกการนัดหมาย\n📋 ตารางคิวและประวัติการนัดหมาย (0)\nรหัส / ประเภท\tลูกค้า\tวัน-เวลา\tสถานะ\tจัดการ\n◉\nทดลองขับ\n▤\nใบเสนอราคา\n◇\nประกันรถ\nTOYOTY\n\nศูนย์รถยนต์ขายรถพร้อมประกัน ครบจบในที่เดียว\n\nรถยนต์\nรุ่นรถทั้งหมด\nโปรโมชัน\nขอใบเสนอราคา\nบริการ\nนัดทดลองขับ\nประกันรถยนต์\nสถานะคำขอ\nติดต่อ\n\n02-xxx-xxxx\n\nจ–ส 09:00–18:00\n\nDashboard ผู้ดูแล (ตัวอย่าง)\nพื้นที่ผู้จัดการ (ตัวอย่าง)\nพื้นที่พนักงานขาย (ตัวอย่าง)\nSystem Status\n© 2569 TOYOTY · งานกลุ่มวิชา CSI400 · ไม่ใช่เว็บไซต์ของโตโยต้าจริง ราคาและข้อมูลเป็นตัวอย่าง",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/lookups/customers",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/lookups/cars",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/lookups/actor?userId=704b424c-42cf-4934-9eec-c5eb59d04f96",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/appointments?customerId=91666001-6230-4fa3-a8fa-4559d195de24",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "customer-_customer_requests.png"
+  },
+  {
+    "role": "customer",
+    "path": "/customer/transactions",
+    "url": "http://localhost:5173/customer/transactions",
+    "text": "ข้ามไปเนื้อหาหลัก\nTOYOTY\nส่งคำขอ\nประวัติธุรกรรม\nประกันของฉัน\nโปรไฟล์\nรถทั้งหมด\nกลับหน้าเว็บไซต์\nบัญชีของฉัน\nค\nคำขอของฉัน\nนัดทดลองขับ\n\nบัญชีลูกค้า / ประวัติธุรกรรม\n\nประวัติธุรกรรม\n\nดูบิลที่ต้องชำระ ชำระเงิน และย้อนดูการชำระทั้งหมดของคุณ\n\nโหมดสาธิต · ข้อมูลการเงินเป็นข้อมูลจำลอง เก็บเฉพาะแท็บนี้ ยังไม่เชื่อม Payment service และไม่มีการตัดเงินจริง\n\nยอดที่ต้องชำระ\n฿177,800.00\n1 บิล\nรอฝ่ายการเงินตรวจสอบ\n฿0.00\nชำระแล้วทั้งหมด\n฿20,000.00\n\nบิลที่ต้องชำระ\n1 รายการ\nเงินดาวน์\nINV-0005 · Corolla Cross\nรอชำระ\n฿177,800.00\nครบกำหนด 16 พ.ย. 2569\nชำระเงิน\nดูใบแจ้งหนี้\nออเดอร์ของฉัน\nออเดอร์\tรถ\tราคาสุทธิ\tชำระแล้ว\tความคืบหน้า\tสถานะ\nORD-0001\tCorolla Cross\t฿889,000.00\t฿20,000.00\t\n\tอนุมัติแล้ว\nORD-0004\tYaris Cross\t฿799,000.00\t฿0.00\t\n\tยกเลิก\nประวัติการชำระเงิน\nวันที่\tรายการ\tช่องทาง / อ้างอิง\tจำนวนเงิน\tสถานะ\tเอกสาร\n6 พ.ย. 2569 11:00\tชำระเงินจอง\nPAY-0001 · ORD-0001 Corolla Cross\n\tโอนเงินผ่านธนาคาร\nKBANK-2569100701\n\t฿20,000.00\tชำระแล้ว\tINV-0001\n22 ต.ค. 2569 10:00\tคืนเงิน ลูกค้ายกเลิกการจองก่อนออกรถ\nREF-0001 · ORD-0004 Yaris Cross\n\tคืนเข้าช่องทางเดิม\nCARD-SIM-0002\n\t−฿10,000.00\tคืนเงินแล้ว\tINV-0002\n13 ต.ค. 2569 11:00\tชำระเงินจอง\nPAY-0002 · ORD-0004 Yaris Cross\n\tบัตรเครดิต/เดบิต\nCARD-SIM-0002\n\t฿10,000.00\tคืนเงินแล้ว\tINV-0002\nแสดง 3 รายการ\n◉\nทดลองขับ\n▤\nใบเสนอราคา\n◇\nประกันรถ\nTOYOTY\n\nศูนย์รถยนต์ขายรถพร้อมประกัน ครบจบในที่เดียว\n\nรถยนต์\nรุ่นรถทั้งหมด\nโปรโมชัน\nขอใบเสนอราคา\nบริการ\nนัดทดลองขับ\nประกันรถยนต์\nสถานะคำขอ\nติดต่อ\n\n02-xxx-xxxx\n\nจ–ส 09:00–18:00\n\nDashboard ผู้ดูแล (ตัวอย่าง)\nพื้นที่ผู้จัดการ (ตัวอย่าง)\nพื้นที่พนักงานขาย (ตัวอย่าง)\nSystem Status\n© 2569 TOYOTY · งานกลุ่มวิชา CSI400 · ไม่ใช่เว็บไซต์ของโตโยต้าจริง ราคาและข้อมูลเป็นตัวอย่าง",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "customer-_customer_transactions.png"
+  },
+  {
+    "role": "customer",
+    "path": "/customer/insurance",
+    "url": "http://localhost:5173/customer/insurance",
+    "text": "ข้ามไปเนื้อหาหลัก\nTOYOTY\nส่งคำขอ\nประวัติธุรกรรม\nประกันของฉัน\nโปรไฟล์\nรถทั้งหมด\nกลับหน้าเว็บไซต์\nบัญชีของฉัน\nค\nคำขอของฉัน\nนัดทดลองขับ\n\nCUSTOMER / ประกันของฉัน\n\nประกันของฉัน\nยังไม่เปิดใช้งาน\n\nหน้านี้เป็นโครงตามรายการหน้าของระบบ ยังไม่มีข้อมูลหรือการดำเนินรายการจริง\n\n◉\nทดลองขับ\n▤\nใบเสนอราคา\n◇\nประกันรถ\nTOYOTY\n\nศูนย์รถยนต์ขายรถพร้อมประกัน ครบจบในที่เดียว\n\nรถยนต์\nรุ่นรถทั้งหมด\nโปรโมชัน\nขอใบเสนอราคา\nบริการ\nนัดทดลองขับ\nประกันรถยนต์\nสถานะคำขอ\nติดต่อ\n\n02-xxx-xxxx\n\nจ–ส 09:00–18:00\n\nDashboard ผู้ดูแล (ตัวอย่าง)\nพื้นที่ผู้จัดการ (ตัวอย่าง)\nพื้นที่พนักงานขาย (ตัวอย่าง)\nSystem Status\n© 2569 TOYOTY · งานกลุ่มวิชา CSI400 · ไม่ใช่เว็บไซต์ของโตโยต้าจริง ราคาและข้อมูลเป็นตัวอย่าง",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "customer-_customer_insurance.png"
+  },
+  {
+    "role": "customer",
+    "path": "/admin/users",
+    "url": "http://localhost:5173/admin/users",
+    "text": "ไม่มีสิทธิ์เข้าถึงหน้านี้\nบัญชีของฉัน",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "customer-_admin_users.png"
+  },
+  {
+    "role": "customer",
+    "test": "refresh-and-logo",
+    "passed": true
+  },
+  {
+    "role": "seller",
+    "test": "login",
+    "url": "http://localhost:5173/seller/tasks",
+    "httpOnly": true
+  },
+  {
+    "role": "seller",
+    "path": "/seller/tasks",
+    "url": "http://localhost:5173/seller/tasks",
+    "text": "TOYOTY\n\nWORKSPACE\n\nงานของฉัน\nสร้างฟอร์มขาย\nนัดหมายของฉัน\nติดต่อการเงิน\nดูรายการรถ\nกลับหน้าเว็บไซต์\nS\nSeller\nบัญชีสาธิต\nพื้นที่พนักงานขาย\nS\nSeller\nงานของ Seller และติดตามลูกค้า (Seller Task Management)\n\nจัดการเคสลูกค้าที่ได้รับมอบหมาย ติดตามผล และอัปเดตสถานะงานขาย\n\n🔄 รีเฟรช\nงานทั้งหมดในระบบ\n0\nรอดำเนินการ\n0\nกำลังดำเนินการ\n0\nปิดงานสำเร็จ\n0\nงานทั้งหมด\n0\nรอดำเนินการ\n0\nกำลังดูแล\n0\nเสร็จสิ้น\n0\nรหัสงาน\tข้อมูลลูกค้า\tรายละเอียดงาน\tกำหนดเวลา\tสถานะ\tดำเนินการ\nไม่พบรายการงานในหมวดหมู่นี้",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/lookups/sellers",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/lookups/actor?userId=1c9ef1c6-0d73-4c13-ae92-5f2e896b78f6",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/appointments?sellerId=20d923eb-8c7e-426e-874c-a088a994eac0",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "seller-_seller_tasks.png"
+  },
+  {
+    "role": "seller",
+    "path": "/seller/appointments",
+    "url": "http://localhost:5173/seller/appointments",
+    "text": "TOYOTY\n\nWORKSPACE\n\nงานของฉัน\nสร้างฟอร์มขาย\nนัดหมายของฉัน\nติดต่อการเงิน\nดูรายการรถ\nกลับหน้าเว็บไซต์\nS\nSeller\nบัญชีสาธิต\nพื้นที่พนักงานขาย\nS\nSeller\nตารางนัดหมายของฉัน (Seller Appointments)\n\nตรวจสอบคิวทดลองขับ ปรึกษาไฟแนนซ์ และเวลานัดหมายกับลูกค้าประจำวัน\n\nนัดหมายทั้งหมด\n0\nวันนี้\n0 คิว\nรอยืนยัน / มอบหมาย\n0\n📅 ปฏิทินและรายการคิวนัดหมายลูกค้า\nรหัสคิว\tชื่อลูกค้า / เบอร์โทร\tประเภทนัดหมาย / รุ่นรถ\tวันและเวลานัดหมาย\tสถานะคิว\nไม่มีรายการนัดหมายในขณะนี้",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/lookups/sellers",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/lookups/actor?userId=1c9ef1c6-0d73-4c13-ae92-5f2e896b78f6",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/appointments?sellerId=20d923eb-8c7e-426e-874c-a088a994eac0",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "seller-_seller_appointments.png"
+  },
+  {
+    "role": "seller",
+    "path": "/seller/orders/new",
+    "url": "http://localhost:5173/seller/orders/new",
+    "text": "TOYOTY\n\nWORKSPACE\n\nงานของฉัน\nสร้างฟอร์มขาย\nนัดหมายของฉัน\nติดต่อการเงิน\nดูรายการรถ\nกลับหน้าเว็บไซต์\nS\nSeller\nบัญชีสาธิต\nพื้นที่พนักงานขาย\nS\nSeller\nสร้างฟอร์มขายและใบจองรถยนต์ (Sales & Insurance Form)\n\nบันทึกข้อมูลการจองรถยนต์และแพ็กเกจประกันภัย เพื่อส่งขออนุมัติจากผู้จัดการ\n\nแบบฟอร์มบันทึกการขาย\nลูกค้า *\nTest customer\nเบอร์โทรศัพท์ลูกค้า\nรถยนต์ที่จอง (เฉพาะคันที่ยังว่าง)\nBMW M4 Competition (#2867B5, 2025)\nBMW M4 Competition (#2867B5, 2025)\nBYD SEAL Premium (#2B5A92, 2025)\nBYD SEAL Premium (#2B5A92, 2025)\nBYD SEAL Premium (#2B5A92, 2025)\nFerrari 296 GTB (#C8102E, 2025)\nPorsche 911 Carrera (#F0F0EC, 2025)\nToyota Camry (#E8E8E4, 2025)\nToyota Camry (#E8E8E4, 2025)\nToyota Corolla Altis Hybrid (#202126, 2025)\nToyota Corolla Altis Hybrid (#202126, 2025)\nToyota Corolla Altis Hybrid (#202126, 2025)\nToyota Corolla Altis Hybrid (#202126, 2025)\nToyota Corolla Cross Hybrid (#B8BBC2, 2025)\nToyota Corolla Cross Hybrid (#B8BBC2, 2025)\nToyota Corolla Cross Hybrid (#B8BBC2, 2025)\nToyota Corolla Cross Hybrid (#B8BBC2, 2025)\nToyota Corolla Cross Hybrid (#B8BBC2, 2025)\nToyota Corolla Cross Hybrid (#B8BBC2, 2025)\nToyota Fortuner (#F2F0E9, 2025)\nToyota Fortuner (#F2F0E9, 2025)\nToyota GR Supra (#D9E0E7, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Yaris (#F2F0E9, 2025)\nToyota Yaris (#F2F0E9, 2025)\nToyota Yaris (#F2F0E9, 2025)\nToyota Yaris (#F2F0E9, 2025)\nToyota Yaris (#F2F0E9, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Cross HEV (#C8102E, 2025)\nToyota Yaris Cross HEV (#C8102E, 2025)\nToyota Yaris Cross HEV (#C8102E, 2025)\nแพ็กเกจประกันภัยควบคู่\nไม่รับประกันภัยเพิ่มเติม\nราคารถ (บาท)\nค่าประกัน (บาท)\nส่วนลด (บาท)\nพนักงานขายผู้รับผิดชอบ (Seller)\nTest seller\nหมายเหตุ / ของแถมพิเศษ\nบันทึกและส่งขออนุมัติฟอร์มขาย\nสรุปยอดชำระสุทธิ\nราคารถยนต์:\n฿9,999,000\nเบี้ยประกันภัย:\n฿0\nหัก ส่วนลดพิเศษ:\n-฿0\nยอดสุทธิรวม:\n฿9,999,000\nคำแนะนำการใช้งาน\n\nเมื่อบันทึกฟอร์มขายนี้ ระบบจะสร้างคำสั่งซื้อ (Order) และส่งต่อไปยังหน้า Manager อนุมัติรายการ ทันที",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/lookups/customers",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/lookups/insurances",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/lookups/cars",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/lookups/sellers",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/lookups/actor?userId=1c9ef1c6-0d73-4c13-ae92-5f2e896b78f6",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "seller-_seller_orders_new.png"
+  },
+  {
+    "role": "seller",
+    "path": "/seller/orders",
+    "url": "http://localhost:5173/seller/orders",
+    "text": "TOYOTY\n\nWORKSPACE\n\nงานของฉัน\nสร้างฟอร์มขาย\nนัดหมายของฉัน\nติดต่อการเงิน\nดูรายการรถ\nกลับหน้าเว็บไซต์\nS\nSeller\nบัญชีสาธิต\nพื้นที่พนักงานขาย\nS\nSeller\nสร้างและติดตามใบสั่งซื้อ (Seller Orders & Insurance)\n\nออกใบจองรถยนต์ควบคู่แพ็กเกจประกันภัย และส่งขออนุมัติจากผู้จัดการ\n\nInternal server error\nลองใหม่\nออกใบสั่งซื้อ / ใบจองใหม่\nลูกค้าผู้จอง *\nTest customer\nพนักงานขายผู้รับผิดชอบ\nTest seller\nรถยนต์ที่จอง (เฉพาะคันที่ยังว่าง)\nBMW M4 Competition (#2867B5, 2025)\nBMW M4 Competition (#2867B5, 2025)\nBYD SEAL Premium (#2B5A92, 2025)\nBYD SEAL Premium (#2B5A92, 2025)\nBYD SEAL Premium (#2B5A92, 2025)\nFerrari 296 GTB (#C8102E, 2025)\nPorsche 911 Carrera (#F0F0EC, 2025)\nToyota Camry (#E8E8E4, 2025)\nToyota Camry (#E8E8E4, 2025)\nToyota Corolla Altis Hybrid (#202126, 2025)\nToyota Corolla Altis Hybrid (#202126, 2025)\nToyota Corolla Altis Hybrid (#202126, 2025)\nToyota Corolla Altis Hybrid (#202126, 2025)\nToyota Corolla Cross Hybrid (#B8BBC2, 2025)\nToyota Corolla Cross Hybrid (#B8BBC2, 2025)\nToyota Corolla Cross Hybrid (#B8BBC2, 2025)\nToyota Corolla Cross Hybrid (#B8BBC2, 2025)\nToyota Corolla Cross Hybrid (#B8BBC2, 2025)\nToyota Corolla Cross Hybrid (#B8BBC2, 2025)\nToyota Fortuner (#F2F0E9, 2025)\nToyota Fortuner (#F2F0E9, 2025)\nToyota GR Supra (#D9E0E7, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Hilux Revo (#E8E8E4, 2025)\nToyota Yaris (#F2F0E9, 2025)\nToyota Yaris (#F2F0E9, 2025)\nToyota Yaris (#F2F0E9, 2025)\nToyota Yaris (#F2F0E9, 2025)\nToyota Yaris (#F2F0E9, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Ativ (#414852, 2025)\nToyota Yaris Cross HEV (#C8102E, 2025)\nToyota Yaris Cross HEV (#C8102E, 2025)\nToyota Yaris Cross HEV (#C8102E, 2025)\nแพ็กเกจประกันภัยรถยนต์\nไม่รับประกันภัยเพิ่มเติม\nราคารถยนต์ (บาท) — จากระบบ\nเบี้ยประกันภัย (บาท) — จากระบบ\nส่วนลดพิเศษที่ขออนุมัติ (บาท)\nยอดสุทธิรวมประกันภัย\n฿9,999,000\nสร้าง Order และส่งขออนุมัติ\nรายการคำสั่งซื้อและสถานะการอนุมัติ\nเลขที่ Order\tลูกค้า / รุ่นรถ\tแพ็กเกจประกันภัย\tยอดสุทธิ\tสถานะ\tความเห็นผู้จัดการ",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/lookups/customers",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/lookups/sellers",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/lookups/insurances",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/lookups/cars",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/orders",
+        "status": 500
+      },
+      {
+        "url": "http://localhost:3003/api/v1/lookups/actor?userId=1c9ef1c6-0d73-4c13-ae92-5f2e896b78f6",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "seller-_seller_orders.png"
+  },
+  {
+    "role": "seller",
+    "path": "/seller/finance",
+    "url": "http://localhost:5173/seller/finance",
+    "text": "TOYOTY\n\nWORKSPACE\n\nงานของฉัน\nสร้างฟอร์มขาย\nนัดหมายของฉัน\nติดต่อการเงิน\nดูรายการรถ\nกลับหน้าเว็บไซต์\nS\nSeller\nบัญชีสาธิต\nพื้นที่พนักงานขาย\nS\nSeller\n\nWorkspace / ติดต่อการเงิน\n\nติดต่อการเงิน\n\nติดตามสถานะการชำระของลูกค้าที่คุณดูแล และส่งเรื่องถึงฝ่ายการเงิน\n\nโหมดสาธิต · ข้อมูลการเงินเป็นข้อมูลจำลอง เก็บเฉพาะแท็บนี้ ยังไม่เชื่อม Payment service และไม่มีการตัดเงินจริง\n\nออเดอร์ที่กำลังชำระ\n3\nยอดค้างรับจากลูกค้า\n฿3,042,000.00\nบิลเกินกำหนด\n1\nเรื่องรอการเงินตอบ\n1\nสถานะการชำระของลูกค้าฉัน\nออเดอร์\tลูกค้า / รถ\tราคาสุทธิ\tชำระแล้ว\tคงค้าง\tบิลล่าสุด\t\nORD-0001\nอนุมัติแล้ว\n\tคุณวีระ\nCorolla Cross\n\t฿889,000.00\t\n฿20,000.00\n\t฿869,000.00\tINV-0005 เงินดาวน์\nรอชำระ\n\tแจ้งการเงิน\nORD-0002\nรออนุมัติ\n\tคุณสมชาย\nYaris Ativ\n\t฿569,000.00\t\n฿0.00\n\t฿569,000.00\tยังไม่ออกบิล\tแจ้งการเงิน\nORD-0004\nยกเลิก\n\tคุณวีระ\nYaris Cross\n\t฿799,000.00\t\n฿0.00\n\t–\tINV-0002 เงินจอง\nยกเลิกบิล\n\tแจ้งการเงิน\nORD-0005\nอนุมัติแล้ว\n\tคุณมานี\nCamry\n\t฿1,589,000.00\t\n฿0.00\n\t฿1,589,000.00\tINV-0003 เงินจอง\nเกินกำหนด\n\tแจ้งการเงิน\nORD-0007\nอนุมัติแล้ว\n\tคุณชูใจ\nYaris\n\t฿584,000.00\t\n฿0.00\n\t฿584,000.00\tยังไม่ออกบิล\tแจ้งการเงิน\nส่งเรื่องถึงฝ่ายการเงิน\nออเดอร์ *\nเลือกออเดอร์\nORD-0001 · คุณวีระ · Corolla Cross\nORD-0002 · คุณสมชาย · Yaris Ativ\nORD-0004 · คุณวีระ · Yaris Cross\nORD-0005 · คุณมานี · Camry\nORD-0007 · คุณชูใจ · Yaris\nเรื่อง *\nตรวจสอบยอดโอน\nขอใบเสร็จ/ใบกำกับภาษี\nลูกค้ายกเลิก ขอคืนเงิน\nสอบถามยอดค้างชำระ\nอื่น ๆ\nข้อความ *\nส่งเรื่อง\n\nเรื่องที่ส่งไปแล้ว\nสอบถามยอดค้างชำระ\nORD-0005 คุณมานี\n9 พ.ย. 2569 15:00\nรอการเงินตอบ\n\nลูกค้าขอเลื่อนชำระเงินจองไปสิ้นเดือน ได้ไหมคะ",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "seller-_seller_finance.png"
+  },
+  {
+    "role": "seller",
+    "path": "/seller/customers/uat",
+    "url": "http://localhost:5173/seller/customers/uat",
+    "text": "TOYOTY\n\nWORKSPACE\n\nงานของฉัน\nสร้างฟอร์มขาย\nนัดหมายของฉัน\nติดต่อการเงิน\nดูรายการรถ\nกลับหน้าเว็บไซต์\nS\nSeller\nบัญชีสาธิต\nพื้นที่พนักงานขาย\nS\nSeller\n\nSELLER / รายละเอียดลูกค้า\n\nรายละเอียดลูกค้า\nยังไม่เปิดใช้งาน\n\nหน้านี้เป็นโครงตามรายการหน้าของระบบ ยังไม่มีข้อมูลหรือการดำเนินรายการจริง\n\nรหัสลูกค้า: uat · ยังไม่ได้โหลดข้อมูลลูกค้า",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "seller-_seller_customers_uat.png"
+  },
+  {
+    "role": "seller",
+    "test": "refresh-and-logo",
+    "passed": true
+  },
+  {
+    "role": "admin",
+    "test": "login",
+    "url": "http://localhost:5173/admin/users",
+    "httpOnly": true
+  },
+  {
+    "role": "admin",
+    "path": "/admin",
+    "url": "http://localhost:5173/admin",
+    "text": "TOYOTY\n\nWORKSPACE\n\nDashboard\nจัดการรถ\nจัดการโปรโมชัน\nกล่องคำขอลูกค้า\nจัดการผู้ใช้\nจัดการแพ็กเกจประกัน\nการเงิน\n◇ ดูรายการรถ\n◉ สถานะระบบ\n← กลับหน้าเว็บไซต์\nA\nAdmin\nบัญชีสาธิต\n⌕\nค้นหาออเดอร์\nA\nAdmin\n\nWorkspace / ภาพรวม\n\nDashboard\n\nภาพรวมวันนี้ · 12 ต.ค. 2569\n\n↓ ส่งออกรายงาน\n\nข้อมูลทั้งหมดเป็นตัวอย่างจากแบบ UI · ยังไม่เชื่อมระบบผู้ดูแล\n\nรถในสต็อก\n48\n▲ 3\nคำขอใหม่วันนี้\n7\n▲ 2\nออเดอร์รออนุมัติ\n4\n▼ 1\nยอดขายเดือนนี้\n฿12.4M\n▲ 8%\nคำขอลูกค้ารายสัปดาห์\n12\nจ\n18\nอ\n9\nพ\n22\nพฤ\n17\nศ\n26\nส\n20\nอา\nคำขอล่าสุด\nสมชาย · Corolla Cross\nวันนี้ 10:20\nใหม่\nสมหญิง · Fortuner\nเมื่อวาน 16:05\nใหม่\nวีระ · Yaris Ativ\nเมื่อวาน 09:40\nรับงานแล้ว\nออเดอร์รออนุมัติ\nออเดอร์\tลูกค้า\tSeller\tรถ\tยอดสุทธิ\tสถานะ\tรายละเอียด\nORD-0002\tคุณสมชาย\tseller01\tYaris Ativ\t฿ 569,000\tรออนุมัติ\tเปิดดู\nORD-0003\tคุณสมหญิง\tseller02\tFortuner\t฿ 1,349,000\tรออนุมัติ\tเปิดดู\nORD-0001\tคุณวีระ\tseller01\tCorolla Cross\t฿ 889,000\tอนุมัติแล้ว\tเปิดดู\nแสดง 3 รายการตัวอย่าง",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "admin-_admin.png"
+  },
+  {
+    "role": "admin",
+    "path": "/admin/users",
+    "url": "http://localhost:5173/admin/users",
+    "text": "TOYOTY\n\nWORKSPACE\n\nDashboard\nจัดการรถ\nจัดการโปรโมชัน\nกล่องคำขอลูกค้า\nจัดการผู้ใช้\nจัดการแพ็กเกจประกัน\nการเงิน\n◇ ดูรายการรถ\n◉ สถานะระบบ\n← กลับหน้าเว็บไซต์\nA\nAdmin\nบัญชีสาธิต\nA\nAdmin\n\nWORKSPACE / IDENTITY\n\nจัดการผู้ใช้\n\nดูแลบัญชี บทบาท และสิทธิ์การใช้งานของทีม\n\nบัญชีของฉัน ↗\n\nเซสชันเข้าสู่ระบบมีอายุ 1 ชั่วโมง\n\nเพิ่มผู้ใช้\nผู้ใช้ทั้งหมด\n7\nใช้งานอยู่\n7\nผู้ดูแลระบบ\n2\nบัญชีผู้ใช้\nโหลดใหม่\nค้นหาผู้ใช้\nบทบาท\nทุกบทบาท\nลูกค้า\nพนักงานขาย\nผู้จัดการ\nผู้ดูแลระบบ\nการเงิน\nคลังสินค้า\nสถานะ\nทุกสถานะ\nใช้งานอยู่\nระงับการใช้งาน\nผู้ใช้\tอีเมล\tบทบาท\tสถานะ\tจัดการ\nผู้ดูแลระบบ\nb4af9b35-20b5-4561-8148-78f3b56d3812\n\tadmin@carshop.local\tผู้ดูแลระบบ\tใช้งานอยู่\tแก้ไขสิทธิ์\nTest customer\n704b424c-42cf-4934-9eec-c5eb59d04f96\n\trole-customer@carshop.test\tลูกค้า\tใช้งานอยู่\tแก้ไขสิทธิ์\nTest seller\n1c9ef1c6-0d73-4c13-ae92-5f2e896b78f6\n\trole-seller@carshop.test\tพนักงานขาย\tใช้งานอยู่\tแก้ไขสิทธิ์\nTest manager\n04f89cad-287f-48cf-89ae-af8034eb96a1\n\trole-manager@carshop.test\tผู้จัดการ\tใช้งานอยู่\tแก้ไขสิทธิ์\nTest admin\n385fff0d-fe1b-4eca-a1b3-41a7bce2c09e\n\trole-admin@carshop.test\tผู้ดูแลระบบ\tใช้งานอยู่\tบัญชีของคุณ\nTest finance\nad0fb5d4-135a-4c5e-9b55-382006184fe9\n\trole-finance@carshop.test\tการเงิน\tใช้งานอยู่\tแก้ไขสิทธิ์\nTest stock\n8dc0a522-9308-4f97-9aba-195574f02688\n\trole-stock@carshop.test\tคลังสินค้า\tใช้งานอยู่\tแก้ไขสิทธิ์\nแสดง 7 จาก 7 ผู้ใช้",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3001/api/v1/users",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "admin-_admin_users.png"
+  },
+  {
+    "role": "admin",
+    "path": "/admin/cars",
+    "url": "http://localhost:5173/admin/cars",
+    "text": "TOYOTY\n\nWORKSPACE\n\nDashboard\nจัดการรถ\nจัดการโปรโมชัน\nกล่องคำขอลูกค้า\nจัดการผู้ใช้\nจัดการแพ็กเกจประกัน\nการเงิน\n◇ ดูรายการรถ\n◉ สถานะระบบ\n← กลับหน้าเว็บไซต์\nA\nAdmin\nบัญชีสาธิต\nA\nAdmin\n\nCATALOG MANAGEMENT\n\nจัดการรถยนต์\n\nเพิ่มรุ่นรถ เลือกรูปจากเครื่องได้หลายภาพ และตรวจภาพก่อนนำไปแสดงหน้าร้าน\n\nจัดการรถ\nสต็อกสินค้า\nโปรโมชัน\nดูหน้าร้าน ↗\ni\n\nรายการรถ ราคา สต็อก และรูปภาพบันทึกในฐานข้อมูลผ่าน catalog API รูปที่เลือกจากเครื่องจะถูกลดขนาดก่อนบันทึก (สูงสุด 6 รูปต่อรุ่น) การลบรุ่นรถทำไม่ได้ถ้ามีออเดอร์หรือนัดหมายอ้างอิงอยู่\n\nInternal server error\n↻\n\nNEW VEHICLE\n\nเพิ่มรถยนต์รุ่นใหม่\n+ เพิ่มรุ่น\nยี่ห้อ\nชื่อรุ่น\nประเภทรถ\nซีดาน\nแฮทช์แบ็ก\nSUV / ครอสโอเวอร์\nกระบะ\nสปอร์ต\nซูเปอร์คาร์\nรถยนต์ไฟฟ้า\nราคา (บาท)\nปีรุ่น\nสต็อกเริ่มต้น\nพลังงาน\nเบนซิน\nดีเซล\nไฮบริด\nPlug-in Hybrid\nไฟฟ้า 100%\nรุ่นย่อย\nเครื่องยนต์ / มอเตอร์\nกำลัง (แรงม้า)\nจำนวนที่นั่ง\nรูปภาพรถจากเครื่อง\n0/6 รูป\n＋ เลือกไฟล์รูปภาพ (เลือกได้หลายรูป)\n\nเลือกรูปด้านหน้า ด้านข้าง ด้านหลัง หรือภายในรถได้สูงสุด 6 รูป รูปจะถูกลดขนาดก่อนบันทึก\n\nURL รูปรถสำรอง (ไม่บังคับ)\n\nถ้าเลือกไฟล์จากเครื่อง รูปที่เลือกจะเป็นภาพหลักและแกลเลอรีก่อน ส่วน URL ด้านบนจะถูกเพิ่มเป็นภาพต่อท้าย\n\n＋ เพิ่มรถเข้ารายการ\n\nVEHICLE LIBRARY\n\nรายการรถทั้งหมด\n0 รุ่น\n⌕\nค้นหารุ่นรถ\nไปจัดการจำนวนสต็อก →",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3002/api/v1/cars?pageSize=100&include=gallery",
+        "status": 500
+      }
+    ],
+    "errors": [],
+    "screenshot": "admin-_admin_cars.png"
+  },
+  {
+    "role": "admin",
+    "path": "/admin/stock",
+    "url": "http://localhost:5173/admin/stock",
+    "text": "TOYOTY\n\nWORKSPACE\n\nDashboard\nจัดการรถ\nจัดการโปรโมชัน\nกล่องคำขอลูกค้า\nจัดการผู้ใช้\nจัดการแพ็กเกจประกัน\nการเงิน\n◇ ดูรายการรถ\n◉ สถานะระบบ\n← กลับหน้าเว็บไซต์\nA\nAdmin\nบัญชีสาธิต\nA\nAdmin\n\nINVENTORY CONTROL\n\nสต็อกรถยนต์\n\nตรวจจำนวนรถ ปรับยอดสต็อก และดูรุ่นที่ใกล้หมดสต็อก\n\nจัดการรถ\nสต็อกสินค้า\nโปรโมชัน\nดูหน้าร้าน ↗\ni\n\nยอดสต็อกอ่านและบันทึกจากฐานข้อมูลผ่าน catalog API สต็อกของแต่ละรุ่นคือจำนวนรถสถานะ “พร้อมขาย” การเพิ่มหรือลดจะเพิ่มหรือปิดรายการรถรายคัน โดยไม่ลบข้อมูลเดิม\n\nInternal server error\n↻\n▦\nรุ่นรถทั้งหมด\n–\nรุ่นในแคตตาล็อก\n▤\nจำนวนรถรวม\n–\nคันที่พร้อมขาย\n!\nสต็อกใกล้หมด\n–\nรุ่นที่เหลือไม่เกิน 2 คัน\n×\nหมดสต็อก\n–\nรุ่นที่ต้องสั่งเพิ่มหรือสอบถาม\n\nINVENTORY OVERVIEW\n\nรายการจำนวนรถ\n0 รุ่นที่แสดง\n⌕\nค้นหารุ่นรถ\nประเภท\nทุกประเภทรถ\nซีดาน\nแฮทช์แบ็ก\nSUV / ครอสโอเวอร์\nกระบะ\nสปอร์ต\nซูเปอร์คาร์\nรถยนต์ไฟฟ้า\nสถานะสต็อก\nทุกสถานะ\nพร้อมจำหน่าย (> 2)\nเหลือน้อย (1–2)\nหมดสต็อก\nรถยนต์\tราคาเริ่มต้น\tสถานะ\tจำนวนคงเหลือ\tปรับยอด\n\nแนวทางพัฒนาต่อ: เพิ่มการตรวจสิทธิ์ผู้ปรับยอด เก็บประวัติการเคลื่อนไหวสต็อก และกรอกเลขตัวถัง (VIN) จริงแทนค่าชั่วคราวที่ระบบสร้างให้",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3002/api/v1/cars?page=1&pageSize=5&availability=all",
+        "status": 500
+      },
+      {
+        "url": "http://localhost:3002/api/v1/cars/stock-summary",
+        "status": 500
+      }
+    ],
+    "errors": [],
+    "screenshot": "admin-_admin_stock.png"
+  },
+  {
+    "role": "admin",
+    "path": "/admin/promotions",
+    "url": "http://localhost:5173/admin/promotions",
+    "text": "TOYOTY\n\nWORKSPACE\n\nDashboard\nจัดการรถ\nจัดการโปรโมชัน\nกล่องคำขอลูกค้า\nจัดการผู้ใช้\nจัดการแพ็กเกจประกัน\nการเงิน\n◇ ดูรายการรถ\n◉ สถานะระบบ\n← กลับหน้าเว็บไซต์\nA\nAdmin\nบัญชีสาธิต\nA\nAdmin\n\nCAMPAIGN MANAGEMENT\n\nจัดการโปรโมชัน\n\nเพิ่ม แก้ไข ลบ เลือกรูปจากเครื่อง และเปิดหรือปิดแคมเปญที่แสดงบนหน้าร้าน\n\nจัดการรถ\nสต็อกสินค้า\nโปรโมชัน\nดูหน้าลูกค้า ↗\nInternal server error\n↻\ni\n\nโปรโมชันและรูปภาพประกอบเก็บในฐานข้อมูลผ่าน catalog API รูปที่เลือกจากเครื่องจะถูกย่อขนาดก่อนบันทึก\n\nNEW CAMPAIGN\n\nเพิ่มโปรโมชันใหม่\n+ เพิ่มรายการ\nชื่อโปรโมชัน *\nหัวข้อรอง\nป้ายแคมเปญ\nข้อเสนอหลัก *\nรายละเอียดโปรโมชัน *\nรถที่ร่วมรายการ\nเงื่อนไข\nวันเริ่มต้น\nวันสิ้นสุด\nURL รูปภาพ (ไม่บังคับ)\nภาพประกอบโปรโมชัน\nเลือกไฟล์จากเครื่องได้ 1 รูป\n＋ เลือกรูปภาพจากเครื่อง\n\nภาพจะถูกย่อขนาดก่อนบันทึก เพื่อลดการใช้พื้นที่ในเบราว์เซอร์\n\nเปิดแสดงโปรโมชันบนหน้าร้าน\nเพิ่มโปรโมชัน\n\nCAMPAIGN LIBRARY\n\nรายการแคมเปญทั้งหมด\n0 แคมเปญ\n\nเมื่อต่อ Backend ควรเพิ่มสิทธิ์ผู้ดูแล การตั้งวันเริ่ม/สิ้นสุด เงื่อนไขรุ่นรถที่ร่วมรายการ และประวัติผู้แก้ไขแคมเปญ",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3002/api/v1/promotions",
+        "status": 500
+      }
+    ],
+    "errors": [],
+    "screenshot": "admin-_admin_promotions.png"
+  },
+  {
+    "role": "admin",
+    "path": "/admin/requests",
+    "url": "http://localhost:5173/admin/requests",
+    "text": "TOYOTY\n\nWORKSPACE\n\nDashboard\nจัดการรถ\nจัดการโปรโมชัน\nกล่องคำขอลูกค้า\nจัดการผู้ใช้\nจัดการแพ็กเกจประกัน\nการเงิน\n◇ ดูรายการรถ\n◉ สถานะระบบ\n← กลับหน้าเว็บไซต์\nA\nAdmin\nบัญชีสาธิต\nA\nAdmin\nจัดการคำขอลูกค้า (Admin Customer Requests)\n\nตรวจสอบ คัดกรอง และอัปเดตสถานะคำขอนัดหมายจากลูกค้าทุกช่องทาง\n\nคำขอทั้งหมด\n0\nรอดำเนินการ (Pending)\n0\nมอบหมาย Seller แล้ว\n0\nเสร็จสมบูรณ์\n0\nทุกสถานะ (All Status)\nPENDING (รอดำเนินการ)\nASSIGNED (มอบหมายแล้ว)\nCOMPLETED (สำเร็จ)\nCANCELLED (ยกเลิก)\nรหัสคำขอ\tข้อมูลลูกค้า\tบริการ / รุ่นรถ\tเวลานัดหมาย\tผู้รับผิดชอบ\tสถานะ\tการจัดการ (Admin)\nไม่พบรายการคำขอที่ค้นหา",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/appointments",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "admin-_admin_requests.png"
+  },
+  {
+    "role": "admin",
+    "path": "/admin/finance",
+    "url": "http://localhost:5173/admin/finance",
+    "text": "TOYOTY\n\nWORKSPACE\n\nDashboard\nจัดการรถ\nจัดการโปรโมชัน\nกล่องคำขอลูกค้า\nจัดการผู้ใช้\nจัดการแพ็กเกจประกัน\nการเงิน\n◇ ดูรายการรถ\n◉ สถานะระบบ\n← กลับหน้าเว็บไซต์\nA\nAdmin\nบัญชีสาธิต\nA\nAdmin\n\nWorkspace / การเงิน\n\nการเงิน\n\nตรวจยอดโอน ติดตามใบแจ้งหนี้ คืนเงิน และตอบเรื่องจากฝ่ายขาย\n\nรีเซ็ตข้อมูลจำลอง\n\nโหมดสาธิต · ข้อมูลการเงินเป็นข้อมูลจำลอง เก็บเฉพาะแท็บนี้ ยังไม่เชื่อม Payment service และไม่มีการตัดเงินจริง\n\nรอตรวจสอบยอดโอน\n1 รายการ\n฿549,000.00\nรับชำระแล้ว 30 วัน\n฿20,000.00\nยอดค้างชำระ\n฿756,800.00\n1 บิลเกินกำหนด\nเรื่องจากฝ่ายขายรอตอบ\n2\n\nตรวจสอบการชำระ1\nใบแจ้งหนี้\nรับชำระ / คืนเงิน\nเรื่องจากฝ่ายขาย2\nรายการแจ้งโอนรอตรวจสอบ\nแจ้งเมื่อ\tลูกค้า / ออเดอร์\tใบแจ้งหนี้\tเลขอ้างอิง\tยอดแจ้งโอน\tตรวจสอบ\n11 พ.ย. 2569 11:00\tคุณปิติ\nORD-0006 · Hilux Revo\n\tINV-0004\nชำระเต็มจำนวน ฿549,000.00\n\tSCB-2569101208\nPAY-0003\n\t฿549,000.00\tยืนยันยอดไม่พบยอด",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "admin-_admin_finance.png"
+  },
+  {
+    "role": "admin",
+    "path": "/admin/insurance-packages",
+    "url": "http://localhost:5173/admin/insurance-packages",
+    "text": "TOYOTY\n\nWORKSPACE\n\nDashboard\nจัดการรถ\nจัดการโปรโมชัน\nกล่องคำขอลูกค้า\nจัดการผู้ใช้\nจัดการแพ็กเกจประกัน\nการเงิน\n◇ ดูรายการรถ\n◉ สถานะระบบ\n← กลับหน้าเว็บไซต์\nA\nAdmin\nบัญชีสาธิต\nA\nAdmin\n\nADMIN / จัดการแพ็กเกจประกัน\n\nจัดการแพ็กเกจประกัน\nยังไม่เปิดใช้งาน\n\nหน้านี้เป็นโครงตามรายการหน้าของระบบ ยังไม่มีข้อมูลหรือการดำเนินรายการจริง",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "admin-_admin_insurance-packages.png"
+  },
+  {
+    "role": "admin",
+    "test": "refresh-and-logo",
+    "passed": true
+  },
+  {
+    "role": "manager",
+    "test": "login",
+    "url": "http://localhost:5173/manager",
+    "httpOnly": true
+  },
+  {
+    "role": "manager",
+    "path": "/manager",
+    "url": "http://localhost:5173/manager",
+    "text": "TOYOTY\n\nWORKSPACE\n\nDashboard\nมอบหมาย Seller\nอนุมัติธุรกรรม\nออกบิลส่งการเงิน\nภาพรวมนัดหมาย\nรายงานประกัน / referral\n◇ ดูรายการรถ\n◉ สถานะระบบ\n← กลับหน้าเว็บไซต์\nM\nManager\nบัญชีสาธิต\nพื้นที่ผู้จัดการ\nM\nManager\n\nWorkspace / ผู้จัดการ\n\nDashboard\n\nพื้นที่สำหรับติดตามงานขายและประสานงานทีม\n\nโหมดสาธิต · ยังไม่เชื่อมข้อมูลจริงหรือระบบตรวจสิทธิ์\n\nการมอบหมายงานขาย\n\nพื้นที่สำหรับติดตามคำขอลูกค้าและจัดสรรงานให้ทีมขาย\n\nสถานะ: ยังไม่เปิดใช้งาน\n\nการอนุมัติรายการ\n\nพื้นที่สำหรับตรวจสอบรายละเอียดและอนุมัติรายการขาย\n\nสถานะ: ยังไม่เปิดใช้งาน",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "manager-_manager.png"
+  },
+  {
+    "role": "manager",
+    "path": "/manager/assignments",
+    "url": "http://localhost:5173/manager/assignments",
+    "text": "TOYOTY\n\nWORKSPACE\n\nDashboard\nมอบหมาย Seller\nอนุมัติธุรกรรม\nออกบิลส่งการเงิน\nภาพรวมนัดหมาย\nรายงานประกัน / referral\n◇ ดูรายการรถ\n◉ สถานะระบบ\n← กลับหน้าเว็บไซต์\nM\nManager\nบัญชีสาธิต\nพื้นที่ผู้จัดการ\nM\nManager\nมอบหมายงานให้พนักงานขาย (Manager Seller Assignments)\n\nกระจายคำขอลูกค้าให้ Seller ตามความเชี่ยวชาญและปริมาณงานในมือ\n\nTest seller\nดูแลลูกค้าอยู่: 0 รายการ\nรายการคำขอที่รอมอบหมายและจัดการผู้ดูแล\nรหัสคำขอ\tลูกค้า\tรายละเอียดความต้องการ\tวันนัดหมาย\tสถานะปัจจุบัน\tเลือก Seller ผู้รับผิดชอบ\tดำเนินการ",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/lookups/sellers",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/appointments?status=PENDING",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "manager-_manager_assignments.png"
+  },
+  {
+    "role": "manager",
+    "path": "/manager/approvals",
+    "url": "http://localhost:5173/manager/approvals",
+    "text": "TOYOTY\n\nWORKSPACE\n\nDashboard\nมอบหมาย Seller\nอนุมัติธุรกรรม\nออกบิลส่งการเงิน\nภาพรวมนัดหมาย\nรายงานประกัน / referral\n◇ ดูรายการรถ\n◉ สถานะระบบ\n← กลับหน้าเว็บไซต์\nM\nManager\nบัญชีสาธิต\nพื้นที่ผู้จัดการ\nM\nManager\nอนุมัติรายการขายและส่วนลด (Manager Order Approvals)\n\nตรวจสอบใบจองรถยนต์ แคมเปญประกันภัย และอนุมัติวงเงินส่วนลดของทีม Seller\n\nInternal server error\nลองใหม่\nรออนุมัติ (Pending Approval)\n0\nอนุมัติแล้ว (Approved)\n0\nส่งกลับแก้ไข / ไม่อนุมัติ\n0\nรายการใบสั่งซื้อที่ส่งขออนุมัติ\nเลขที่ Order\tลูกค้า / ผู้ขาย\tรถยนต์และประกันภัย\tรายละเอียดราคา\tสถานะ\tความเห็นผู้จัดการ\tการอนุมัติ",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3003/api/v1/orders",
+        "status": 500
+      }
+    ],
+    "errors": [],
+    "screenshot": "manager-_manager_approvals.png"
+  },
+  {
+    "role": "manager",
+    "path": "/manager/invoices",
+    "url": "http://localhost:5173/manager/invoices",
+    "text": "TOYOTY\n\nWORKSPACE\n\nDashboard\nมอบหมาย Seller\nอนุมัติธุรกรรม\nออกบิลส่งการเงิน\nภาพรวมนัดหมาย\nรายงานประกัน / referral\n◇ ดูรายการรถ\n◉ สถานะระบบ\n← กลับหน้าเว็บไซต์\nM\nManager\nบัญชีสาธิต\nพื้นที่ผู้จัดการ\nM\nManager\n\nWorkspace / ออกบิลส่งการเงิน\n\nออกบิลส่งการเงิน\n\nออกใบแจ้งหนี้จากออเดอร์ที่อนุมัติแล้ว ระบบส่งต่อให้ฝ่ายการเงิน (Admin) และลูกค้า\n\nโหมดสาธิต · ข้อมูลการเงินเป็นข้อมูลจำลอง เก็บเฉพาะแท็บนี้ ยังไม่เชื่อม Payment service และไม่มีการตัดเงินจริง\n\nออเดอร์รอออกบิล\n3\nบิลรอชำระ\n2\nบิลเกินกำหนด\n1\nบิลชำระครบ\n1\nออเดอร์และยอดที่ออกบิล\nออเดอร์\tลูกค้า / รถ\tราคาสุทธิ\tออกบิลแล้ว\tยังไม่ออกบิล\tชำระแล้ว\tสถานะออเดอร์\t\nORD-0001\tคุณวีระ\nCorolla Cross · seller01\n\t฿889,000.00\t฿197,800.00\t฿691,200.00\t\n฿20,000.00\n\tอนุมัติแล้ว\tออกบิล\nORD-0002\tคุณสมชาย\nYaris Ativ · seller01\n\t฿569,000.00\t฿0.00\t฿569,000.00\t\n฿0.00\n\tรออนุมัติ\tรออนุมัติก่อน\nORD-0003\tคุณสมหญิง\nFortuner · seller02\n\t฿1,349,000.00\t฿0.00\t฿1,349,000.00\t\n฿0.00\n\tรออนุมัติ\tรออนุมัติก่อน\nORD-0005\tคุณมานี\nCamry · seller01\n\t฿1,589,000.00\t฿30,000.00\t฿1,559,000.00\t\n฿0.00\n\tอนุมัติแล้ว\tออกบิล\nORD-0006\tคุณปิติ\nHilux Revo · seller02\n\t฿549,000.00\t฿549,000.00\t฿0.00\t\n฿0.00\n\tอนุมัติแล้ว\tออกบิลครบแล้ว\nORD-0007\tคุณชูใจ\nYaris · seller01\n\t฿584,000.00\t฿0.00\t฿584,000.00\t\n฿0.00\n\tอนุมัติแล้ว\tออกบิล\nออกใบแจ้งหนี้ใหม่\nออเดอร์ *\nเลือกออเดอร์ที่อนุมัติแล้ว\nORD-0001 · คุณวีระ · Corolla Cross\nORD-0005 · คุณมานี · Camry\nORD-0007 · คุณชูใจ · Yaris\nประเภทบิล *\nเงินจอง\nเงินดาวน์\nชำระเต็มจำนวน\nยอดคงเหลือ\nจำนวนเงิน (บาท) *\nครบกำหนดชำระ *\nหมายเหตุถึงฝ่ายการเงิน\nออกบิลและส่งการเงิน\n\nบิลที่ออกแล้ว\nINV-0005 เงินดาวน์ ฿177,800.00\nORD-0001 คุณวีระ · ครบกำหนด 16 พ.ย. 2569\nรอชำระ\nINV-0004 ชำระเต็มจำนวน ฿549,000.00\nORD-0006 คุณปิติ · ครบกำหนด 14 พ.ย. 2569\nรอชำระ\nINV-0001 เงินจอง ฿20,000.00\nORD-0001 คุณวีระ · ครบกำหนด 8 พ.ย. 2569\nชำระครบ\nINV-0003 เงินจอง ฿30,000.00\nORD-0005 คุณมานี · ครบกำหนด 8 พ.ย. 2569\nเกินกำหนด",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "manager-_manager_invoices.png"
+  },
+  {
+    "role": "manager",
+    "path": "/manager/appointments",
+    "url": "http://localhost:5173/manager/appointments",
+    "text": "TOYOTY\n\nWORKSPACE\n\nDashboard\nมอบหมาย Seller\nอนุมัติธุรกรรม\nออกบิลส่งการเงิน\nภาพรวมนัดหมาย\nรายงานประกัน / referral\n◇ ดูรายการรถ\n◉ สถานะระบบ\n← กลับหน้าเว็บไซต์\nM\nManager\nบัญชีสาธิต\nพื้นที่ผู้จัดการ\nM\nManager\n\nMANAGER / ภาพรวมนัดหมาย\n\nภาพรวมนัดหมาย\nยังไม่เปิดใช้งาน\n\nหน้านี้เป็นโครงตามรายการหน้าของระบบ ยังไม่มีข้อมูลหรือการดำเนินรายการจริง",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "manager-_manager_appointments.png"
+  },
+  {
+    "role": "manager",
+    "path": "/manager/reports/insurance",
+    "url": "http://localhost:5173/manager/reports/insurance",
+    "text": "TOYOTY\n\nWORKSPACE\n\nDashboard\nมอบหมาย Seller\nอนุมัติธุรกรรม\nออกบิลส่งการเงิน\nภาพรวมนัดหมาย\nรายงานประกัน / referral\n◇ ดูรายการรถ\n◉ สถานะระบบ\n← กลับหน้าเว็บไซต์\nM\nManager\nบัญชีสาธิต\nพื้นที่ผู้จัดการ\nM\nManager\n\nMANAGER / รายงานประกัน / referral\n\nรายงานประกัน / referral\nยังไม่เปิดใช้งาน\n\nหน้านี้เป็นโครงตามรายการหน้าของระบบ ยังไม่มีข้อมูลหรือการดำเนินรายการจริง",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "manager-_manager_reports_insurance.png"
+  },
+  {
+    "role": "manager",
+    "test": "refresh-and-logo",
+    "passed": true
+  },
+  {
+    "role": "finance",
+    "test": "login",
+    "url": "http://localhost:5173/account",
+    "httpOnly": true
+  },
+  {
+    "role": "finance",
+    "path": "/account",
+    "url": "http://localhost:5173/account",
+    "text": "ข้ามไปเนื้อหาหลัก\nTOYOTY\nหน้าแรก\nรายการรถ\nโปรโมชัน\nติดต่อเรา\nบัญชีของฉัน\nค\nคำขอของฉัน\nนัดทดลองขับ\n\nMY TOYOTY / บัญชีของฉัน\n\nโปรไฟล์ของฉัน\n\nจัดการข้อมูลของคุณ เพื่อให้ทุกการติดต่อราบรื่น\n\nออกจากระบบ\n\nเซสชันเข้าสู่ระบบมีอายุ 1 ชั่วโมง\n\nT\nTest finance\n\nrole-finance@carshop.test\n\nfinance\n\nข้อมูลส่วนตัวใช้สำหรับการติดต่อและนัดหมายกับทีม TOYOTY\n\nดูคำขอของฉัน →\nข้อมูลส่วนตัว\nชื่อ–นามสกุล\nอีเมล\nอีเมลใช้เป็นบัญชีเข้าสู่ระบบ\nเบอร์โทรศัพท์\nบันทึกการเปลี่ยนแปลง\n◉\nทดลองขับ\n▤\nใบเสนอราคา\n◇\nประกันรถ\nTOYOTY\n\nศูนย์รถยนต์ขายรถพร้อมประกัน ครบจบในที่เดียว\n\nรถยนต์\nรุ่นรถทั้งหมด\nโปรโมชัน\nขอใบเสนอราคา\nบริการ\nนัดทดลองขับ\nประกันรถยนต์\nสถานะคำขอ\nติดต่อ\n\n02-xxx-xxxx\n\nจ–ส 09:00–18:00\n\nDashboard ผู้ดูแล (ตัวอย่าง)\nพื้นที่ผู้จัดการ (ตัวอย่าง)\nพื้นที่พนักงานขาย (ตัวอย่าง)\nSystem Status\n© 2569 TOYOTY · งานกลุ่มวิชา CSI400 · ไม่ใช่เว็บไซต์ของโตโยต้าจริง ราคาและข้อมูลเป็นตัวอย่าง",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "finance-_account.png"
+  },
+  {
+    "role": "finance",
+    "path": "/admin/finance",
+    "url": "http://localhost:5173/admin/finance",
+    "text": "ไม่มีสิทธิ์เข้าถึงหน้านี้\nบัญชีของฉัน",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "finance-_admin_finance.png"
+  },
+  {
+    "role": "finance",
+    "test": "refresh-and-logo",
+    "passed": true
+  },
+  {
+    "role": "stock",
+    "test": "login",
+    "url": "http://localhost:5173/account",
+    "httpOnly": true
+  },
+  {
+    "role": "stock",
+    "path": "/account",
+    "url": "http://localhost:5173/account",
+    "text": "ข้ามไปเนื้อหาหลัก\nTOYOTY\nหน้าแรก\nรายการรถ\nโปรโมชัน\nติดต่อเรา\nบัญชีของฉัน\nค\nคำขอของฉัน\nนัดทดลองขับ\n\nMY TOYOTY / บัญชีของฉัน\n\nโปรไฟล์ของฉัน\n\nจัดการข้อมูลของคุณ เพื่อให้ทุกการติดต่อราบรื่น\n\nออกจากระบบ\n\nเซสชันเข้าสู่ระบบมีอายุ 1 ชั่วโมง\n\nT\nTest stock\n\nrole-stock@carshop.test\n\nstock\n\nข้อมูลส่วนตัวใช้สำหรับการติดต่อและนัดหมายกับทีม TOYOTY\n\nดูคำขอของฉัน →\nข้อมูลส่วนตัว\nชื่อ–นามสกุล\nอีเมล\nอีเมลใช้เป็นบัญชีเข้าสู่ระบบ\nเบอร์โทรศัพท์\nบันทึกการเปลี่ยนแปลง\n◉\nทดลองขับ\n▤\nใบเสนอราคา\n◇\nประกันรถ\nTOYOTY\n\nศูนย์รถยนต์ขายรถพร้อมประกัน ครบจบในที่เดียว\n\nรถยนต์\nรุ่นรถทั้งหมด\nโปรโมชัน\nขอใบเสนอราคา\nบริการ\nนัดทดลองขับ\nประกันรถยนต์\nสถานะคำขอ\nติดต่อ\n\n02-xxx-xxxx\n\nจ–ส 09:00–18:00\n\nDashboard ผู้ดูแล (ตัวอย่าง)\nพื้นที่ผู้จัดการ (ตัวอย่าง)\nพื้นที่พนักงานขาย (ตัวอย่าง)\nSystem Status\n© 2569 TOYOTY · งานกลุ่มวิชา CSI400 · ไม่ใช่เว็บไซต์ของโตโยต้าจริง ราคาและข้อมูลเป็นตัวอย่าง",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "stock-_account.png"
+  },
+  {
+    "role": "stock",
+    "path": "/admin/stock",
+    "url": "http://localhost:5173/admin/stock",
+    "text": "ไม่มีสิทธิ์เข้าถึงหน้านี้\nบัญชีของฉัน",
+    "responses": [
+      {
+        "url": "http://localhost:3001/api/v1/users/me",
+        "status": 200
+      }
+    ],
+    "errors": [],
+    "screenshot": "stock-_admin_stock.png"
+  },
+  {
+    "role": "stock",
+    "test": "refresh-and-logo",
+    "passed": true
+  },
+  {
+    "role": "mobile",
+    "path": "/",
+    "viewport": 390,
+    "scroll": 390,
+    "screenshot": "mobile-_.png"
+  },
+  {
+    "role": "mobile",
+    "path": "/catalog",
+    "viewport": 390,
+    "scroll": 390,
+    "screenshot": "mobile-_catalog.png"
+  },
+  {
+    "role": "mobile",
+    "path": "/login",
+    "viewport": 390,
+    "scroll": 390,
+    "screenshot": "mobile-_login.png"
+  },
+  {
+    "role": "mobile",
+    "path": "/register",
+    "viewport": 390,
+    "scroll": 390,
+    "screenshot": "mobile-_register.png"
+  }
+]

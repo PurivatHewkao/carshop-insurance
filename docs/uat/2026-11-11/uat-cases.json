@@ -1,0 +1,546 @@
+[
+  {
+    "id": "WEB-01",
+    "role": "public",
+    "expected": "public เปิด / แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "HTTP 500: cars?pageSize=100, promotions; หน้าจอแสดง Internal server error",
+    "status": "FAIL",
+    "evidence": "public-_.png"
+  },
+  {
+    "id": "WEB-02",
+    "role": "public",
+    "expected": "public เปิด /catalog แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "HTTP 500: cars?pageSize=100, promotions; หน้าจอแสดง Internal server error",
+    "status": "FAIL",
+    "evidence": "public-_catalog.png"
+  },
+  {
+    "id": "WEB-03",
+    "role": "public",
+    "expected": "public เปิด /catalog/corolla-cross แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "HTTP 500: cars/corolla-cross, promotions; หน้าจอแสดง Internal server error",
+    "status": "FAIL",
+    "evidence": "public-_catalog_corolla-cross.png"
+  },
+  {
+    "id": "WEB-04",
+    "role": "public",
+    "expected": "public เปิด /promotions แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "HTTP 500: promotions; หน้าจอแสดง Internal server error",
+    "status": "FAIL",
+    "evidence": "public-_promotions.png"
+  },
+  {
+    "id": "WEB-05",
+    "role": "public",
+    "expected": "public เปิด /contact แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้า placeholder หรือสาธิต ยังไม่เปิดใช้งานจริง",
+    "status": "BLOCKED",
+    "evidence": "public-_contact.png"
+  },
+  {
+    "id": "WEB-06",
+    "role": "public",
+    "expected": "public เปิด /register แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้าโหลดได้ ไม่พบ pageerror หรือ HTTP 5xx ในช่วงตรวจ; เป็น smoke check ของหน้าจอ",
+    "status": "PASS",
+    "evidence": "public-_register.png"
+  },
+  {
+    "id": "WEB-07",
+    "role": "public",
+    "expected": "public เปิด /login แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้าโหลดได้ ไม่พบ pageerror หรือ HTTP 5xx ในช่วงตรวจ; เป็น smoke check ของหน้าจอ",
+    "status": "PASS",
+    "evidence": "public-_login.png"
+  },
+  {
+    "id": "WEB-08",
+    "role": "public",
+    "expected": "public เปิด /system-status แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้าโหลดได้ ไม่พบ pageerror หรือ HTTP 5xx ในช่วงตรวจ; เป็น smoke check ของหน้าจอ",
+    "status": "PASS",
+    "evidence": "public-_system-status.png"
+  },
+  {
+    "id": "WEB-09",
+    "role": "public",
+    "expected": "เปิด URL ที่ไม่มี ต้องแสดงหน้าไม่พบ",
+    "actual": "ไม่พบหน้านี้",
+    "status": "PASS",
+    "evidence": "public-_nonexistent-uat.png"
+  },
+  {
+    "id": "WEB-10",
+    "role": "customer",
+    "expected": "Login customer ด้วยบัญชีทดสอบ แล้วเข้าสู่หน้าของ role และได้ HttpOnly cookie",
+    "actual": "/customer/profile | HttpOnly=True",
+    "status": "PASS",
+    "evidence": "browser-results.json"
+  },
+  {
+    "id": "WEB-11",
+    "role": "customer",
+    "expected": "customer เปิด /customer/profile แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้าโหลดได้ ไม่พบ pageerror หรือ HTTP 5xx ในช่วงตรวจ; เป็น smoke check ของหน้าจอ",
+    "status": "PASS",
+    "evidence": "customer-_customer_profile.png"
+  },
+  {
+    "id": "WEB-12",
+    "role": "customer",
+    "expected": "customer เปิด /account แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้าโหลดได้ ไม่พบ pageerror หรือ HTTP 5xx ในช่วงตรวจ; เป็น smoke check ของหน้าจอ",
+    "status": "PASS",
+    "evidence": "customer-_account.png"
+  },
+  {
+    "id": "WEB-13",
+    "role": "customer",
+    "expected": "customer เปิด /customer/requests แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้าโหลดได้ ไม่พบ pageerror หรือ HTTP 5xx ในช่วงตรวจ; เป็น smoke check ของหน้าจอ",
+    "status": "PASS",
+    "evidence": "customer-_customer_requests.png"
+  },
+  {
+    "id": "WEB-14",
+    "role": "customer",
+    "expected": "customer เปิด /customer/transactions แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้าแสดงข้อมูลจำลอง ไม่ยืนยันผลจาก business API หรือ DB",
+    "status": "BLOCKED",
+    "evidence": "customer-_customer_transactions.png"
+  },
+  {
+    "id": "WEB-15",
+    "role": "customer",
+    "expected": "customer เปิด /customer/insurance แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้า placeholder หรือสาธิต ยังไม่เปิดใช้งานจริง",
+    "status": "BLOCKED",
+    "evidence": "customer-_customer_insurance.png"
+  },
+  {
+    "id": "WEB-16",
+    "role": "customer",
+    "expected": "customer เปิด /admin/users ต้องถูกปฏิเสธตาม route guard ปัจจุบัน",
+    "actual": "แสดงไม่มีสิทธิ์เข้าถึงหน้านี้",
+    "status": "PASS",
+    "evidence": "customer-_admin_users.png"
+  },
+  {
+    "id": "WEB-17",
+    "role": "customer",
+    "expected": "customer เปิด Account > Refresh > กด logo ใน header ต้องยังเห็นบัญชีของฉัน",
+    "actual": "Reload Account สำเร็จ และ Home แสดงลิงก์บัญชีของฉัน",
+    "status": "PASS",
+    "evidence": "browser-results.json"
+  },
+  {
+    "id": "WEB-18",
+    "role": "seller",
+    "expected": "Login seller ด้วยบัญชีทดสอบ แล้วเข้าสู่หน้าของ role และได้ HttpOnly cookie",
+    "actual": "/seller/tasks | HttpOnly=True",
+    "status": "PASS",
+    "evidence": "browser-results.json"
+  },
+  {
+    "id": "WEB-19",
+    "role": "seller",
+    "expected": "seller เปิด /seller/tasks แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้าโหลดได้ ไม่พบ pageerror หรือ HTTP 5xx ในช่วงตรวจ; เป็น smoke check ของหน้าจอ",
+    "status": "PASS",
+    "evidence": "seller-_seller_tasks.png"
+  },
+  {
+    "id": "WEB-20",
+    "role": "seller",
+    "expected": "seller เปิด /seller/appointments แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้าโหลดได้ ไม่พบ pageerror หรือ HTTP 5xx ในช่วงตรวจ; เป็น smoke check ของหน้าจอ",
+    "status": "PASS",
+    "evidence": "seller-_seller_appointments.png"
+  },
+  {
+    "id": "WEB-21",
+    "role": "seller",
+    "expected": "seller เปิด /seller/orders/new แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้าโหลดได้ ไม่พบ pageerror หรือ HTTP 5xx ในช่วงตรวจ; เป็น smoke check ของหน้าจอ",
+    "status": "PASS",
+    "evidence": "seller-_seller_orders_new.png"
+  },
+  {
+    "id": "WEB-22",
+    "role": "seller",
+    "expected": "seller เปิด /seller/orders แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "HTTP 500: orders; หน้าจอแสดง Internal server error",
+    "status": "FAIL",
+    "evidence": "seller-_seller_orders.png"
+  },
+  {
+    "id": "WEB-23",
+    "role": "seller",
+    "expected": "seller เปิด /seller/finance แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้าแสดงข้อมูลจำลอง ไม่ยืนยันผลจาก business API หรือ DB",
+    "status": "BLOCKED",
+    "evidence": "seller-_seller_finance.png"
+  },
+  {
+    "id": "WEB-24",
+    "role": "seller",
+    "expected": "seller เปิด /seller/customers/uat แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้า placeholder หรือสาธิต ยังไม่เปิดใช้งานจริง",
+    "status": "BLOCKED",
+    "evidence": "seller-_seller_customers_uat.png"
+  },
+  {
+    "id": "WEB-25",
+    "role": "seller",
+    "expected": "seller เปิด Account > Refresh > กด logo ใน header ต้องยังเห็นบัญชีของฉัน",
+    "actual": "Reload Account สำเร็จ และ Home แสดงลิงก์บัญชีของฉัน",
+    "status": "PASS",
+    "evidence": "browser-results.json"
+  },
+  {
+    "id": "WEB-26",
+    "role": "admin",
+    "expected": "Login admin ด้วยบัญชีทดสอบ แล้วเข้าสู่หน้าของ role และได้ HttpOnly cookie",
+    "actual": "/admin/users | HttpOnly=True",
+    "status": "PASS",
+    "evidence": "browser-results.json"
+  },
+  {
+    "id": "WEB-27",
+    "role": "admin",
+    "expected": "admin เปิด /admin แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้าแสดงข้อมูลจำลอง ไม่ยืนยันผลจาก business API หรือ DB",
+    "status": "BLOCKED",
+    "evidence": "admin-_admin.png"
+  },
+  {
+    "id": "WEB-28",
+    "role": "admin",
+    "expected": "admin เปิด /admin/users แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้าโหลดได้ ไม่พบ pageerror หรือ HTTP 5xx ในช่วงตรวจ; เป็น smoke check ของหน้าจอ",
+    "status": "PASS",
+    "evidence": "admin-_admin_users.png"
+  },
+  {
+    "id": "WEB-29",
+    "role": "admin",
+    "expected": "admin เปิด /admin/cars แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "HTTP 500: cars?pageSize=100&include=gallery; หน้าจอแสดง Internal server error",
+    "status": "FAIL",
+    "evidence": "admin-_admin_cars.png"
+  },
+  {
+    "id": "WEB-30",
+    "role": "admin",
+    "expected": "admin เปิด /admin/stock แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "HTTP 500: cars/stock-summary, cars?page=1&pageSize=5&availability=all; หน้าจอแสดง Internal server error",
+    "status": "FAIL",
+    "evidence": "admin-_admin_stock.png"
+  },
+  {
+    "id": "WEB-31",
+    "role": "admin",
+    "expected": "admin เปิด /admin/promotions แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "HTTP 500: promotions; หน้าจอแสดง Internal server error",
+    "status": "FAIL",
+    "evidence": "admin-_admin_promotions.png"
+  },
+  {
+    "id": "WEB-32",
+    "role": "admin",
+    "expected": "admin เปิด /admin/requests แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้าโหลดได้ ไม่พบ pageerror หรือ HTTP 5xx ในช่วงตรวจ; เป็น smoke check ของหน้าจอ",
+    "status": "PASS",
+    "evidence": "admin-_admin_requests.png"
+  },
+  {
+    "id": "WEB-33",
+    "role": "admin",
+    "expected": "admin เปิด /admin/finance แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้าแสดงข้อมูลจำลอง ไม่ยืนยันผลจาก business API หรือ DB",
+    "status": "BLOCKED",
+    "evidence": "admin-_admin_finance.png"
+  },
+  {
+    "id": "WEB-34",
+    "role": "admin",
+    "expected": "admin เปิด /admin/insurance-packages แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้า placeholder หรือสาธิต ยังไม่เปิดใช้งานจริง",
+    "status": "BLOCKED",
+    "evidence": "admin-_admin_insurance-packages.png"
+  },
+  {
+    "id": "WEB-35",
+    "role": "admin",
+    "expected": "admin เปิด Account > Refresh > กด logo ใน header ต้องยังเห็นบัญชีของฉัน",
+    "actual": "Reload Account สำเร็จ และ Home แสดงลิงก์บัญชีของฉัน",
+    "status": "PASS",
+    "evidence": "browser-results.json"
+  },
+  {
+    "id": "WEB-36",
+    "role": "manager",
+    "expected": "Login manager ด้วยบัญชีทดสอบ แล้วเข้าสู่หน้าของ role และได้ HttpOnly cookie",
+    "actual": "/manager | HttpOnly=True",
+    "status": "PASS",
+    "evidence": "browser-results.json"
+  },
+  {
+    "id": "WEB-37",
+    "role": "manager",
+    "expected": "manager เปิด /manager แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้า placeholder หรือสาธิต ยังไม่เปิดใช้งานจริง",
+    "status": "BLOCKED",
+    "evidence": "manager-_manager.png"
+  },
+  {
+    "id": "WEB-38",
+    "role": "manager",
+    "expected": "manager เปิด /manager/assignments แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้าโหลดได้ ไม่พบ pageerror หรือ HTTP 5xx ในช่วงตรวจ; เป็น smoke check ของหน้าจอ",
+    "status": "PASS",
+    "evidence": "manager-_manager_assignments.png"
+  },
+  {
+    "id": "WEB-39",
+    "role": "manager",
+    "expected": "manager เปิด /manager/approvals แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "HTTP 500: orders; หน้าจอแสดง Internal server error",
+    "status": "FAIL",
+    "evidence": "manager-_manager_approvals.png"
+  },
+  {
+    "id": "WEB-40",
+    "role": "manager",
+    "expected": "manager เปิด /manager/invoices แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้าแสดงข้อมูลจำลอง ไม่ยืนยันผลจาก business API หรือ DB",
+    "status": "BLOCKED",
+    "evidence": "manager-_manager_invoices.png"
+  },
+  {
+    "id": "WEB-41",
+    "role": "manager",
+    "expected": "manager เปิด /manager/appointments แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้า placeholder หรือสาธิต ยังไม่เปิดใช้งานจริง",
+    "status": "BLOCKED",
+    "evidence": "manager-_manager_appointments.png"
+  },
+  {
+    "id": "WEB-42",
+    "role": "manager",
+    "expected": "manager เปิด /manager/reports/insurance แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้า placeholder หรือสาธิต ยังไม่เปิดใช้งานจริง",
+    "status": "BLOCKED",
+    "evidence": "manager-_manager_reports_insurance.png"
+  },
+  {
+    "id": "WEB-43",
+    "role": "manager",
+    "expected": "manager เปิด Account > Refresh > กด logo ใน header ต้องยังเห็นบัญชีของฉัน",
+    "actual": "Reload Account สำเร็จ และ Home แสดงลิงก์บัญชีของฉัน",
+    "status": "PASS",
+    "evidence": "browser-results.json"
+  },
+  {
+    "id": "WEB-44",
+    "role": "finance",
+    "expected": "Login finance ด้วยบัญชีทดสอบ แล้วเข้าสู่หน้าของ role และได้ HttpOnly cookie",
+    "actual": "/account | HttpOnly=True",
+    "status": "PASS",
+    "evidence": "browser-results.json"
+  },
+  {
+    "id": "WEB-45",
+    "role": "finance",
+    "expected": "finance เปิด /account แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้าโหลดได้ ไม่พบ pageerror หรือ HTTP 5xx ในช่วงตรวจ; เป็น smoke check ของหน้าจอ",
+    "status": "PASS",
+    "evidence": "finance-_account.png"
+  },
+  {
+    "id": "WEB-46",
+    "role": "finance",
+    "expected": "finance เปิด /admin/finance ต้องถูกปฏิเสธตาม route guard ปัจจุบัน",
+    "actual": "แสดงไม่มีสิทธิ์เข้าถึงหน้านี้",
+    "status": "PASS",
+    "evidence": "finance-_admin_finance.png"
+  },
+  {
+    "id": "WEB-47",
+    "role": "finance",
+    "expected": "finance เปิด Account > Refresh > กด logo ใน header ต้องยังเห็นบัญชีของฉัน",
+    "actual": "Reload Account สำเร็จ และ Home แสดงลิงก์บัญชีของฉัน",
+    "status": "PASS",
+    "evidence": "browser-results.json"
+  },
+  {
+    "id": "WEB-48",
+    "role": "stock",
+    "expected": "Login stock ด้วยบัญชีทดสอบ แล้วเข้าสู่หน้าของ role และได้ HttpOnly cookie",
+    "actual": "/account | HttpOnly=True",
+    "status": "PASS",
+    "evidence": "browser-results.json"
+  },
+  {
+    "id": "WEB-49",
+    "role": "stock",
+    "expected": "stock เปิด /account แล้วอ่านข้อมูลหรือหน้าที่ตรงกับสิทธิ์ได้",
+    "actual": "หน้าโหลดได้ ไม่พบ pageerror หรือ HTTP 5xx ในช่วงตรวจ; เป็น smoke check ของหน้าจอ",
+    "status": "PASS",
+    "evidence": "stock-_account.png"
+  },
+  {
+    "id": "WEB-50",
+    "role": "stock",
+    "expected": "stock เปิด /admin/stock ต้องถูกปฏิเสธตาม route guard ปัจจุบัน",
+    "actual": "แสดงไม่มีสิทธิ์เข้าถึงหน้านี้",
+    "status": "PASS",
+    "evidence": "stock-_admin_stock.png"
+  },
+  {
+    "id": "WEB-51",
+    "role": "stock",
+    "expected": "stock เปิด Account > Refresh > กด logo ใน header ต้องยังเห็นบัญชีของฉัน",
+    "actual": "Reload Account สำเร็จ และ Home แสดงลิงก์บัญชีของฉัน",
+    "status": "PASS",
+    "evidence": "browser-results.json"
+  },
+  {
+    "id": "WEB-52",
+    "role": "mobile",
+    "expected": "เปิด / ที่ 390 × 844 ต้องไม่มี horizontal overflow",
+    "actual": "viewport 390 px / content 390 px; ตรวจเฉพาะ layout",
+    "status": "PASS",
+    "evidence": "mobile-_.png"
+  },
+  {
+    "id": "WEB-53",
+    "role": "mobile",
+    "expected": "เปิด /catalog ที่ 390 × 844 ต้องไม่มี horizontal overflow",
+    "actual": "viewport 390 px / content 390 px; ตรวจเฉพาะ layout",
+    "status": "PASS",
+    "evidence": "mobile-_catalog.png"
+  },
+  {
+    "id": "WEB-54",
+    "role": "mobile",
+    "expected": "เปิด /login ที่ 390 × 844 ต้องไม่มี horizontal overflow",
+    "actual": "viewport 390 px / content 390 px; ตรวจเฉพาะ layout",
+    "status": "PASS",
+    "evidence": "mobile-_login.png"
+  },
+  {
+    "id": "WEB-55",
+    "role": "mobile",
+    "expected": "เปิด /register ที่ 390 × 844 ต้องไม่มี horizontal overflow",
+    "actual": "viewport 390 px / content 390 px; ตรวจเฉพาะ layout",
+    "status": "PASS",
+    "evidence": "mobile-_register.png"
+  },
+  {
+    "id": "REG-01",
+    "role": "flow",
+    "expected": "รหัสยืนยันไม่ตรงกัน ต้องไม่สร้างบัญชี",
+    "actual": "รหัสผ่านทั้งสองช่องไม่ตรงกัน",
+    "status": "PASS",
+    "evidence": "flow-results.json"
+  },
+  {
+    "id": "REG-02",
+    "role": "flow",
+    "expected": "สมัครสมาชิก สร้าง customer ใน DB และเข้า profile",
+    "actual": "{\"url\": \"http://localhost:5173/customer/profile\", \"userId\": \"b0c1aa58-1d63-47c5-bbc6-7cf2153e7764\", \"customerId\": \"9f141843-39b1-4d29-b4bc-d1ded78539eb\", \"role\": \"CUSTOMER\"}",
+    "status": "PASS",
+    "evidence": "flow-results.json"
+  },
+  {
+    "id": "REG-03",
+    "role": "flow",
+    "expected": "อีเมลซ้ำถูกปฏิเสธ 409",
+    "actual": "409",
+    "status": "PASS",
+    "evidence": "flow-results.json"
+  },
+  {
+    "id": "AUTH-01",
+    "role": "flow",
+    "expected": "HttpOnly cookie และไม่มี JWT ใน web storage",
+    "actual": "{\"httpOnly\": true, \"sameSite\": \"Lax\", \"local\": [], \"session\": [], \"cookie\": false}",
+    "status": "PASS",
+    "evidence": "flow-results.json"
+  },
+  {
+    "id": "PROF-01",
+    "role": "flow",
+    "expected": "แก้ชื่อแล้ว refresh ต้องตรง DB",
+    "actual": "UAT-20261111-d74bb1 Updated",
+    "status": "PASS",
+    "evidence": "flow-results.json"
+  },
+  {
+    "id": "APT-01",
+    "role": "flow",
+    "expected": "สร้างนัดหมายผ่านหน้าลูกค้าแล้ว DB มี note UAT และ PENDING",
+    "actual": "{\"http\": 201, \"rows\": [{\"id\": \"da8e9e1f-be23-445d-9072-1217202fe98a\", \"status\": \"PENDING\", \"note\": \"UAT-20261111-d74bb1\", \"customer_id\": \"9f141843-39b1-4d29-b4bc-d1ded78539eb\"}]}",
+    "status": "PASS",
+    "evidence": "flow-results.json"
+  },
+  {
+    "id": "APT-02",
+    "role": "flow",
+    "expected": "นัดหมายซ้ำต้อง HTTP 409",
+    "actual": "{\"code\": 409, \"body\": {\"error\": {\"code\": \"DUPLICATE_APPOINTMENT\", \"message\": \"You already have this appointment\"}}}",
+    "status": "PASS",
+    "evidence": "flow-results.json"
+  },
+  {
+    "id": "SEC-01",
+    "role": "flow",
+    "expected": "ผู้ไม่ login อ่านนัดหมายไม่ได้ ต้อง 401 หรือ 403",
+    "actual": "{\"http\": 200, \"exposedUatAppointment\": true}",
+    "status": "FAIL",
+    "evidence": "flow-results.json"
+  },
+  {
+    "id": "SEC-02",
+    "role": "flow",
+    "expected": "ผู้ไม่ login แก้สถานะไม่ได้ ต้อง 401 หรือ 403",
+    "actual": "{\"http\": 200, \"dbStatus\": \"CANCELLED\"}",
+    "status": "FAIL",
+    "evidence": "flow-results.json"
+  },
+  {
+    "id": "APT-03",
+    "role": "flow",
+    "expected": "สร้างนัดหมายใหม่แล้ว Manager assign และ Seller complete ได้",
+    "actual": "{\"method\": \"API without authentication; functional result only\", \"id\": \"aa9cd557-9cb4-4ed3-96b2-007fdf64c4ea\", \"create\": 201, \"assign\": 200, \"confirm\": 200, \"complete\": 200, \"state\": \"COMPLETED\"}",
+    "status": "PASS",
+    "evidence": "flow-results.json"
+  },
+  {
+    "id": "ORDER-01",
+    "role": "flow",
+    "expected": "สร้าง order ด้วยข้อมูล UAT ต้องได้ 201 และยอดจาก DB",
+    "actual": "{\"http\": 500, \"error\": {\"code\": \"INTERNAL_ERROR\", \"message\": \"Internal server error\"}}",
+    "status": "FAIL",
+    "evidence": "flow-results.json"
+  },
+  {
+    "id": "LOGOUT-01",
+    "role": "flow",
+    "expected": "Logout ล้าง cookie และเข้า profile ซ้ำต้องไป login",
+    "actual": "http://localhost:5173/login",
+    "status": "PASS",
+    "evidence": "flow-results.json"
+  },
+  {
+    "id": "LOGIN-NEG",
+    "role": "flow",
+    "expected": "รหัสผ่านผิดต้องแสดง error และยังอยู่ login",
+    "actual": "เซสชันหมดอายุหรือข้อมูลเข้าสู่ระบบไม่ถูกต้อง กรุณาเข้าสู่ระบบอีกครั้ง",
+    "status": "PASS",
+    "evidence": "flow-results.json"
+  }
+]

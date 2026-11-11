@@ -1,0 +1,172 @@
+{
+  "run": "UAT-20261111-d74bb1",
+  "email": "uat-20261111-d74bb1@example.test",
+  "results": [
+    {
+      "id": "REG-01",
+      "expected": "รหัสยืนยันไม่ตรงกัน ต้องไม่สร้างบัญชี",
+      "status": "PASS",
+      "actual": "รหัสผ่านทั้งสองช่องไม่ตรงกัน"
+    },
+    {
+      "id": "REG-02",
+      "expected": "สมัครสมาชิก สร้าง customer ใน DB และเข้า profile",
+      "status": "PASS",
+      "actual": {
+        "url": "http://localhost:5173/customer/profile",
+        "userId": "b0c1aa58-1d63-47c5-bbc6-7cf2153e7764",
+        "customerId": "9f141843-39b1-4d29-b4bc-d1ded78539eb",
+        "role": "CUSTOMER"
+      }
+    },
+    {
+      "id": "REG-03",
+      "expected": "อีเมลซ้ำถูกปฏิเสธ 409",
+      "status": "PASS",
+      "actual": 409
+    },
+    {
+      "id": "AUTH-01",
+      "expected": "HttpOnly cookie และไม่มี JWT ใน web storage",
+      "status": "PASS",
+      "actual": {
+        "httpOnly": true,
+        "sameSite": "Lax",
+        "local": [],
+        "session": [],
+        "cookie": false
+      }
+    },
+    {
+      "id": "PROF-01",
+      "expected": "แก้ชื่อแล้ว refresh ต้องตรง DB",
+      "status": "PASS",
+      "actual": "UAT-20261111-d74bb1 Updated"
+    },
+    {
+      "id": "APT-01",
+      "expected": "สร้างนัดหมายผ่านหน้าลูกค้าแล้ว DB มี note UAT และ PENDING",
+      "status": "PASS",
+      "actual": {
+        "http": 201,
+        "rows": [
+          {
+            "id": "da8e9e1f-be23-445d-9072-1217202fe98a",
+            "status": "PENDING",
+            "note": "UAT-20261111-d74bb1",
+            "customer_id": "9f141843-39b1-4d29-b4bc-d1ded78539eb"
+          }
+        ]
+      }
+    },
+    {
+      "id": "APT-02",
+      "expected": "นัดหมายซ้ำต้อง HTTP 409",
+      "status": "PASS",
+      "actual": {
+        "code": 409,
+        "body": {
+          "error": {
+            "code": "DUPLICATE_APPOINTMENT",
+            "message": "You already have this appointment"
+          }
+        }
+      }
+    },
+    {
+      "id": "SEC-01",
+      "expected": "ผู้ไม่ login อ่านนัดหมายไม่ได้ ต้อง 401 หรือ 403",
+      "status": "FAIL",
+      "actual": {
+        "http": 200,
+        "exposedUatAppointment": true
+      }
+    },
+    {
+      "id": "SEC-02",
+      "expected": "ผู้ไม่ login แก้สถานะไม่ได้ ต้อง 401 หรือ 403",
+      "status": "FAIL",
+      "actual": {
+        "http": 200,
+        "dbStatus": "CANCELLED"
+      }
+    },
+    {
+      "id": "APT-03",
+      "expected": "สร้างนัดหมายใหม่แล้ว Manager assign และ Seller complete ได้",
+      "status": "PASS",
+      "actual": {
+        "method": "API without authentication; functional result only",
+        "id": "aa9cd557-9cb4-4ed3-96b2-007fdf64c4ea",
+        "create": 201,
+        "assign": 200,
+        "confirm": 200,
+        "complete": 200,
+        "state": "COMPLETED"
+      }
+    },
+    {
+      "id": "ORDER-01",
+      "expected": "สร้าง order ด้วยข้อมูล UAT ต้องได้ 201 และยอดจาก DB",
+      "status": "FAIL",
+      "actual": {
+        "http": 500,
+        "error": {
+          "code": "INTERNAL_ERROR",
+          "message": "Internal server error"
+        }
+      }
+    },
+    {
+      "id": "LOGOUT-01",
+      "expected": "Logout ล้าง cookie และเข้า profile ซ้ำต้องไป login",
+      "status": "PASS",
+      "actual": "http://localhost:5173/login"
+    },
+    {
+      "id": "LOGIN-NEG",
+      "expected": "รหัสผ่านผิดต้องแสดง error และยังอยู่ login",
+      "status": "PASS",
+      "actual": "เซสชันหมดอายุหรือข้อมูลเข้าสู่ระบบไม่ถูกต้อง กรุณาเข้าสู่ระบบอีกครั้ง"
+    },
+    {
+      "id": "DB-01",
+      "expected": "ตรวจ schema ประกอบการวิเคราะห์ error",
+      "status": "INFO",
+      "actual": {
+        "ordersColumns": [
+          "id",
+          "customer_id",
+          "seller_id",
+          "car_id",
+          "promotion_id",
+          "order_date",
+          "subtotal",
+          "discount",
+          "total_amount",
+          "status",
+          "active_car_id",
+          "created_at",
+          "updated_at"
+        ],
+        "tables": [
+          "appointments",
+          "assignments",
+          "car_images",
+          "car_models",
+          "cars",
+          "customers",
+          "employees",
+          "identity_admin_lock",
+          "identity_revoked_tokens",
+          "insurances",
+          "invoices",
+          "orders",
+          "payments",
+          "promotions",
+          "users"
+        ]
+      }
+    }
+  ]
+}

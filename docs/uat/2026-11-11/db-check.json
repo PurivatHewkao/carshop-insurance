@@ -1,0 +1,40 @@
+{
+  "users": [
+    {
+      "email": "uat-20261111-d74bb1@example.test",
+      "role": "CUSTOMER"
+    },
+    {
+      "email": "uat-20261111-e0153a@example.test",
+      "role": "CUSTOMER"
+    }
+  ],
+  "appointments": [
+    {
+      "id": "aa9cd557-9cb4-4ed3-96b2-007fdf64c4ea",
+      "status": "COMPLETED",
+      "note": "UAT-20261111-d74bb1 lifecycle"
+    },
+    {
+      "id": "da8e9e1f-be23-445d-9072-1217202fe98a",
+      "status": "CANCELLED",
+      "note": "UAT-20261111-d74bb1"
+    }
+  ],
+  "orders": [
+    {
+      "count": 0
+    }
+  ],
+  "catalog": [
+    {
+      "models": 15,
+      "cars": 47,
+      "promotions": 5
+    }
+  ],
+  "catalogWithDbConfig": {
+    "count": 15,
+    "total": 15
+  }
+}
