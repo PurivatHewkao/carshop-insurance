@@ -58,8 +58,29 @@ try {
   await page.locator('[name=name]').fill('Browser Updated');
   await page.getByRole('button', { name: 'บันทึกการเปลี่ยนแปลง' }).click();
   await page.getByText('บันทึกข้อมูลโปรไฟล์แล้ว', { exact: true }).waitFor();
+  const showroomNav = page.locator('header.s-nav');
+  await showroomNav.getByRole('link', { name: 'TOYOTY หน้าแรก' }).click();
+  await page.waitForURL(url + '/');
+  const accountLink = showroomNav.getByRole('link', {
+    name: 'บัญชีของฉัน',
+    exact: true,
+  });
+  await accountLink.waitFor();
+  assert.equal(
+    await showroomNav
+      .getByRole('link', { name: 'เข้าสู่ระบบ', exact: true })
+      .count(),
+    0,
+  );
+  await page.reload();
+  await accountLink.click();
+  await page.waitForURL('**/account');
   await page.getByRole('button', { name: 'ออกจากระบบ', exact: true }).click();
   await page.waitForURL('**/login');
+  await showroomNav.getByRole('link', { name: 'TOYOTY หน้าแรก' }).click();
+  await showroomNav
+    .getByRole('link', { name: 'เข้าสู่ระบบ', exact: true })
+    .waitFor();
   assert.ok(
     !(await page.context().cookies()).some(
       (cookie) => cookie.name === 'carshop_identity_session',
