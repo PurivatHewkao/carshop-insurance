@@ -25,6 +25,6 @@ function VerifiedRole({ roles, children }) {
 }
 export default function RequireRole({ roles, children }) {
   const session = useSyncExternalStore(subscribeSession, getSession);
-  if (!session) return <Navigate to="/login" replace />;
+  if (session === null) return <Navigate to="/login" replace />;
   return <VerifiedRole roles={roles}>{children}</VerifiedRole>;
 }

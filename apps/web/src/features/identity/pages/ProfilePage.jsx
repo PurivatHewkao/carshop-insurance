@@ -113,6 +113,7 @@ function ProfileForm() {
 }
 export default function ProfilePage() {
   const session = useSyncExternalStore(subscribeSession, getSession);
+  const [logoutError, setLogoutError] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
   return (
@@ -127,12 +128,12 @@ export default function ProfilePage() {
           <button
             className="s-btn out"
             onClick={async () => {
+              setLogoutError('');
               try {
                 await logout();
-              } catch {
-                // Local credentials are cleared even if the server is unavailable.
-              } finally {
                 navigate('/login');
+              } catch (error) {
+                setLogoutError(authError(error));
               }
             }}
           >
@@ -140,6 +141,7 @@ export default function ProfilePage() {
           </button>
         )}
       </header>
+      <Feedback message={logoutError} error />
       <ModeNotice />
       {session ? (
         <>

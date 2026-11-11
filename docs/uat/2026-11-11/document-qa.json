@@ -1,0 +1,11 @@
+{
+  "blocked": 12,
+  "visual_review": "All 15 pages inspected after final render; no clipping or broken tables",
+  "fail": 12,
+  "baseline": "df325c3",
+  "renderer": "Microsoft Word PDF export then bundled pypdfium2",
+  "pages": 15,
+  "cases": 68,
+  "pass": 44,
+  "date": "2026-11-11"
+}

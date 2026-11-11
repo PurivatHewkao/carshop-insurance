@@ -16,6 +16,11 @@ import {
   updateProfile,
 } from './repository.js';
 import { profile } from './validation.js';
+import {
+  clearSessionCookie,
+  setSessionCookie,
+  verifyWriteOrigin,
+} from './sessionCookie.js';
 
 const router = Router();
 const limiter = rateLimit({
@@ -34,14 +39,24 @@ router.use((_req, res, next) => {
   res.set('Cache-Control', 'no-store');
   next();
 });
+router.use(verifyWriteOrigin);
+
+function sendSession(req, res, status, result) {
+  if (req.get('X-Identity-Session') === 'cookie') {
+    setSessionCookie(res, result.accessToken);
+    return res.status(status).json({ data: { user: result.user } });
+  }
+  return res.status(status).json({ data: result });
+}
 router.post('/auth/register', limiter, async (req, res) => {
-  res.status(201).json({ data: await register(req.body) });
+  sendSession(req, res, 201, await register(req.body));
 });
 router.post('/auth/login', limiter, async (req, res) => {
-  res.json({ data: await login(req.body) });
+  sendSession(req, res, 200, await login(req.body));
 });
 router.post('/auth/logout', authenticate, async (req, res) => {
   await logout(req.auth.claims);
+  if (req.auth.viaCookie) clearSessionCookie(res);
   res.status(204).end();
 });
 router.get('/users/me', authenticate, (req, res) => {

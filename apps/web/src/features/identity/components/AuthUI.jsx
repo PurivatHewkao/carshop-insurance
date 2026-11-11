@@ -9,7 +9,7 @@ export function ModeNotice() {
     <p className="auth-mode">
       {isDemo
         ? 'โหมดสาธิต · ข้อมูลตัวอย่างในหน่วยความจำ รีเฟรชแล้วเริ่มใหม่'
-        : 'เข้าสู่ระบบใหม่เมื่อรีเฟรชหน้า เพื่อเข้าถึงข้อมูลบัญชีของคุณ'}
+        : 'เซสชันเข้าสู่ระบบมีอายุ 1 ชั่วโมง'}
     </p>
   );
 }
@@ -27,6 +27,8 @@ export function PasswordField({
   label = 'รหัสผ่าน',
   name = 'password',
   autoComplete = 'current-password',
+  value,
+  onChange,
 }) {
   const [visible, setVisible] = useState(false);
   return (
@@ -38,6 +40,8 @@ export function PasswordField({
           name={name}
           type={visible ? 'text' : 'password'}
           autoComplete={autoComplete}
+          value={value}
+          onChange={onChange}
           minLength={8}
           maxLength={128}
           required

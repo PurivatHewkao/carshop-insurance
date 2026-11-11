@@ -1,11 +1,26 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Action, Brand } from '../components/common/Showroom.jsx';
 import design from '../design/toyoty.json';
 import { pageMenu } from '../routes/pageList.js';
+import {
+  getProfile,
+  getSession,
+  subscribeSession,
+} from '../features/identity/api/auth.js';
 export default function ShowroomLayout({ customer = false }) {
   const [open, setOpen] = useState(false);
+  const session = useSyncExternalStore(subscribeSession, getSession);
+  const [sessionCheckFailed, setSessionCheckFailed] = useState(false);
   const { pathname, hash } = useLocation();
+  useEffect(() => {
+    if (session !== undefined) return;
+    const controller = new AbortController();
+    getProfile(controller.signal).catch(() => {
+      if (!controller.signal.aborted) setSessionCheckFailed(true);
+    });
+    return () => controller.abort();
+  }, [session]);
   useEffect(() => {
     if (hash)
       document
@@ -45,12 +60,16 @@ export default function ShowroomLayout({ customer = false }) {
           )}
         </nav>
         <div className="s-util">
-          {customer ? (
-            <span className="customer-demo-badge">Customer · สาธิต</span>
-          ) : (
-            <Link className="s-btn out login-link" to="/login">
-              เข้าสู่ระบบ
+          {session ? (
+            <Link className="s-btn out login-link" to="/account">
+              บัญชีของฉัน
             </Link>
+          ) : (
+            (session === null || sessionCheckFailed) && (
+              <Link className="s-btn out login-link" to="/login">
+                เข้าสู่ระบบ
+              </Link>
+            )
           )}
           <NavLink
             className="s-user"

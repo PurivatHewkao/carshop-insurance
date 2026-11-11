@@ -14,6 +14,7 @@ import {
   assertAdmin,
 } from './repository.js';
 import { credentials, profile, fail } from './validation.js';
+import { clearSessionCookie, readSessionCookie } from './sessionCookie.js';
 
 const deriveKey = promisify(scrypt);
 const dummySalt = randomBytes(16).toString('hex');
@@ -27,7 +28,7 @@ async function hashPassword(password) {
 function session(user) {
   const accessToken = jwt.sign({ role: user.role }, env.jwtSecret, {
     algorithm: 'HS256',
-    expiresIn: '1h',
+    expiresIn: env.jwtLifetimeSeconds,
     subject: user.id,
     issuer: env.jwtIssuer,
     audience: env.jwtAudience,
@@ -69,22 +70,30 @@ export async function login(body) {
     fail(401, 'INVALID_CREDENTIALS', 'อีเมลหรือรหัสผ่านไม่ถูกต้อง');
   return session(user);
 }
-export async function authenticate(req, _res, next) {
-  const match = /^Bearer ([^\s]+)$/i.exec(req.get('authorization') || '');
-  if (!match) fail(401, 'UNAUTHORIZED', 'กรุณาเข้าสู่ระบบ');
-  let claims;
-  try {
-    claims = jwt.verify(match[1], env.jwtSecret, {
-      algorithms: ['HS256'],
-      issuer: env.jwtIssuer,
-      audience: env.jwtAudience,
-    });
-  } catch {
+export async function authenticate(req, res, next) {
+  const authorization = req.get('authorization');
+  const viaCookie = !authorization;
+  const token = viaCookie
+    ? readSessionCookie(req)
+    : /^Bearer ([^\s]+)$/i.exec(authorization)?.[1];
+  if (!token) fail(401, 'UNAUTHORIZED', 'กรุณาเข้าสู่ระบบ');
+  function invalidToken() {
+    if (viaCookie) clearSessionCookie(res);
     fail(
       401,
       'INVALID_TOKEN',
       'เซสชันหมดอายุหรือไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่',
     );
+  }
+  let claims;
+  try {
+    claims = jwt.verify(token, env.jwtSecret, {
+      algorithms: ['HS256'],
+      issuer: env.jwtIssuer,
+      audience: env.jwtAudience,
+    });
+  } catch {
+    invalidToken();
   }
   const user = await findById(claims.sub);
   if (
@@ -94,8 +103,8 @@ export async function authenticate(req, _res, next) {
     !claims.exp ||
     (await isRevoked(claims.jti))
   )
-    fail(401, 'INVALID_TOKEN', 'เซสชันไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่');
-  req.auth = { user, claims };
+    invalidToken();
+  req.auth = { user, claims, viaCookie };
   next();
 }
 export async function logout(claims) {

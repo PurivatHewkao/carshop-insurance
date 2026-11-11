@@ -3,10 +3,23 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthShell, Feedback, PasswordField } from '../components/AuthUI.jsx';
 import { authError, demoAccount, isDemo, login } from '../api/auth.js';
 
+const testRoles = [
+  'customer',
+  'seller',
+  'admin',
+  'manager',
+  'finance',
+  'stock',
+];
+const roleTestPassword =
+  import.meta.env.DEV && import.meta.env.VITE_IDENTITY_ROLE_TEST_PASSWORD;
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   async function submit(event) {
     event.preventDefault();
     setBusy(true);
@@ -48,16 +61,48 @@ export default function LoginPage() {
               autoComplete="username"
               placeholder="you@example.com"
               maxLength={254}
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
               required
             />
           </label>
-          <PasswordField />
+          <PasswordField
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
           <Feedback message={error} error />
           <button className="s-btn pri auth-submit" disabled={busy}>
             {busy ? 'กำลังเข้าสู่ระบบ…' : 'เข้าสู่ระบบ →'}
           </button>
         </fieldset>
       </form>
+      {roleTestPassword &&
+        !isDemo &&
+        ['localhost', '127.0.0.1', '[::1]'].includes(
+          window.location.hostname,
+        ) && (
+          <section className="auth-demo" aria-label="บัญชีทดสอบในเครื่อง">
+            <strong>บัญชีทดสอบในเครื่อง</strong>
+            <p>เลือกบทบาทเพื่อกรอกข้อมูล แล้วกดเข้าสู่ระบบ</p>
+            <div className="auth-role-buttons">
+              {testRoles.map((role) => (
+                <button
+                  key={role}
+                  type="button"
+                  className="s-btn out"
+                  disabled={busy}
+                  onClick={() => {
+                    setEmail(`role-${role}@carshop.test`);
+                    setPassword(roleTestPassword);
+                    setError('');
+                  }}
+                >
+                  {role.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
       <p className="auth-switch">
         ยังไม่มีบัญชี? <Link to="/register">สมัครสมาชิก</Link>
       </p>

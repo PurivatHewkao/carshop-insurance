@@ -21,17 +21,19 @@ after(async () => {
   await new Promise((resolve) => server.close(resolve));
   await closeMysqlPool();
 });
-async function request(path, { token, body, method = 'GET' } = {}) {
+async function request(path, { token, body, method = 'GET', headers } = {}) {
   const response = await fetch(base + path, {
     method,
     headers: {
       ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...headers,
     },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   return {
     status: response.status,
+    headers: response.headers,
     data: response.status === 204 ? null : await response.json(),
   };
 }
@@ -178,6 +180,87 @@ test('concurrent duplicate registration creates one account', async () => {
     ),
   );
   assert.deepEqual(results.map((r) => r.status).sort(), [201, 409]);
+});
+
+test('browser session cookie is protected, reusable after reload, and revoked on logout', async () => {
+  const origin = env.corsOrigins[0];
+  const credentials = { email: account.email, password: account.password };
+  const startSession = {
+    method: 'POST',
+    body: credentials,
+    headers: { Origin: origin, 'X-Identity-Session': 'cookie' },
+  };
+  const foreignOrigin = 'http://localhost:9999';
+  const blockedLogin = await request('/auth/login', {
+    ...startSession,
+    headers: { ...startSession.headers, Origin: foreignOrigin },
+  });
+  assert.equal(blockedLogin.status, 403);
+  assert.equal(blockedLogin.headers.get('set-cookie'), null);
+
+  const loggedIn = await request('/auth/login', startSession);
+  assert.equal(loggedIn.status, 200);
+  assert.equal(loggedIn.data.data.accessToken, undefined);
+  assert.equal(
+    loggedIn.headers.get('access-control-allow-credentials'),
+    'true',
+  );
+  assert.equal(loggedIn.headers.get('access-control-allow-origin'), origin);
+  const setCookie = loggedIn.headers.get('set-cookie');
+  for (const attribute of [
+    /HttpOnly/i,
+    /SameSite=Lax/i,
+    /Path=\/api\/v1/i,
+    /Max-Age=3600/i,
+  ])
+    assert.match(setCookie, attribute);
+  const cookie = setCookie.split(';')[0];
+  assert.equal(
+    (await request('/users/me', { headers: { Cookie: cookie } })).data.data
+      .email,
+    account.email,
+  );
+  for (const headers of [
+    { Cookie: cookie },
+    { Cookie: cookie, Origin: foreignOrigin },
+  ]) {
+    const blocked = await request('/users/me', {
+      method: 'PATCH',
+      body: { name: 'Blocked', phone: account.phone },
+      headers,
+    });
+    assert.equal(blocked.status, 403);
+  }
+
+  const expired = jwt.sign({}, env.jwtSecret, {
+    subject: loggedIn.data.data.user.id,
+    issuer: env.jwtIssuer,
+    audience: env.jwtAudience,
+    jwtid: 'expired-cookie',
+    expiresIn: -1,
+  });
+  const rejected = await request('/users/me', {
+    headers: { Cookie: `carshop_identity_session=${expired}` },
+  });
+  assert.equal(rejected.status, 401);
+  assert.match(
+    rejected.headers.get('set-cookie'),
+    /^carshop_identity_session=;/,
+  );
+
+  const loggedOut = await request('/auth/logout', {
+    method: 'POST',
+    headers: { Cookie: cookie, Origin: origin },
+  });
+  assert.equal(loggedOut.status, 204);
+  assert.match(
+    loggedOut.headers.get('set-cookie'),
+    /^carshop_identity_session=;/,
+  );
+  assert.equal(
+    (await request('/users/me', { headers: { Cookie: cookie } })).status,
+    401,
+  );
 });
 
 test('authentication attempts are rate limited', async () => {

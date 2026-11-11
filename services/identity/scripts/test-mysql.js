@@ -13,11 +13,17 @@ const connection = await mysql.createConnection({
   password: process.env.MYSQL_PASSWORD,
 });
 let created = false;
+const roleTestPassword = `RoleTest1${randomBytes(16).toString('hex')}`;
 async function run(args) {
   const child = spawn(process.execPath, args, {
     cwd: fileURLToPath(new URL('../', import.meta.url)),
     stdio: 'inherit',
-    env: { ...process.env, MYSQL_DATABASE: database, NODE_ENV: 'test' },
+    env: {
+      ...process.env,
+      MYSQL_DATABASE: database,
+      NODE_ENV: 'test',
+      ROLE_TEST_PASSWORD: roleTestPassword,
+    },
   });
   const code = await new Promise((resolve, reject) => {
     child.once('error', reject);
@@ -50,6 +56,10 @@ try {
     'test/auth.test.js',
   ]);
   await run(['../../apps/web/src/features/identity/check-auth-api.mjs']);
+  if (['127.0.0.1', 'localhost', '::1'].includes(process.env.MYSQL_HOST)) {
+    await run(['scripts/seed-roles.js']);
+    await run(['scripts/seed-roles.js']);
+  }
   await run(['../../apps/web/src/features/identity/check-auth-browser.mjs']);
 } catch (error) {
   console.error(error.code || error.message);

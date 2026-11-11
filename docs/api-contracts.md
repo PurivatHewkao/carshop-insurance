@@ -35,7 +35,7 @@ JWT: HS256, `sub=user.id`, `role`, `jti`, `iat`, `exp` (1 ชั่วโมง)
 
 Validation: name trim 1–100, email trim/lowercase สูงสุด 254, phone `0[0-9]{8,9}`, password 8–128 รวมอังกฤษ+ตัวเลขตอนสมัคร; unknown fields ไม่ถูกบันทึก Errors envelope `{error:{code,message}}`: 400 VALIDATION_ERROR, 401 INVALID_CREDENTIALS/UNAUTHORIZED/INVALID_TOKEN, 409 EMAIL_EXISTS, 429 TOO_MANY_REQUESTS จำกัด auth รวม 30 ครั้ง/IP/15 นาที ทุก auth response ไม่ cache
 
-Frontend เก็บ JWT ใน memory; refresh ต้อง Login ใหม่ ไม่ fallback เข้า demo เมื่อ API ล้มเหลว Admin ใช้ GET/POST `/users` และ PATCH `/users/:id` ได้แล้ว รองรับ roles customer/seller/manager/admin/finance/stock ดูรายละเอียด request และข้อจำกัดใน services/identity/README.md
+หน้าเว็บส่ง `X-Identity-Session: cookie` ตอน Login/Register เพื่อรับ `{data:{user}}` พร้อมคุกกี้ `HttpOnly` แทน JWT ใน JSON จากนั้นกู้เซสชันด้วย `GET /users/me` เมื่อรีเฟรชหน้าที่ต้องล็อกอิน Endpoint ที่ต้องยืนยันตัวตนรองรับคุกกี้และ Bearer JWT ส่วน Logout ยกเลิก JWT และล้างคุกกี้ของเบราว์เซอร์ Admin ใช้ GET/POST `/users` และ PATCH `/users/:id` ดูรายละเอียดการตั้งค่า origin และ HTTPS ใน services/identity/README.md
 
 ## Planned: business endpoints อื่น
 

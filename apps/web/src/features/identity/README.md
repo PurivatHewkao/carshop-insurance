@@ -12,7 +12,7 @@ Roles รองรับ customer, seller, manager, admin, finance, stock Login 
 
 RequireRole ป้องกัน parent routes Customer/Seller/Manager/Admin และตรวจโปรไฟล์กับ Backend เมื่อเข้าพื้นที่นั้น API ตรวจสิทธิ์เองทุก request การตรวจหน้าเว็บไม่แทนการตรวจ API ของ feature อื่น
 
-JWT และ session เก็บใน memory รีเฟรชต้อง Login ใหม่ บัญชีอยู่ใน MySQL ใช้ VITE_IDENTITY_MODE=demo เพื่อเปิดข้อมูลสาธิตเดิมโดยชัดแจ้ง การสร้างผู้ใช้ใหม่ต้องใช้ API
+เบราว์เซอร์เก็บ JWT ในคุกกี้ `HttpOnly` อายุ 1 ชั่วโมง เมื่อเปิดหรือรีเฟรชหน้าที่ต้องล็อกอิน React รอผล `GET /users/me` เพื่อกู้ข้อมูลผู้ใช้และตรวจบทบาทก่อนแสดงหน้า บัญชีอยู่ใน MySQL ใช้ VITE_IDENTITY_MODE=demo เพื่อเปิดข้อมูลสาธิตเดิมโดยชัดแจ้ง การสร้างผู้ใช้ใหม่ต้องใช้ API
 
 รัน npm run dev:identity และ npm run dev:web จาก root ทดสอบครบด้วย npm --prefix services/identity test ซึ่งสร้าง MySQL ชั่วคราวและรัน headless Edge
 
