@@ -54,6 +54,7 @@ try {
     '--test-concurrency=1',
     'test/admin.test.js',
     'test/auth.test.js',
+    'test/shared-auth.test.js',
   ]);
   await run(['../../apps/web/src/features/identity/check-auth-api.mjs']);
   if (['127.0.0.1', 'localhost', '::1'].includes(process.env.MYSQL_HOST)) {

@@ -63,3 +63,7 @@ Browser test ใช้ Microsoft Edge ค่าเริ่มต้น ตั�
 Admin test ตรวจ seed ซ้ำ อีเมลซ้ำ สิทธิ์ล่าสุด การแก้พร้อมกัน และข้อมูลหลังปิด/เปิด connection ใหม่ Auth test ตรวจ JWT ปลอม/หมดอายุ/issuer/audience ผิด Logout, validation และ rate limit
 
 Login/Register รวม 30 requests/IP/15 นาที รายการผู้ใช้เป็นรายการทั้งหมดสำหรับงานขนาดเล็ก UI กรองข้อมูลใน Browser
+
+## Session middleware สำหรับ service อื่น
+
+ดู [ตัวตรวจ session กลาง](../../packages/auth/README.md) สำหรับการใช้ Identity ตรวจ JWT, role ปัจจุบัน, Logout และบัญชีถูกระงับ พร้อมตัวอย่าง CORS/cookie และขอบเขต ownership ที่แต่ละ service ต้องตรวจเพิ่ม ตัวกลางยังไม่ได้ติดตั้งใน business routes ของ service อื่น
