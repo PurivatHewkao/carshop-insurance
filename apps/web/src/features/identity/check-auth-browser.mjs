@@ -47,10 +47,25 @@ try {
   await page.getByRole('button', { name: 'สร้างบัญชี →', exact: true }).click();
   await page.waitForURL('**/customer/profile');
   await page.locator('[name=name]').waitFor();
+  const sessionCookie = (await page.context().cookies()).find(
+    (cookie) => cookie.name === 'carshop_identity_session',
+  );
+  assert.ok(sessionCookie?.httpOnly);
+  assert.equal(sessionCookie.sameSite, 'Lax');
+  await page.reload();
+  await page.locator('[name=name]').waitFor();
+  assert.equal(new URL(page.url()).pathname, '/customer/profile');
   await page.locator('[name=name]').fill('Browser Updated');
   await page.getByRole('button', { name: 'บันทึกการเปลี่ยนแปลง' }).click();
   await page.getByText('บันทึกข้อมูลโปรไฟล์แล้ว', { exact: true }).waitFor();
   await page.getByRole('button', { name: 'ออกจากระบบ', exact: true }).click();
+  await page.waitForURL('**/login');
+  assert.ok(
+    !(await page.context().cookies()).some(
+      (cookie) => cookie.name === 'carshop_identity_session',
+    ),
+  );
+  await page.goto(url + '/customer/profile');
   await page.waitForURL('**/login');
   async function signIn(email, password) {
     await page.locator('[name=email]').fill(email);
@@ -82,7 +97,9 @@ try {
   );
   await signIn(admin.email, 'Admin12345');
   await page.waitForURL('**/admin/users');
+  await page.reload();
   await page.getByRole('button', { name: 'เพิ่มผู้ใช้', exact: true }).click();
+  assert.equal(new URL(page.url()).pathname, '/admin/users');
   const form = page.getByRole('region', { name: 'สร้างบัญชีผู้ใช้' });
   await form.locator('[name=name]').fill('Browser Staff');
   await form.locator('[name=email]').fill('browser-staff@example.test');

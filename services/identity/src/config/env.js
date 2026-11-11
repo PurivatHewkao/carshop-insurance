@@ -11,6 +11,7 @@ export const env = {
   jwtSecret: configuredSecret || randomBytes(32).toString('hex'),
   jwtIssuer: 'carshop-identity',
   jwtAudience: 'carshop-web',
+  jwtLifetimeSeconds: 60 * 60,
   service: 'identity',
   port: Number(process.env.PORT || 3001),
   nodeEnv: process.env.NODE_ENV || 'development',

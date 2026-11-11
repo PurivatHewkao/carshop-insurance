@@ -28,7 +28,8 @@ try {
       );
       assert.equal(auth.isDemo, mode === 'demo');
       await assert.rejects(auth.listUsers(), /ผู้ดูแล/);
-      await assert.rejects(auth.getProfile(), /เข้าสู่ระบบ/);
+      if (mode === 'demo')
+        await assert.rejects(auth.getProfile(), /เข้าสู่ระบบ/);
       if (mode === 'demo') {
         await assert.rejects(
           auth.login({ ...auth.demoAccount, password: 'wrong' }),
@@ -93,7 +94,7 @@ try {
           const data = malformed
             ? { wrong: true }
             : config.url === 'auth/login'
-              ? { user, accessToken: 'test-token' }
+              ? { user }
               : config.url === 'users'
                 ? [user]
                 : user;
@@ -107,8 +108,10 @@ try {
         };
         await auth.login({ email: user.email, password: 'Test12345' });
         assert.equal(calls[0].url, 'auth/login');
+        assert.equal(calls[0].headers.get('X-Identity-Session'), 'cookie');
         await auth.getProfile();
-        assert.equal(calls.at(-1).headers.Authorization, 'Bearer test-token');
+        assert.equal(calls.at(-1).withCredentials, true);
+        assert.equal(calls.at(-1).headers.Authorization, undefined);
         assert.equal((await auth.listUsers()).length, 1);
         await auth.updateProfile({
           name: 'Name',
@@ -129,9 +132,12 @@ try {
         await assert.rejects(auth.logout(), /network/);
         assert.equal(
           auth.getSession(),
-          null,
-          'Logout must clear local credentials even when API fails',
+          user,
+          'The UI must retain the session until the server clears the cookie',
         );
+        fail = false;
+        await auth.logout();
+        fail = true;
         await assert.rejects(
           auth.login({ email: user.email, password: 'Test12345' }),
         );

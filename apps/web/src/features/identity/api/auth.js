@@ -31,8 +31,8 @@ let users = [
     status: 'inactive',
   },
 ];
-let session = null;
-let token = null;
+// undefined means the browser session hasn't been checked yet; null means signed out.
+let session = isDemo ? null : undefined;
 const listeners = new Set();
 export const subscribeSession = (listener) => {
   listeners.add(listener);
@@ -43,7 +43,8 @@ function setSession(user) {
   session = user;
   listeners.forEach((listener) => listener());
 }
-async function request(method, url, data, signal) {
+async function request(method, url, data, signal, startingSession = false) {
+  const previousSession = session;
   let response;
   try {
     response = await identityClient.request({
@@ -51,11 +52,14 @@ async function request(method, url, data, signal) {
       url,
       data,
       signal,
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: startingSession ? { 'X-Identity-Session': 'cookie' } : {},
     });
   } catch (error) {
-    if (error.response?.status === 401) {
-      token = null;
+    if (
+      !startingSession &&
+      error.response?.status === 401 &&
+      session === previousSession
+    ) {
       setSession(null);
     }
     throw error;
@@ -63,20 +67,15 @@ async function request(method, url, data, signal) {
   return response.data?.data;
 }
 function acceptSession(result) {
-  if (
-    !result?.user ||
-    typeof result.accessToken !== 'string' ||
-    !result.accessToken
-  )
-    throw new Error('รูปแบบข้อมูลเข้าสู่ระบบไม่ตรงกับ contract');
-  validateUser(result.user);
-  token = result.accessToken;
-  setSession(result.user);
-  return result.user;
+  const user = validateUser(result?.user);
+  setSession(user);
+  return user;
 }
 export async function login(values) {
   if (!isDemo)
-    return acceptSession(await request('post', 'auth/login', values));
+    return acceptSession(
+      await request('post', 'auth/login', values, undefined, true),
+    );
   const user = users.find(
     (item) => item.email === values.email.trim().toLowerCase(),
   );
@@ -92,7 +91,9 @@ export async function login(values) {
 }
 export async function register(values) {
   if (!isDemo)
-    return acceptSession(await request('post', 'auth/register', values));
+    return acceptSession(
+      await request('post', 'auth/register', values, undefined, true),
+    );
   if (users.some((item) => item.email === values.email))
     throw new Error('อีเมลนี้มีบัญชีอยู่แล้ว');
   // No passwords are stored. A registered demo account opens a temporary session.
@@ -109,20 +110,29 @@ export async function register(values) {
   return user;
 }
 export async function logout() {
-  try {
-    if (!isDemo && token) await request('post', 'auth/logout');
-  } finally {
-    token = null;
-    setSession(null);
+  if (!isDemo) {
+    try {
+      await request('post', 'auth/logout');
+    } catch (error) {
+      if (error.response?.status !== 401) throw error;
+    }
   }
+  setSession(null);
 }
 export async function getProfile(signal) {
-  if (!session) throw new Error('กรุณาเข้าสู่ระบบก่อนดูข้อมูลบัญชี');
-  return validateUser(
-    isDemo
-      ? { ...session }
-      : await request('get', 'users/me', undefined, signal),
+  if (session === null) throw new Error('กรุณาเข้าสู่ระบบก่อนดูข้อมูลบัญชี');
+  if (isDemo) return validateUser({ ...session });
+  const previousSession = session;
+  const user = validateUser(
+    await request('get', 'users/me', undefined, signal),
   );
+  if (
+    !signal?.aborted &&
+    session === previousSession &&
+    Object.keys(user).some((key) => user[key] !== session?.[key])
+  )
+    setSession(user);
+  return user;
 }
 export async function updateProfile(values) {
   if (!session) throw new Error('กรุณาเข้าสู่ระบบก่อนแก้ไขข้อมูล');

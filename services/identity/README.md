@@ -42,7 +42,9 @@ Register สร้าง customers ส่วนพนักงานสร้า
 
 ฐานข้อมูลจริงที่ตรวจครั้งนี้ไม่มีบัญชีเดิม ระบบรองรับ hash แบบ scrypt ที่สร้างโดย Identity นี้ หากนำบัญชีจากระบบอื่นเข้ามา ต้องเพิ่มการย้ายรูปแบบ password hash ตามระบบต้นทางก่อน
 
-JWT ฝั่ง Browser เก็บใน memory รีเฟรชต้อง Login ใหม่ บัญชีและ revoked tokens คงอยู่หลังรีสตาร์ต Backend การ Logout ตอน API ติดต่อไม่ได้ล้าง local token แต่ token ฝั่ง server ยังมีอายุจนหมดเวลา
+หน้าเว็บส่ง `X-Identity-Session: cookie` ตอน Login/Register เพื่อรับ JWT ผ่านคุกกี้ `HttpOnly` อายุ 1 ชั่วโมง พร้อมข้อมูลผู้ใช้ใน JSON เบราว์เซอร์แนบคุกกี้ให้ Identity API และ React เรียก `GET /users/me` เมื่อรีเฟรชหน้าที่ต้องล็อกอิน Logout ยกเลิก JWT และล้างคุกกี้ หาก API ติดต่อไม่ได้ หน้าโปรไฟล์แสดงข้อผิดพลาดให้ลองใหม่ บัญชีและรายการ JWT ที่ยกเลิกคงอยู่หลังรีสตาร์ต Backend
+
+คุกกี้ใช้ `SameSite=Lax` และ `Secure` ใน production ให้หน้าเว็บกับ Identity API ใช้ HTTPS และอยู่ site เดียวกัน เช่น subdomains ภายใต้โดเมนเดียวกัน หรือส่งต่อ Identity API ผ่าน reverse proxy ของเว็บ ตั้ง `CORS_ORIGINS` ให้ตรงกับ origin ของหน้าเว็บ คำขอที่เปลี่ยนข้อมูลด้วยคุกกี้จะตรวจ origin ด้วย
 
 ## Test
 
