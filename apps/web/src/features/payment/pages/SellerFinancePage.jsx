@@ -1,80 +1,114 @@
 import { useState } from 'react';
+import { createFinanceRequest, createInvoice } from '../api/paymentApi.js';
 import {
-  createFinanceRequest,
-  DEMO_SELLER_ID,
-  invoiceStatus,
-  orderSummary,
-  requestTopics,
-} from '../api/mockPaymentApi.js';
-import {
-  DemoNote,
   FormMessage,
   Kpis,
+  LoadState,
   PageHeader,
   Progress,
   StatusPill,
 } from '../components/FinanceUi.jsx';
 import { useAction, usePaymentData } from '../hooks/usePaymentData.js';
-import { baht, money, thDateTime } from '../utils/format.js';
+import {
+  activeInvoice,
+  canInvoice,
+  carLabel,
+  invoiceStatus,
+  netPaid,
+  orderOf,
+  outstanding,
+} from '../utils/finance.js';
+import {
+  baht,
+  dateInput,
+  money,
+  thDateTime,
+  toSatang,
+} from '../utils/format.js';
 
+const requestTopics = [
+  'ตรวจสอบยอดโอน',
+  'ลูกค้าขอแยกงวดชำระ',
+  'แก้ไขใบแจ้งหนี้',
+  'ลูกค้าขอคืนเงิน',
+  'อื่น ๆ',
+];
+
+// backend ส่งเฉพาะออเดอร์ที่ Seller ที่ login อยู่เป็นผู้ขาย
 export default function SellerFinancePage() {
-  const data = usePaymentData();
+  const { data, error, loading, reload } = usePaymentData({ requests: true });
   const [orderId, setOrderId] = useState('');
-  const [message, run] = useAction();
+  const [message, run, , busy] = useAction();
 
-  const orders = data.orders.filter((o) => o.sellerId === DEMO_SELLER_ID);
-  const requests = data.financeRequests.filter(
-    (r) => r.sellerId === DEMO_SELLER_ID,
+  const header = (
+    <PageHeader
+      crumb="Workspace / ติดต่อการเงิน"
+      title="ติดต่อการเงิน"
+      sub="ติดตามการชำระของลูกค้าที่คุณดูแล ออกใบแจ้งหนี้ และส่งเรื่องถึงฝ่ายการเงิน"
+    />
   );
+  if (!data)
+    return (
+      <main className="page-content admin-content">
+        {header}
+        <LoadState loading={loading} error={error} onRetry={reload} />
+      </main>
+    );
+
+  const orders = data.orders;
+  const requests = data.financeRequests;
   const overdue = data.invoices.filter(
-    (i) =>
-      orders.some((o) => o.orderId === i.orderId) &&
-      invoiceStatus(data, i) === 'overdue',
-  );
-  const active = orders.filter((o) => o.status === 'approved');
-  const outstanding = active.reduce(
-    (sum, o) => sum + orderSummary(data, o.orderId).outstanding,
-    0,
-  );
+    (i) => invoiceStatus(i) === 'OVERDUE',
+  ).length;
+  const active = orders.filter((o) => o.orderStatus === 'CONFIRMED');
 
-  function submit(event) {
+  async function issue(order) {
+    const invoice = await run(
+      () => createInvoice(order.orderId, dateInput(7)),
+      (inv) => `ออกใบแจ้งหนี้ ${inv.invoiceNumber} ${money(inv.amount)} แล้ว`,
+    );
+    if (invoice) reload();
+  }
+
+  async function submit(event) {
     event.preventDefault();
     const formEl = event.currentTarget;
     const form = new FormData(formEl);
-    const created = run(
+    const created = await run(
       () =>
         createFinanceRequest({
           orderId,
           topic: String(form.get('topic')),
           message: String(form.get('message')),
         }),
-      () => 'ส่งเรื่องถึงฝ่ายการเงินแล้ว (จำลอง) ติดตามคำตอบได้ด้านล่าง',
+      () => 'ส่งเรื่องถึงฝ่ายการเงินแล้ว ติดตามคำตอบได้ด้านล่าง',
     );
     if (created) {
       formEl.reset();
       setOrderId('');
+      reload();
     }
   }
 
   return (
     <main className="page-content admin-content">
-      <PageHeader
-        crumb="Workspace / ติดต่อการเงิน"
-        title="ติดต่อการเงิน"
-        sub="ติดตามสถานะการชำระของลูกค้าที่คุณดูแล และส่งเรื่องถึงฝ่ายการเงิน"
-      />
-      <DemoNote />
+      {header}
+      <LoadState error={error} onRetry={reload} />
       <Kpis
         items={[
           { l: 'ออเดอร์ที่กำลังชำระ', v: active.length },
-          { l: 'ยอดค้างรับจากลูกค้า', v: baht(outstanding) },
-          { l: 'บิลเกินกำหนด', v: overdue.length },
+          {
+            l: 'ยอดค้างรับจากลูกค้า',
+            v: baht(active.reduce((s, o) => s + outstanding(o), 0)),
+          },
+          { l: 'บิลเกินกำหนด', v: overdue },
           {
             l: 'เรื่องรอการเงินตอบ',
-            v: requests.filter((r) => r.status === 'open').length,
+            v: requests.filter((r) => r.status === 'OPEN').length,
           },
         ]}
       />
+      <FormMessage message={message} />
 
       <section className="s-card flush">
         <div className="s-card-h">
@@ -93,49 +127,63 @@ export default function SellerFinancePage() {
                 <th scope="col" className="num">
                   คงค้าง
                 </th>
-                <th scope="col">บิลล่าสุด</th>
+                <th scope="col">ใบแจ้งหนี้</th>
                 <th scope="col" />
               </tr>
             </thead>
             <tbody>
               {orders.map((o) => {
-                const sum = orderSummary(data, o.orderId);
-                const last = data.invoices
-                  .filter((i) => i.orderId === o.orderId)
-                  .sort((a, b) => b.issueDate.localeCompare(a.issueDate))[0];
+                const invoice = activeInvoice(data, o.orderId);
                 return (
                   <tr key={o.orderId}>
                     <td>
                       {o.orderNumber}
                       <span className="pay-sub">
-                        <StatusPill kind="order" status={o.status} />
+                        <StatusPill kind="order" status={o.orderStatus} />
                       </span>
                     </td>
                     <td>
                       {o.customerName}
-                      <span className="pay-sub">{o.car}</span>
+                      <span className="pay-sub">{carLabel(o)}</span>
                     </td>
                     <td className="num">{money(o.totalAmount)}</td>
                     <td>
-                      <Progress value={sum.paid} total={sum.total} />
-                      <span className="pay-sub">{baht(sum.paid)}</span>
+                      <Progress
+                        value={netPaid(o)}
+                        total={toSatang(o.totalAmount)}
+                      />
+                      <span className="pay-sub">{baht(netPaid(o))}</span>
                     </td>
                     <td className="num">
-                      {o.status === 'cancelled' ? '–' : baht(sum.outstanding)}
+                      {o.orderStatus === 'CANCELLED'
+                        ? '–'
+                        : baht(outstanding(o))}
                     </td>
                     <td>
-                      {last ? (
+                      {invoice ? (
                         <>
-                          {last.invoiceNumber} {last.title}
+                          {invoice.invoiceNumber}
                           <span className="pay-sub">
                             <StatusPill
                               kind="invoice"
-                              status={invoiceStatus(data, last)}
+                              status={invoiceStatus(invoice)}
                             />
                           </span>
                         </>
+                      ) : canInvoice(data, o) ? (
+                        <button
+                          className="s-act"
+                          disabled={busy}
+                          onClick={() => issue(o)}
+                        >
+                          ออกใบแจ้งหนี้
+                        </button>
                       ) : (
-                        <span className="small">ยังไม่ออกบิล</span>
+                        <span className="small">
+                          {o.orderStatus === 'PENDING'
+                            ? 'รออนุมัติก่อน'
+                            : 'ยังไม่ออกบิล'}
+                        </span>
                       )}
                     </td>
                     <td className="acts">
@@ -179,7 +227,7 @@ export default function SellerFinancePage() {
                 </option>
                 {orders.map((o) => (
                   <option key={o.orderId} value={o.orderId}>
-                    {o.orderNumber} · {o.customerName} · {o.car}
+                    {o.orderNumber} · {o.customerName} · {o.car.name}
                   </option>
                 ))}
               </select>
@@ -199,15 +247,14 @@ export default function SellerFinancePage() {
                 name="message"
                 maxLength={500}
                 required
-                placeholder="เช่น ลูกค้าโอนเงินดาวน์แล้วเมื่อเช้า ฝากตรวจสอบยอด"
+                placeholder="เช่น ลูกค้าโอนเงินแล้วเมื่อเช้า ฝากตรวจสอบยอด"
               />
             </label>
             <div className="s-form-f">
-              <button className="s-btn pri" type="submit">
+              <button className="s-btn pri" type="submit" disabled={busy}>
                 ส่งเรื่อง
               </button>
             </div>
-            <FormMessage message={message} />
           </form>
         </section>
 
@@ -218,13 +265,13 @@ export default function SellerFinancePage() {
               <p className="empty-state">ยังไม่มีเรื่องที่ส่ง</p>
             )}
             {requests.map((r) => {
-              const order = data.orders.find((o) => o.orderId === r.orderId);
+              const order = orderOf(data, r.orderId);
               return (
-                <article className="pay-msg" key={r.requestId}>
+                <article className="pay-msg" key={r.id}>
                   <div className="meta">
                     <b>{r.topic}</b>
                     <span>
-                      {order.orderNumber} {order.customerName}
+                      {order?.orderNumber} {order?.customerName}
                     </span>
                     <span>{thDateTime(r.createdAt)}</span>
                     <StatusPill kind="request" status={r.status} />

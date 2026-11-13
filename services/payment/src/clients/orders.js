@@ -42,10 +42,45 @@ export async function cancelOrderAfterFullRefund(connection, order) {
   );
 }
 
-export async function employeeExists(connection, employeeId) {
-  const [rows] = await connection.query(
-    'SELECT id FROM employees WHERE id = ?',
-    [employeeId],
+/**
+ * Read-only order list for the finance pages: order + customer/seller names +
+ * car + money sums from payments/refunds. `scope` comes from orderScope(actor, 'o.id').
+ */
+export async function listOrderOverview(connection, { scope, status, paging }) {
+  const where = [];
+  const params = [];
+  if (scope.sql) {
+    where.push(scope.sql);
+    params.push(...scope.params);
+  }
+  if (status) {
+    where.push('o.status = ?');
+    params.push(status);
+  }
+  const whereSql = where.length ? ' WHERE ' + where.join(' AND ') : '';
+  const [[{ total }]] = await connection.query(
+    'SELECT COUNT(*) AS total FROM orders o' + whereSql,
+    params,
   );
-  return rows.length > 0;
+  const [rows] = await connection.query(
+    `SELECT o.id, o.status, o.total_amount, o.created_at,
+       o.customer_id, TRIM(CONCAT(c.first_name, ' ', c.last_name)) AS customer_name,
+       o.seller_id, TRIM(CONCAT(e.first_name, ' ', e.last_name)) AS seller_name,
+       m.brand, m.model_name, car.color, car.manufacture_year,
+       (SELECT COALESCE(SUM(p.amount), 0) FROM payments p
+         WHERE p.order_id = o.id AND p.status IN ('SUCCESS','REFUNDED')) AS paid,
+       (SELECT COALESCE(SUM(p.amount), 0) FROM payments p
+         WHERE p.order_id = o.id AND p.status = 'PENDING') AS pending,
+       (SELECT COALESCE(SUM(r.amount), 0) FROM refunds r
+         WHERE r.order_id = o.id AND r.status = 'REFUNDED') AS refunded
+     FROM orders o
+     JOIN customers c ON c.id = o.customer_id
+     JOIN employees e ON e.id = o.seller_id
+     JOIN cars car ON car.id = o.car_id
+     JOIN car_models m ON m.id = car.car_model_id` +
+      whereSql +
+      ' ORDER BY o.created_at DESC, o.id DESC LIMIT ? OFFSET ?',
+    [...params, paging.limit, paging.offset],
+  );
+  return { rows, total: Number(total) };
 }

@@ -7,4 +7,7 @@ export const env = {
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean),
+  // Identity checks the login session (packages/auth). Server config only.
+  identityApiUrl:
+    process.env.IDENTITY_API_URL || 'http://localhost:3001/api/v1',
 };

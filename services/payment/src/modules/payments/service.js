@@ -11,6 +11,11 @@ import {
   requireBody,
 } from '../../utils/validate.js';
 import { balanceToApi, orderBalance } from './balance.js';
+import {
+  assertOrderAccess,
+  FINANCE,
+  orderScope,
+} from '../../middleware/auth.js';
 
 export const PAYMENT_METHODS = ['CASH', 'BANK_TRANSFER', 'CREDIT_CARD'];
 export const PAYMENT_STATUSES = ['PENDING', 'SUCCESS', 'FAILED', 'REFUNDED'];
@@ -64,9 +69,11 @@ async function settleIfFullyPaid(connection, order) {
 /**
  * POST /orders/{orderId}/payments
  * CREDIT_CARD is a simulated gateway: SUCCESS immediately.
- * CASH and BANK_TRANSFER stay PENDING until Admin confirms (PATCH /payments/{id}).
+ * BANK_TRANSFER stays PENDING until Finance confirms (PATCH /payments/{id}).
+ * CASH is recorded by Finance at the showroom, so it is SUCCESS immediately;
+ * a customer cannot record CASH.
  */
-export async function createPayment(orderId, rawBody, idempotencyKey) {
+export async function createPayment(actor, orderId, rawBody, idempotencyKey) {
   const body = requireBody(rawBody);
   const amount = parseAmount(body.amount);
   const paymentMethod = readEnum(
@@ -74,6 +81,13 @@ export async function createPayment(orderId, rawBody, idempotencyKey) {
     'paymentMethod',
     PAYMENT_METHODS,
   );
+  if (paymentMethod === 'CASH' && !FINANCE.includes(actor.role)) {
+    throw httpError(
+      403,
+      'PAYMENT_METHOD_NOT_ALLOWED',
+      'Only Finance can record CASH payments',
+    );
+  }
   let reference = readText(body, 'transactionReference', { max: 150 });
   if (paymentMethod === 'BANK_TRANSFER' && !reference) {
     throw httpError(
@@ -83,7 +97,9 @@ export async function createPayment(orderId, rawBody, idempotencyKey) {
       [{ field: 'transactionReference', issue: 'required' }],
     );
   }
+  // userId in the hash: the same key from another user is a mismatch (422), not a replay.
   const requestHash = hashRequest({
+    userId: actor.userId,
     orderId,
     amount,
     paymentMethod,
@@ -100,7 +116,7 @@ export async function createPayment(orderId, rawBody, idempotencyKey) {
     if (replay) return { ...replay, replayed: true };
 
     const order = await lockOrder(connection, orderId);
-    if (!order) throw orderNotFound();
+    assertOrderAccess(actor, order, orderNotFound);
     if (order.status !== 'CONFIRMED') {
       throw httpError(
         409,
@@ -121,9 +137,12 @@ export async function createPayment(orderId, rawBody, idempotencyKey) {
       );
     }
 
-    const simulatedSuccess = paymentMethod === 'CREDIT_CARD';
+    const simulatedSuccess =
+      paymentMethod === 'CREDIT_CARD' || paymentMethod === 'CASH';
     if (simulatedSuccess && !reference) {
-      reference = 'SIM-CC-' + randomBytes(6).toString('hex').toUpperCase();
+      reference =
+        (paymentMethod === 'CASH' ? 'CASH-' : 'SIM-CC-') +
+        randomBytes(6).toString('hex').toUpperCase();
     }
     const id = randomUUID();
     try {
@@ -205,10 +224,14 @@ export async function reviewPayment(paymentId, rawBody) {
   });
 }
 
-export async function getPayment(paymentId) {
+export async function getPayment(actor, paymentId) {
+  const scope = orderScope(actor);
   const [rows] = await query(
-    'SELECT ' + COLUMNS + ' FROM payments WHERE id = ?',
-    [paymentId],
+    'SELECT ' +
+      COLUMNS +
+      ' FROM payments WHERE id = ?' +
+      (scope.sql ? ' AND ' + scope.sql : ''),
+    [paymentId, ...scope.params],
   );
   if (!rows.length)
     throw httpError(404, 'PAYMENT_NOT_FOUND', 'Payment not found');
@@ -216,10 +239,10 @@ export async function getPayment(paymentId) {
 }
 
 /** GET /orders/{orderId}/payments — history + money summary of one order. */
-export async function listOrderPayments(orderId) {
+export async function listOrderPayments(actor, orderId) {
   const pool = { query };
   const order = await findOrder(pool, orderId);
-  if (!order) throw orderNotFound();
+  assertOrderAccess(actor, order, orderNotFound);
   const [rows] = await query(
     'SELECT ' +
       COLUMNS +
@@ -233,10 +256,15 @@ export async function listOrderPayments(orderId) {
   };
 }
 
-/** GET /payments — Admin/Manager list with filters. */
-export async function listPayments(queryString, paging) {
+/** GET /payments — staff see all; customer/seller see only their orders. */
+export async function listPayments(actor, queryString, paging) {
   const where = [];
   const params = [];
+  const scope = orderScope(actor);
+  if (scope.sql) {
+    where.push(scope.sql);
+    params.push(...scope.params);
+  }
   const status = readEnum(queryString.status, 'status', PAYMENT_STATUSES, {
     required: false,
   });
