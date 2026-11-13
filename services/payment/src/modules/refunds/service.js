@@ -16,6 +16,7 @@ import {
 } from '../../utils/validate.js';
 import { lockPayment } from '../payments/service.js';
 import { orderBalance } from '../payments/balance.js';
+import { assertOrderAccess, orderScope } from '../../middleware/auth.js';
 
 export const REFUND_STATUSES = ['REQUESTED', 'REFUNDED', 'REJECTED'];
 const SCOPE = 'refunds.create';
@@ -57,11 +58,18 @@ async function lockRefund(connection, refundId) {
 }
 
 /** POST /payments/{paymentId}/refunds — request a refund (status REQUESTED). */
-export async function requestRefund(paymentId, rawBody, idempotencyKey) {
+export async function requestRefund(actor, paymentId, rawBody, idempotencyKey) {
   const body = requireBody(rawBody);
   const amount = parseAmount(body.amount);
   const reason = readText(body, 'reason', { max: 500, required: true });
-  const requestHash = hashRequest({ paymentId, amount, reason });
+  const requestHash = hashRequest({
+    userId: actor.userId,
+    paymentId,
+    amount,
+    reason,
+  });
+  const paymentNotFound = () =>
+    httpError(404, 'PAYMENT_NOT_FOUND', 'Payment not found');
 
   return withTransaction(async (connection) => {
     const replay = await claimKey(
@@ -76,9 +84,9 @@ export async function requestRefund(paymentId, rawBody, idempotencyKey) {
       'SELECT order_id FROM payments WHERE id = ?',
       [paymentId],
     );
-    if (!found.length)
-      throw httpError(404, 'PAYMENT_NOT_FOUND', 'Payment not found');
-    await lockOrder(connection, found[0].order_id);
+    if (!found.length) throw paymentNotFound();
+    const order = await lockOrder(connection, found[0].order_id);
+    assertOrderAccess(actor, order, paymentNotFound);
     const payment = await lockPayment(connection, paymentId);
     if (payment.status !== 'SUCCESS') {
       throw httpError(
@@ -103,8 +111,15 @@ export async function requestRefund(paymentId, rawBody, idempotencyKey) {
     const id = randomUUID();
     try {
       await connection.query(
-        'INSERT INTO refunds (id, payment_id, order_id, amount, reason) VALUES (?, ?, ?, ?, ?)',
-        [id, paymentId, payment.order_id, formatMoney(amount), reason],
+        'INSERT INTO refunds (id, payment_id, order_id, amount, reason, requested_by) VALUES (?, ?, ?, ?, ?, ?)',
+        [
+          id,
+          paymentId,
+          payment.order_id,
+          formatMoney(amount),
+          reason,
+          actor.userId,
+        ],
       );
     } catch (error) {
       if (error.code === 'ER_DUP_ENTRY') {
@@ -148,7 +163,7 @@ async function lockForReview(connection, refundId) {
 }
 
 /** POST /refunds/{id}/approve — Admin records the payout reference. */
-export async function approveRefund(refundId, rawBody) {
+export async function approveRefund(actor, refundId, rawBody) {
   const body = requireBody(rawBody);
   const refundReference = readText(body, 'refundReference', {
     max: 150,
@@ -159,8 +174,8 @@ export async function approveRefund(refundId, rawBody) {
     const { order, payment } = await lockForReview(connection, refundId);
     try {
       await connection.query(
-        "UPDATE refunds SET status = 'REFUNDED', refund_reference = ?, reviewed_at = ? WHERE id = ?",
-        [refundReference, new Date(), refundId],
+        "UPDATE refunds SET status = 'REFUNDED', refund_reference = ?, reviewed_by = ?, reviewed_at = ? WHERE id = ?",
+        [refundReference, actor.userId, new Date(), refundId],
       );
     } catch (error) {
       if (error.code === 'ER_DUP_ENTRY') {
@@ -196,32 +211,38 @@ export async function approveRefund(refundId, rawBody) {
 }
 
 /** POST /refunds/{id}/reject — reason is required; payment and order stay unchanged. */
-export async function rejectRefund(refundId, rawBody) {
+export async function rejectRefund(actor, refundId, rawBody) {
   const body = requireBody(rawBody);
   const reason = readText(body, 'reason', { max: 500, required: true });
   return withTransaction(async (connection) => {
     await lockForReview(connection, refundId);
     await connection.query(
-      "UPDATE refunds SET status = 'REJECTED', review_note = ?, reviewed_at = ? WHERE id = ?",
-      [reason, new Date(), refundId],
+      "UPDATE refunds SET status = 'REJECTED', review_note = ?, reviewed_by = ?, reviewed_at = ? WHERE id = ?",
+      [reason, actor.userId, new Date(), refundId],
     );
     return refundToApi(await lockRefund(connection, refundId));
   });
 }
 
-export async function getRefund(refundId) {
+export async function getRefund(actor, refundId) {
+  const scope = orderScope(actor);
   const [rows] = await query(
-    'SELECT ' + COLUMNS + ' FROM refunds WHERE id = ?',
-    [refundId],
+    'SELECT ' +
+      COLUMNS +
+      ' FROM refunds WHERE id = ?' +
+      (scope.sql ? ' AND ' + scope.sql : ''),
+    [refundId, ...scope.params],
   );
   if (!rows.length)
     throw httpError(404, 'REFUND_NOT_FOUND', 'Refund not found');
   return refundToApi(rows[0]);
 }
 
-export async function listOrderRefunds(orderId) {
+export async function listOrderRefunds(actor, orderId) {
   const order = await findOrder({ query }, orderId);
-  if (!order) throw httpError(404, 'ORDER_NOT_FOUND', 'Order not found');
+  assertOrderAccess(actor, order, () =>
+    httpError(404, 'ORDER_NOT_FOUND', 'Order not found'),
+  );
   const [rows] = await query(
     'SELECT ' +
       COLUMNS +
@@ -231,13 +252,18 @@ export async function listOrderRefunds(orderId) {
   return { data: rows.map(refundToApi) };
 }
 
-export async function listRefunds(queryString, paging) {
+export async function listRefunds(actor, queryString, paging) {
   const where = [];
   const params = [];
   const add = (sql, value) => {
     where.push(sql);
     params.push(value);
   };
+  const scope = orderScope(actor);
+  if (scope.sql) {
+    where.push(scope.sql);
+    params.push(...scope.params);
+  }
   const status = readEnum(queryString.status, 'status', REFUND_STATUSES, {
     required: false,
   });

@@ -1,61 +1,78 @@
 import { useState } from 'react';
+import { cancelInvoice, createInvoice } from '../api/paymentApi.js';
 import {
-  createInvoice,
-  invoiceStatus,
-  invoiceTitles,
-  orderSummary,
-} from '../api/mockPaymentApi.js';
-import {
-  DemoNote,
   FormMessage,
   InvoiceDialog,
   Kpis,
+  LoadState,
   PageHeader,
   Progress,
   StatusPill,
 } from '../components/FinanceUi.jsx';
 import { useAction, usePaymentData } from '../hooks/usePaymentData.js';
-import { baht, dateInput, money, thDate } from '../utils/format.js';
+import {
+  activeInvoice,
+  canInvoice,
+  carLabel,
+  invoiceStatus,
+  netPaid,
+  orderOf,
+} from '../utils/finance.js';
+import { baht, dateInput, money, thDate, toSatang } from '../utils/format.js';
 
+// ใบแจ้งหนี้ 1 ใบต่อออเดอร์ = ราคาสุทธิทั้งหมด (ลูกค้าแบ่งจ่ายหลายครั้งได้)
 export default function ManagerInvoicesPage() {
-  const data = usePaymentData();
+  const { data, error, loading, reload } = usePaymentData();
   const [orderId, setOrderId] = useState('');
   const [viewing, setViewing] = useState(null);
-  const [message, run] = useAction();
+  const [message, run, , busy] = useAction();
 
-  const orders = data.orders.filter((o) => o.status !== 'cancelled');
-  const billable = orders.filter(
-    (o) =>
-      o.status === 'approved' && orderSummary(data, o.orderId).unbilled > 0,
+  const header = (
+    <PageHeader
+      crumb="Workspace / ออกบิลส่งการเงิน"
+      title="ออกบิลส่งการเงิน"
+      sub="ออกใบแจ้งหนี้จากออเดอร์ที่อนุมัติแล้ว ลูกค้าเห็นบิลในหน้าประวัติธุรกรรม และฝ่ายการเงินติดตามยอดต่อ"
+    />
   );
-  const selected = billable.find((o) => o.orderId === orderId);
-  const unbilled = selected ? orderSummary(data, orderId).unbilled : 0;
-  const issued = data.invoices
-    .filter((i) => orders.some((o) => o.orderId === i.orderId))
-    .sort((a, b) => b.issueDate.localeCompare(a.issueDate));
-  const statusCount = (status) =>
-    issued.filter((i) => invoiceStatus(data, i) === status).length;
+  if (!data)
+    return (
+      <main className="page-content admin-content">
+        {header}
+        <LoadState loading={loading} error={error} onRetry={reload} />
+      </main>
+    );
 
-  function submit(event) {
+  const orders = data.orders.filter((o) => o.orderStatus !== 'CANCELLED');
+  const billable = orders.filter((o) => canInvoice(data, o));
+  const selected = billable.find((o) => o.orderId === orderId);
+  const issued = [...data.invoices].sort((a, b) =>
+    String(b.createdAt).localeCompare(String(a.createdAt)),
+  );
+  const statusCount = (status) =>
+    issued.filter((i) => invoiceStatus(i) === status).length;
+
+  async function submit(event) {
     event.preventDefault();
     const formEl = event.currentTarget;
-    const form = new FormData(formEl);
-    const invoice = run(
-      () =>
-        createInvoice({
-          orderId,
-          title: String(form.get('title')),
-          amount: String(form.get('amount')),
-          dueDate: String(form.get('dueDate')),
-          note: String(form.get('note') || ''),
-        }),
+    const dueDate = String(new FormData(formEl).get('dueDate'));
+    const invoice = await run(
+      () => createInvoice(orderId, dueDate),
       (inv) =>
-        `ออกใบแจ้งหนี้ ${inv.invoiceNumber} ${money(inv.amount)} ส่งฝ่ายการเงินและลูกค้าแล้ว (จำลอง)`,
+        `ออกใบแจ้งหนี้ ${inv.invoiceNumber} ${money(inv.amount)} แล้ว ลูกค้าและฝ่ายการเงินเห็นในระบบทันที`,
     );
     if (invoice) {
       formEl.reset();
       setOrderId('');
+      reload();
     }
+  }
+
+  async function cancel(invoice) {
+    const done = await run(
+      () => cancelInvoice(invoice.id),
+      () => `ยกเลิกใบแจ้งหนี้ ${invoice.invoiceNumber} แล้ว ออกใบใหม่ได้`,
+    );
+    if (done) reload();
   }
 
   function pick(id) {
@@ -67,24 +84,21 @@ export default function ManagerInvoicesPage() {
 
   return (
     <main className="page-content admin-content">
-      <PageHeader
-        crumb="Workspace / ออกบิลส่งการเงิน"
-        title="ออกบิลส่งการเงิน"
-        sub="ออกใบแจ้งหนี้จากออเดอร์ที่อนุมัติแล้ว ระบบส่งต่อให้ฝ่ายการเงิน (Admin) และลูกค้า"
-      />
-      <DemoNote />
+      {header}
+      <LoadState error={error} onRetry={reload} />
       <Kpis
         items={[
           { l: 'ออเดอร์รอออกบิล', v: billable.length },
-          { l: 'บิลรอชำระ', v: statusCount('issued') },
-          { l: 'บิลเกินกำหนด', v: statusCount('overdue') },
-          { l: 'บิลชำระครบ', v: statusCount('paid') },
+          { l: 'บิลรอชำระ', v: statusCount('ISSUED') },
+          { l: 'บิลเกินกำหนด', v: statusCount('OVERDUE') },
+          { l: 'บิลชำระครบ', v: statusCount('PAID') },
         ]}
       />
+      <FormMessage message={message} />
 
       <section className="s-card flush">
         <div className="s-card-h">
-          <h2>ออเดอร์และยอดที่ออกบิล</h2>
+          <h2>ออเดอร์และใบแจ้งหนี้</h2>
         </div>
         <div className="s-tw">
           <table className="s-tbl">
@@ -95,43 +109,51 @@ export default function ManagerInvoicesPage() {
                 <th scope="col" className="num">
                   ราคาสุทธิ
                 </th>
-                <th scope="col" className="num">
-                  ออกบิลแล้ว
-                </th>
-                <th scope="col" className="num">
-                  ยังไม่ออกบิล
-                </th>
                 <th scope="col">ชำระแล้ว</th>
+                <th scope="col">ใบแจ้งหนี้</th>
                 <th scope="col">สถานะออเดอร์</th>
                 <th scope="col" />
               </tr>
             </thead>
             <tbody>
               {orders.map((o) => {
-                const sum = orderSummary(data, o.orderId);
+                const invoice = activeInvoice(data, o.orderId);
                 return (
                   <tr key={o.orderId}>
                     <td>{o.orderNumber}</td>
                     <td>
                       {o.customerName}
                       <span className="pay-sub">
-                        {o.car} · {o.sellerId}
+                        {carLabel(o)} · ฝ่ายขาย {o.sellerName}
                       </span>
                     </td>
                     <td className="num">{money(o.totalAmount)}</td>
-                    <td className="num">{baht(sum.billed)}</td>
-                    <td className="num">{baht(sum.unbilled)}</td>
                     <td>
-                      <Progress value={sum.paid} total={sum.total} />
-                      <span className="pay-sub">{baht(sum.paid)}</span>
+                      <Progress
+                        value={netPaid(o)}
+                        total={toSatang(o.totalAmount)}
+                      />
+                      <span className="pay-sub">{baht(netPaid(o))}</span>
                     </td>
                     <td>
-                      <StatusPill kind="order" status={o.status} />
+                      {invoice ? (
+                        <button
+                          className="s-act"
+                          onClick={() => setViewing(invoice)}
+                        >
+                          {invoice.invoiceNumber}
+                        </button>
+                      ) : (
+                        <span className="small">–</span>
+                      )}
+                    </td>
+                    <td>
+                      <StatusPill kind="order" status={o.orderStatus} />
                     </td>
                     <td className="acts">
-                      {o.status !== 'approved' ? (
+                      {o.orderStatus === 'PENDING' ? (
                         <span className="small">รออนุมัติก่อน</span>
-                      ) : sum.unbilled > 0 ? (
+                      ) : canInvoice(data, o) ? (
                         <button
                           className="s-act"
                           onClick={() => pick(o.orderId)}
@@ -139,7 +161,7 @@ export default function ManagerInvoicesPage() {
                           ออกบิล
                         </button>
                       ) : (
-                        <span className="small">ออกบิลครบแล้ว</span>
+                        <span className="small">ออกบิลแล้ว</span>
                       )}
                     </td>
                   </tr>
@@ -147,6 +169,9 @@ export default function ManagerInvoicesPage() {
               })}
             </tbody>
           </table>
+          {orders.length === 0 && (
+            <p className="empty-state">ยังไม่มีออเดอร์</p>
+          )}
         </div>
       </section>
 
@@ -167,32 +192,18 @@ export default function ManagerInvoicesPage() {
                 </option>
                 {billable.map((o) => (
                   <option key={o.orderId} value={o.orderId}>
-                    {o.orderNumber} · {o.customerName} · {o.car}
+                    {o.orderNumber} · {o.customerName} · {o.car.name}
                   </option>
                 ))}
               </select>
             </label>
             <label className="s-fld">
-              <span>ประเภทบิล *</span>
-              <select className="s-in" name="title" required>
-                {invoiceTitles.map((t) => (
-                  <option key={t}>{t}</option>
-                ))}
-              </select>
-            </label>
-            <label className="s-fld">
-              <span>จำนวนเงิน (บาท) *</span>
+              <span>ยอดบิล (ราคาสุทธิของออเดอร์)</span>
               <input
-                key={orderId}
                 className="s-in"
-                name="amount"
-                type="number"
-                min="0.01"
-                step="0.01"
-                max={selected ? (unbilled / 100).toFixed(2) : undefined}
-                defaultValue={selected ? (unbilled / 100).toFixed(2) : ''}
+                value={selected ? money(selected.totalAmount) : ''}
+                readOnly
                 disabled={!selected}
-                required
               />
             </label>
             <label className="s-fld">
@@ -206,50 +217,48 @@ export default function ManagerInvoicesPage() {
                 required
               />
             </label>
-            <label className="s-fld wide">
-              <span>หมายเหตุถึงฝ่ายการเงิน</span>
-              <textarea
-                className="s-in"
-                name="note"
-                maxLength={300}
-                placeholder="เช่น ลูกค้าขอแยกชำระ 2 งวด"
-              />
-            </label>
-            {selected && (
-              <p className="small s-fld wide">
-                ยอดที่ยังไม่ได้ออกบิลของ {selected.orderNumber}:{' '}
-                <b>{baht(unbilled)}</b>
-              </p>
-            )}
             <div className="s-form-f">
-              <button className="s-btn pri" type="submit" disabled={!selected}>
+              <button
+                className="s-btn pri"
+                type="submit"
+                disabled={!selected || busy}
+              >
                 ออกบิลและส่งการเงิน
               </button>
             </div>
-            <FormMessage message={message} />
           </form>
         </section>
 
         <section className="s-card s-list">
-          <h3>บิลที่ออกแล้ว</h3>
+          <h3>ใบแจ้งหนี้ที่ออกแล้ว</h3>
           {issued.length === 0 && <p className="empty-state">ยังไม่มีบิล</p>}
           {issued.map((inv) => {
-            const order = data.orders.find((o) => o.orderId === inv.orderId);
+            const order = orderOf(data, inv.orderId);
+            const status = invoiceStatus(inv);
             return (
-              <div className="it" key={inv.invoiceId}>
+              <div className="it" key={inv.id}>
                 <div className="grow">
                   <b>
                     <button className="s-act" onClick={() => setViewing(inv)}>
                       {inv.invoiceNumber}
                     </button>{' '}
-                    {inv.title} {money(inv.amount)}
+                    {money(inv.amount)}
                   </b>
                   <span>
-                    {order.orderNumber} {order.customerName} · ครบกำหนด{' '}
+                    {order?.orderNumber} {order?.customerName} · ครบกำหนด{' '}
                     {thDate(inv.dueDate)}
                   </span>
                 </div>
-                <StatusPill kind="invoice" status={invoiceStatus(data, inv)} />
+                <StatusPill kind="invoice" status={status} />
+                {inv.status === 'ISSUED' && (
+                  <button
+                    className="s-act del"
+                    disabled={busy}
+                    onClick={() => cancel(inv)}
+                  >
+                    ยกเลิก
+                  </button>
+                )}
               </div>
             );
           })}

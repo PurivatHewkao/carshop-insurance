@@ -28,6 +28,14 @@ export async function orderBalance(connection, order) {
   };
 }
 
+/**
+ * Money is still owed only while the order is PENDING/CONFIRMED. A PAID order
+ * with a partial refund (e.g. an accessory returned) owes nothing more, and a
+ * CANCELLED order owes nothing at all.
+ */
+export const openForPayment = (status) =>
+  status === 'PENDING' || status === 'CONFIRMED';
+
 export function balanceToApi(order, balance) {
   return {
     orderId: order.id,
@@ -36,7 +44,9 @@ export function balanceToApi(order, balance) {
     paidAmount: formatMoney(balance.paid),
     pendingAmount: formatMoney(balance.pending),
     refundedAmount: formatMoney(balance.refunded),
-    outstandingAmount: formatMoney(balance.outstanding),
+    outstandingAmount: formatMoney(
+      openForPayment(order.status) ? balance.outstanding : 0,
+    ),
     currency: 'THB',
   };
 }
