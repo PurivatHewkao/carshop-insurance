@@ -1,9 +1,13 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { query, withTransaction } from '../../db/transaction.js';
-import { employeeExists, findOrder, lockOrder } from '../../clients/orders.js';
+import { findOrder, lockOrder } from '../../clients/orders.js';
+import {
+  assertOrderAccess,
+  orderScope,
+  requireEmployee,
+} from '../../middleware/auth.js';
 import { httpError } from '../../utils/httpError.js';
 import {
-  optionalUuid,
   readDate,
   readEnum,
   requireBody,
@@ -42,21 +46,16 @@ function newInvoiceNumber(today) {
   );
 }
 
+const orderNotFound = () =>
+  httpError(404, 'ORDER_NOT_FOUND', 'Order not found');
+
 /**
- * POST /orders/{orderId}/invoices — Seller/Admin issues an invoice for the full order total.
- * issuedBy (employee id) comes from the body until Identity provides the logged-in user.
+ * POST /orders/{orderId}/invoices — an employee issues an invoice for the full order total.
+ * issued_by = the logged-in employee (a seller only for their own orders).
  */
-export async function createInvoice(orderId, rawBody) {
+export async function createInvoice(actor, orderId, rawBody) {
   const body = requireBody(rawBody);
-  const issuedBy = optionalUuid(body.issuedBy, 'issuedBy');
-  if (!issuedBy) {
-    throw httpError(
-      400,
-      'VALIDATION_ERROR',
-      'issuedBy (employee id) is required',
-      [{ field: 'issuedBy', issue: 'required' }],
-    );
-  }
+  const issuedBy = requireEmployee(actor);
   const today = todayUtc();
   const dueDate = readDate(body.dueDate, 'dueDate');
   if (dueDate && dueDate < today) {
@@ -67,7 +66,7 @@ export async function createInvoice(orderId, rawBody) {
 
   return withTransaction(async (connection) => {
     const order = await lockOrder(connection, orderId);
-    if (!order) throw httpError(404, 'ORDER_NOT_FOUND', 'Order not found');
+    assertOrderAccess(actor, order, orderNotFound);
     if (!['CONFIRMED', 'PAID'].includes(order.status)) {
       throw httpError(
         409,
@@ -75,14 +74,6 @@ export async function createInvoice(orderId, rawBody) {
         'Invoices can be issued only for CONFIRMED or PAID orders (current: ' +
           order.status +
           ')',
-      );
-    }
-    if (!(await employeeExists(connection, issuedBy))) {
-      throw httpError(
-        422,
-        'EMPLOYEE_NOT_FOUND',
-        'issuedBy is not an employee',
-        [{ field: 'issuedBy', issue: 'not_found' }],
       );
     }
     const [existing] = await connection.query(
@@ -160,19 +151,23 @@ export async function cancelInvoice(invoiceId) {
   });
 }
 
-export async function getInvoice(invoiceId) {
+export async function getInvoice(actor, invoiceId) {
+  const scope = orderScope(actor);
   const [rows] = await query(
-    'SELECT ' + COLUMNS + ' FROM invoices WHERE id = ?',
-    [invoiceId],
+    'SELECT ' +
+      COLUMNS +
+      ' FROM invoices WHERE id = ?' +
+      (scope.sql ? ' AND ' + scope.sql : ''),
+    [invoiceId, ...scope.params],
   );
   if (!rows.length)
     throw httpError(404, 'INVOICE_NOT_FOUND', 'Invoice not found');
   return invoiceToApi(rows[0]);
 }
 
-export async function listOrderInvoices(orderId) {
+export async function listOrderInvoices(actor, orderId) {
   const order = await findOrder({ query }, orderId);
-  if (!order) throw httpError(404, 'ORDER_NOT_FOUND', 'Order not found');
+  assertOrderAccess(actor, order, orderNotFound);
   const [rows] = await query(
     'SELECT ' +
       COLUMNS +
@@ -182,9 +177,14 @@ export async function listOrderInvoices(orderId) {
   return { data: rows.map(invoiceToApi) };
 }
 
-export async function listInvoices(queryString, paging) {
+export async function listInvoices(actor, queryString, paging) {
   const where = [];
   const params = [];
+  const scope = orderScope(actor);
+  if (scope.sql) {
+    where.push(scope.sql);
+    params.push(...scope.params);
+  }
   const status = readEnum(queryString.status, 'status', INVOICE_STATUSES, {
     required: false,
   });

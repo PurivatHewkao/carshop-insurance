@@ -1,30 +1,33 @@
 # payment frontend — คนที่ 4 (ดิว)
 
-รับผิดชอบ การเงินและชำระเงินจำลอง ยังเป็น placeholder ไม่มี business API/auth
+หน้าการเงินทั้ง 4 หน้าเรียก Payment service จริง (`services/payment`, port 3004) ข้อมูลมาจาก MySQL `carshop_sql`
+ไม่มีข้อมูลจำลองในหน้าเว็บแล้ว (`mockPaymentApi.js` ถูกลบ) — การตัดบัตรยังเป็นระบบจำลองที่ backend
 
-## ไฟล์เจ้าของ
+## หน้า
 
-- routes.jsx: เพิ่ม route ของ feature ที่ export ให้ src/routes/index.jsx; path ปัจจุบัน /payment
-- api/client.js: Axios client ของ payment เท่านั้น base URL รวม /api/v1 และเรียก relative endpoint เช่น health
-- pages/PlaceholderPage.jsx: แทนหรือเพิ่ม pages เมื่อทำ feature จริง
-- README.md: อัปเดตคู่มือและ dependencies
+| Route                    | Role     | ทำอะไรได้                                                                  |
+| ------------------------ | -------- | -------------------------------------------------------------------------- |
+| `/customer/transactions` | customer | ดูยอดค้าง ชำระ (โอน/บัตรจำลอง) ดูใบแจ้งหนี้ ขอคืนเงิน                      |
+| `/seller/finance`        | seller   | ดูการชำระของลูกค้าที่ตัวเองขาย ออกใบแจ้งหนี้ ส่งเรื่องถึงการเงิน           |
+| `/manager/invoices`      | manager  | ออก/ยกเลิกใบแจ้งหนี้ ดูยอดทุกออเดอร์                                       |
+| `/admin/finance`         | admin    | ตรวจยอดโอน อนุมัติคืนเงิน รับเงินสด ใบแจ้งหนี้ ประวัติ ตอบเรื่องจากฝ่ายขาย |
 
-## เพิ่มงาน
+backend กรองข้อมูลตาม role ของผู้ login เอง หน้าเว็บไม่ต้องกรอง
 
-เพิ่ม pages/_.jsx, components/_.jsx, hooks/use*.js และ api/*.js ตามงานที่ใช้จริง ไม่ต้องสร้างไฟล์เปล่าทุก layer
-UI เรียก API ของ service ผ่าน client ไม่เชื่อม DB; src/lib/http.js เก็บ config ร่วมเท่านั้น
+## ไฟล์
+
+- `api/client.js` — Axios client (`withCredentials` ส่ง cookie session ของ Identity)
+- `api/paymentApi.js` — ฟังก์ชันเรียก endpoint + `paymentError()` แปลงรหัส error เป็นข้อความไทย
+- `hooks/usePaymentData.js` — `usePaymentData()` โหลด order-balances/payments/invoices/refunds(/finance-requests) พร้อม loading/error/reload; `useAction()` สำหรับปุ่มที่ส่งข้อมูล
+- `utils/finance.js` — จับคู่รายการ (บิลของออเดอร์, ยอดคืนได้, สถานะเกินกำหนด) · `utils/format.js` — เงิน/วันที่/ป้ายสถานะ
+- `components/FinanceUi.jsx` — ชิ้นส่วน UI ร่วม + ใบแจ้งหนี้ (พิมพ์/บันทึก PDF จากเบราว์เซอร์)
+
+## รัน
+
+จาก root: `npm run dev` (หรืออย่างน้อย `dev:web`, `dev:identity`, `dev:sales`, `dev:payment`) แล้ว login ด้วยบัญชีของ role นั้น
+ตั้งค่า payment ตาม `services/payment/README.md` ก่อน (`.env` + `npm run db:migrate`)
 
 ## ประสาน
 
-Layout, common components, routes กลาง, styles, entry point, src/lib/http.js และ apps/web/package.json/package-lock.json ประสานคนที่ 5 (อั้ม) ก่อนแก้
-ไม่แก้ src/features ของเพื่อนหรือ services ของเพื่อนโดยไม่ประสาน ดู docs/team-ownership.md
-รันจาก root: npm run dev:web และ npm run dev:payment; เมื่อติดตั้ง frontend เดี่ยว cd apps/web แล้ว npm install และ npm run dev
-
-## งานเริ่มต้น
-
-1. ตกลง Order contract กับคนที่ 3 (เฟียร์) และออกแบบ payments/invoices/refunds
-2. พัฒนา payment simulation พร้อม idempotency และตรวจยอดฝั่ง server
-3. พัฒนา invoice และ refund simulation พร้อมสถานะ
-4. เชื่อมประวัติชำระเงินและหน้าฝ่ายการเงิน
-
-พร้อม integrate เมื่อ routes ไม่มีชนกัน, contract ตรง backend, มี loading/empty/error และ validation/auth จริงตามขอบเขตที่ตกลง, build/lint ผ่าน และไม่มีข้อมูลสำเร็จปลอม
+- route `/admin/finance` อยู่ใต้ `RequireRole roles={['admin']}` ใน `src/routes/index.jsx` (ไฟล์กลาง) — role `finance` ยังเข้าไม่ได้ทางเว็บ แม้ backend อนุญาตแล้ว ต้องตกลงกับโจเซฟ/อั้ม
+- Layout, common components, routes กลาง, styles และ `apps/web/package.json` ประสานคนที่ 5 (อั้ม) ก่อนแก้

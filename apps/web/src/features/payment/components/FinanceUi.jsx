@@ -1,10 +1,19 @@
 import { useEffect, useRef } from 'react';
 import {
-  invoicePaidSatang,
+  carLabel,
   invoiceStatus,
-  toSatang,
-} from '../api/mockPaymentApi.js';
-import { baht, money, statusLabels, thDate } from '../utils/format.js';
+  netPaid,
+  orderOf,
+  outstanding,
+} from '../utils/finance.js';
+import {
+  baht,
+  money,
+  paymentMethods,
+  statusLabels,
+  thDate,
+  thDateTime,
+} from '../utils/format.js';
 import '../payment.css';
 
 export function StatusPill({ kind, status }) {
@@ -25,11 +34,25 @@ export function PageHeader({ crumb, title, sub, children }) {
   );
 }
 
-export function DemoNote() {
+/** แสดงระหว่างโหลด / เมื่อโหลดไม่ได้ — คืน null เมื่อพร้อมแสดงข้อมูล */
+export function LoadState({ loading, error, onRetry }) {
+  if (loading) return <p className="s-note">กำลังโหลดข้อมูลการเงิน…</p>;
+  if (!error) return null;
+  return (
+    <p className="s-note pay-error" role="alert">
+      {error}{' '}
+      <button type="button" className="s-act" onClick={onRetry}>
+        ลองใหม่
+      </button>
+    </p>
+  );
+}
+
+export function SimNote() {
   return (
     <p className="s-note">
-      โหมดสาธิต · ข้อมูลการเงินเป็นข้อมูลจำลอง เก็บเฉพาะแท็บนี้ ยังไม่เชื่อม
-      Payment service และไม่มีการตัดเงินจริง
+      ข้อมูลจริงจาก Payment service · การตัดบัตรเป็นระบบจำลอง
+      ไม่มีการตัดเงินจริง
     </p>
   );
 }
@@ -114,11 +137,8 @@ export function Dialog({ title, onClose, children }) {
 }
 
 export function InvoiceDialog({ data, invoice, onClose }) {
-  const order = data.orders.find((o) => o.orderId === invoice.orderId);
-  const payments = data.payments.filter(
-    (p) => p.invoiceId === invoice.invoiceId,
-  );
-  const paid = invoicePaidSatang(data, invoice.invoiceId);
+  const order = orderOf(data, invoice.orderId);
+  const payments = data.payments.filter((p) => p.orderId === invoice.orderId);
   function print() {
     document.body.classList.add('pay-printing');
     window.addEventListener(
@@ -139,16 +159,19 @@ export function InvoiceDialog({ data, invoice, onClose }) {
           <div className="pay-doc-no">
             <span className="small">ใบแจ้งหนี้</span>
             <b>{invoice.invoiceNumber}</b>
-            <StatusPill kind="invoice" status={invoiceStatus(data, invoice)} />
+            <StatusPill kind="invoice" status={invoiceStatus(invoice)} />
           </div>
         </div>
         <dl className="s-kv">
           {[
-            ['ลูกค้า', order.customerName],
-            ['ออเดอร์', order.orderNumber + ' · ' + order.car],
+            ['ลูกค้า', order?.customerName ?? '–'],
+            [
+              'ออเดอร์',
+              order ? order.orderNumber + ' · ' + carLabel(order) : '–',
+            ],
+            ['ฝ่ายขาย', order?.sellerName ?? '–'],
             ['วันที่ออก', thDate(invoice.issueDate)],
             ['ครบกำหนดชำระ', thDate(invoice.dueDate)],
-            ['ออกโดย', invoice.issuedBy],
           ].map(([k, v]) => (
             <div className="r" key={k}>
               <dt className="k">{k}</dt>
@@ -167,37 +190,36 @@ export function InvoiceDialog({ data, invoice, onClose }) {
           </thead>
           <tbody>
             <tr>
-              <td>
-                {invoice.title} — {order.car}
-                {invoice.note && <div className="small">{invoice.note}</div>}
-              </td>
+              <td>ราคารถสุทธิ — {order ? carLabel(order) : invoice.orderId}</td>
               <td className="num">{money(invoice.amount)}</td>
             </tr>
           </tbody>
-          <tfoot>
-            <tr>
-              <td>ชำระแล้ว</td>
-              <td className="num">{baht(paid)}</td>
-            </tr>
-            <tr>
-              <th scope="row">คงค้าง</th>
-              <th className="num">
-                {invoice.status === 'void'
-                  ? '–'
-                  : baht(Math.max(0, toSatang(invoice.amount) - paid))}
-              </th>
-            </tr>
-          </tfoot>
+          {order && (
+            <tfoot>
+              <tr>
+                <td>ชำระแล้ว (หักคืนเงิน)</td>
+                <td className="num">{baht(netPaid(order))}</td>
+              </tr>
+              <tr>
+                <th scope="row">คงค้าง</th>
+                <th className="num">
+                  {invoice.status === 'CANCELLED'
+                    ? '–'
+                    : baht(outstanding(order))}
+                </th>
+              </tr>
+            </tfoot>
+          )}
         </table>
         {payments.length > 0 && (
           <>
-            <h3>การชำระเงิน</h3>
+            <h3>การชำระเงินของออเดอร์นี้</h3>
             <ul className="pay-mini">
               {payments.map((p) => (
-                <li key={p.paymentId}>
+                <li key={p.id}>
                   <span>
-                    {p.paymentNumber} · {thDate(p.paidAt)} ·{' '}
-                    {p.transactionReference}
+                    {thDateTime(p.paymentDate ?? p.createdAt)} ·{' '}
+                    {paymentMethods[p.paymentMethod]} · {p.transactionReference}
                   </span>
                   <span>
                     {money(p.amount)}{' '}
@@ -208,7 +230,7 @@ export function InvoiceDialog({ data, invoice, onClose }) {
             </ul>
           </>
         )}
-        <p className="small">เอกสารจำลองสำหรับสาธิตระบบ ไม่ใช่ใบกำกับภาษี</p>
+        <p className="small">เอกสารสำหรับสาธิตระบบ ไม่ใช่ใบกำกับภาษี</p>
       </article>
       <div className="s-btns">
         <button className="s-btn pri" type="button" onClick={print}>
