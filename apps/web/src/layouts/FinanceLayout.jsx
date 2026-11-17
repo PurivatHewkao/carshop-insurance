@@ -1,0 +1,11 @@
+import WorkspaceLayout from './WorkspaceLayout.jsx';
+// พื้นที่ทำงานของบัญชี role finance (หน้าเดียวกับ /admin/finance ของ Admin)
+const links = [
+  ['/finance', 'การเงิน'],
+  ['/catalog', '◇ ดูรายการรถ'],
+  ['/account', '◎ บัญชีของฉัน'],
+  ['/', '← กลับหน้าเว็บไซต์'],
+];
+export default function FinanceLayout() {
+  return <WorkspaceLayout role="Finance" links={links} />;
+}

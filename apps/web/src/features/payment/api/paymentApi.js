@@ -61,6 +61,23 @@ export const createInvoice = (orderId, dueDate) =>
 export const cancelInvoice = (invoiceId) =>
   send('post', `invoices/${invoiceId}/cancel`);
 
+/** ดาวน์โหลดใบแจ้งหนี้ PDF ที่ backend สร้าง (GET /invoices/{id}/pdf) */
+export async function downloadInvoicePdf(invoice) {
+  const { data } = await paymentClient.get(`invoices/${invoice.id}/pdf`, {
+    responseType: 'blob',
+    timeout: 20000,
+    headers: { Accept: 'application/pdf' },
+  });
+  const url = URL.createObjectURL(data);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = invoice.invoiceNumber + '.pdf';
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
 export const createFinanceRequest = (body) =>
   send('post', 'finance-requests', body);
 export const replyFinanceRequest = (requestId, reply) =>

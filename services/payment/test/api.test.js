@@ -798,3 +798,93 @@ describe('login, roles and ownership', () => {
     assert.ok(sellerList.json.data.some((r) => r.id === created.json.data.id));
   });
 });
+
+describe('customer views and invoice PDF', () => {
+  async function getPdf(url, as) {
+    const res = await fetch(base + url, {
+      headers: as ? { authorization: 'Bearer tok-' + as } : {},
+    });
+    return {
+      status: res.status,
+      headers: res.headers,
+      body: Buffer.from(await res.arrayBuffer()),
+    };
+  }
+
+  test('/me/invoices and /me/refunds: own rows only, customers only', async () => {
+    const { orderId } = await makeOrder('1500.00');
+    const pay = await api('POST', `/orders/${orderId}/payments`, {
+      key: 'pay-me-000001',
+      body: { amount: '1500.00', paymentMethod: 'CASH' },
+    });
+    assert.equal(pay.status, 201);
+    const invoice = await api('POST', `/orders/${orderId}/invoices`, {
+      as: 'manager',
+      body: {},
+    });
+    assert.equal(invoice.status, 201);
+    const refund = await api('POST', `/payments/${pay.json.data.id}/refunds`, {
+      as: 'customer',
+      key: 'ref-me-000001',
+      body: { amount: '100.00', reason: 'ทดสอบ /me/refunds' },
+    });
+    assert.equal(refund.status, 201);
+
+    const mine = await api('GET', '/me/invoices', { as: 'customer' });
+    assert.equal(mine.status, 200);
+    assert.ok(mine.json.data.some((i) => i.id === invoice.json.data.id));
+    const other = await api('GET', '/me/invoices', { as: 'customer2' });
+    assert.ok(!other.json.data.some((i) => i.id === invoice.json.data.id));
+
+    const myRefunds = await api('GET', '/me/refunds', { as: 'customer' });
+    assert.ok(myRefunds.json.data.some((r) => r.id === refund.json.data.id));
+    const otherRefunds = await api('GET', '/me/refunds', { as: 'customer2' });
+    assert.ok(
+      !otherRefunds.json.data.some((r) => r.id === refund.json.data.id),
+    );
+
+    for (const as of ['seller', 'admin']) {
+      assert.equal((await api('GET', '/me/invoices', { as })).status, 403);
+      assert.equal((await api('GET', '/me/refunds', { as })).status, 403);
+    }
+    assert.equal((await api('GET', '/me/invoices', { as: null })).status, 401);
+  });
+
+  test('GET /invoices/{id}/pdf: Thai A4 PDF for owner/staff, 404 for others', async () => {
+    const { orderId } = await makeOrder('1250000.00');
+    await api('POST', `/orders/${orderId}/payments`, {
+      key: 'pay-pdf-00001',
+      body: { amount: '250000.00', paymentMethod: 'CASH' },
+    });
+    const invoice = await api('POST', `/orders/${orderId}/invoices`, {
+      as: 'seller',
+      body: { dueDate: '2099-12-31' },
+    });
+    assert.equal(invoice.status, 201);
+    const url = `/invoices/${invoice.json.data.id}/pdf`;
+
+    const pdf = await getPdf(url, 'customer');
+    assert.equal(pdf.status, 200);
+    assert.equal(pdf.headers.get('content-type'), 'application/pdf');
+    assert.match(
+      pdf.headers.get('content-disposition'),
+      new RegExp(invoice.json.data.invoiceNumber + '[.]pdf'),
+    );
+    assert.equal(pdf.body.subarray(0, 5).toString(), '%PDF-');
+    if (process.env.SAVE_TEST_PDF)
+      (await import('node:fs')).writeFileSync(
+        process.env.SAVE_TEST_PDF,
+        pdf.body,
+      );
+
+    for (const as of ['seller', 'manager', 'finance', 'admin'])
+      assert.equal((await getPdf(url, as)).status, 200, as);
+    for (const as of ['customer2', 'seller2', 'stock'])
+      assert.equal((await getPdf(url, as)).status, 404, as);
+    assert.equal((await getPdf(url, null)).status, 401);
+    assert.equal(
+      (await getPdf(`/invoices/${randomUUID()}/pdf`, 'admin')).status,
+      404,
+    );
+  });
+});
