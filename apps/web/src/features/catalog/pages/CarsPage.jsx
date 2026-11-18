@@ -19,7 +19,6 @@ export default function CarsPage() {
   const { promotions: allPromotions } = usePromotions();
   const promotions = useMemo(() => allPromotions.filter((item) => item.active).slice(0, 3), [allPromotions]);
   const categories = [...new Set(cars.map((car) => car.type))];
-  const heroCar = cars.find((car) => car.id === 'lamborghini-huracan') || cars.find((car) => car.type === 'supercar') || cars[0];
 
   const filteredCars = cars
     .filter((car) => {

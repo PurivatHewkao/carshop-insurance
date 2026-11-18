@@ -1,6 +1,11 @@
 import { Router } from 'express';
 import { httpError } from '../../utils/httpError.js';
 import {
+  CATALOG_EDITORS,
+  CATALOG_STAFF,
+  staffOnly,
+} from '../../middleware/auth.js';
+import {
   MAX_STOCK,
   createModel,
   deleteModel,
@@ -215,11 +220,17 @@ router.get('/', async (req, res) => {
 });
 
 // GET /cars/stock-summary — numbers for the stock page cards
-router.get('/stock-summary', async (_req, res) => {
-  res.set('Cache-Control', 'no-store').json({ data: await getStockSummary() });
-});
+router.get(
+  '/stock-summary',
+  ...staffOnly(...CATALOG_STAFF),
+  async (_req, res) => {
+    res
+      .set('Cache-Control', 'no-store')
+      .json({ data: await getStockSummary() });
+  },
+);
 
-router.post('/', async (req, res) => {
+router.post('/', ...staffOnly(...CATALOG_EDITORS), async (req, res) => {
   res.status(201).json({ data: await createModel(parseCar(req.body)) });
 });
 
@@ -230,30 +241,38 @@ router.get('/:id', async (req, res) => {
 });
 
 // PATCH /cars/:id/stock  { "stock": 5 }  — set the number of AVAILABLE cars
-router.patch('/:id/stock', async (req, res) => {
-  const ref = readRef(req.params.id);
-  const stock = req.body?.stock;
-  if (!Number.isInteger(stock) || stock < 0 || stock > MAX_STOCK) {
-    throw httpError(
-      400,
-      'INVALID_STOCK',
-      'stock must be an integer between 0 and ' + MAX_STOCK,
-    );
-  }
-  const model = await setStock(ref, stock);
-  if (!model) throw httpError(404, 'CAR_NOT_FOUND', 'Car model not found');
-  res.set('Cache-Control', 'no-store').json({ data: model });
-});
+router.patch(
+  '/:id/stock',
+  ...staffOnly(...CATALOG_EDITORS),
+  async (req, res) => {
+    const ref = readRef(req.params.id);
+    const stock = req.body?.stock;
+    if (!Number.isInteger(stock) || stock < 0 || stock > MAX_STOCK) {
+      throw httpError(
+        400,
+        'INVALID_STOCK',
+        'stock must be an integer between 0 and ' + MAX_STOCK,
+      );
+    }
+    const model = await setStock(ref, stock);
+    if (!model) throw httpError(404, 'CAR_NOT_FOUND', 'Car model not found');
+    res.set('Cache-Control', 'no-store').json({ data: model });
+  },
+);
 
 // PUT /cars/:id/photos  { "photos": ["https://…", "data:image/jpeg;base64,…"] } — first one is the main image
-router.put('/:id/photos', async (req, res) => {
-  const ref = readRef(req.params.id);
-  const model = await replacePhotos(ref, readPhotos(req.body?.photos));
-  if (!model) throw httpError(404, 'CAR_NOT_FOUND', 'Car model not found');
-  res.set('Cache-Control', 'no-store').json({ data: model });
-});
+router.put(
+  '/:id/photos',
+  ...staffOnly(...CATALOG_EDITORS),
+  async (req, res) => {
+    const ref = readRef(req.params.id);
+    const model = await replacePhotos(ref, readPhotos(req.body?.photos));
+    if (!model) throw httpError(404, 'CAR_NOT_FOUND', 'Car model not found');
+    res.set('Cache-Control', 'no-store').json({ data: model });
+  },
+);
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', ...staffOnly(...CATALOG_EDITORS), async (req, res) => {
   if (!(await deleteModel(readRef(req.params.id)))) {
     throw httpError(404, 'CAR_NOT_FOUND', 'Car model not found');
   }

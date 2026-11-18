@@ -114,7 +114,7 @@ export default function StockPage() {
         <article className={summary?.lowStock ? 'is-warning' : ''}><span className="catalog-metric-icon">!</span><small>สต็อกใกล้หมด</small><strong>{summary ? summary.lowStock : '–'}</strong><span>รุ่นที่เหลือไม่เกิน 2 คัน</span></article>
         <article className={summary?.outOfStock ? 'is-danger' : ''}><span className="catalog-metric-icon">×</span><small>หมดสต็อก</small><strong>{summary ? summary.outOfStock : '–'}</strong><span>รุ่นที่ต้องสั่งเพิ่มหรือสอบถาม</span></article>
       </div>
-
+ 
       <section className="catalog-admin-panel catalog-stock-panel">
         <div className="catalog-admin-panel-head"><div><p className="catalog-eyebrow">INVENTORY OVERVIEW</p><h2>รายการจำนวนรถ</h2></div><span className="catalog-number-tag">{result.total} รุ่นที่แสดง</span></div>
         <div className="catalog-stock-filters">
