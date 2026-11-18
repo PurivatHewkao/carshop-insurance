@@ -117,6 +117,13 @@ export async function register(values) {
   setSession(user);
   return user;
 }
+export async function requestPasswordReset(email) {
+  await request('post', 'auth/forgot-password', { email });
+}
+export async function resetPassword(token, password) {
+  await request('post', 'auth/reset-password', { token, password });
+  setSession(null);
+}
 export async function logout() {
   if (!isDemo) {
     try {

@@ -67,3 +67,20 @@ Login/Register รวม 30 requests/IP/15 นาที รายการผู
 ## Session middleware สำหรับ service อื่น
 
 ดู [ตัวตรวจ session กลาง](../../packages/auth/README.md) สำหรับการใช้ Identity ตรวจ JWT, role ปัจจุบัน, Logout และบัญชีถูกระงับ พร้อมตัวอย่าง CORS/cookie และขอบเขต ownership ที่แต่ละ service ต้องตรวจเพิ่ม ตัวกลางยังไม่ได้ติดตั้งใน business routes ของ service อื่น
+## Password recovery
+
+In the Identity service environment, set `RESEND_API_KEY`, `PASSWORD_RESET_FROM`
+(a sender on your verified Resend domain), and `PASSWORD_RESET_WEB_ORIGIN`
+(the HTTPS frontend origin, no path; local HTTP loopback is allowed in development).
+Disable click tracking for reset emails so the single-use link goes directly to the frontend.
+Use a stable `JWT_SECRET` across service restarts and replicas.
+
+- `POST /api/v1/auth/forgot-password` with `{ email }` returns 202 for valid email
+  syntax when configured, regardless of whether an active account exists.
+  Delivery happens in the background on the running Identity server.
+- `POST /api/v1/auth/reset-password` with `{ token, password }` returns 204 on
+  success. Links expire after 30 minutes. Changing the password invalidates all
+  prior reset links and access tokens for that user.
+
+No database migration is needed. On first rollout, users with sessions issued
+before this change must sign in again.

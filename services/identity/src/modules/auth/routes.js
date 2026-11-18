@@ -17,12 +17,31 @@ import {
 } from './repository.js';
 import { profile } from './validation.js';
 import {
+  readResetRequest,
+  resetPassword,
+  sendResetEmail,
+} from './passwordReset.js';
+import {
   clearSessionCookie,
   setSessionCookie,
   verifyWriteOrigin,
 } from './sessionCookie.js';
 
 const router = Router();
+const recoveryLimits = {
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: {
+    error: {
+      code: 'TOO_MANY_REQUESTS',
+      message: 'ดำเนินการบ่อยเกินไป กรุณารอ 15 นาทีแล้วลองใหม่',
+    },
+  },
+};
+const forgotLimiter = rateLimit(recoveryLimits);
+const resetLimiter = rateLimit(recoveryLimits);
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 30,
@@ -53,6 +72,19 @@ router.post('/auth/register', limiter, async (req, res) => {
 });
 router.post('/auth/login', limiter, async (req, res) => {
   sendSession(req, res, 200, await login(req.body));
+});
+router.post('/auth/forgot-password', forgotLimiter, (req, res) => {
+  const request = readResetRequest(req.body);
+  // Respond before looking up the account so delivery time cannot reveal it.
+  res.status(202).json({ data: { accepted: true } });
+  void sendResetEmail(request).catch(() => {
+    console.error('Password reset email delivery failed');
+  });
+});
+router.post('/auth/reset-password', resetLimiter, async (req, res) => {
+  await resetPassword(req.body);
+  clearSessionCookie(res);
+  res.status(204).end();
 });
 router.post('/auth/logout', authenticate, async (req, res) => {
   await logout(req.auth.claims);

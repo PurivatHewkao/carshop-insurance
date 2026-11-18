@@ -28,6 +28,20 @@ export async function findById(id, db = getMysqlPool()) {
   const [rows] = await db.execute(`${selection} WHERE u.id=?`, [id]);
   return decode(rows[0]);
 }
+export async function replacePassword(user, secret, expiresAt) {
+  const [result] = await getMysqlPool().execute(
+    `UPDATE users SET password_hash=?
+     WHERE id=? AND status='ACTIVE' AND BINARY password_hash=?
+       AND UNIX_TIMESTAMP() < ?`,
+    [
+      `scrypt$${secret.salt}$${secret.passwordHash}`,
+      user.id,
+      user.encodedPassword,
+      expiresAt,
+    ],
+  );
+  return result.affectedRows === 1;
+}
 export async function transaction(action) {
   const db = await getMysqlPool().getConnection();
   try {

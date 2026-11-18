@@ -1,4 +1,10 @@
-import { randomBytes, randomUUID, scrypt, timingSafeEqual } from 'node:crypto';
+import {
+  createHmac,
+  randomBytes,
+  randomUUID,
+  scrypt,
+  timingSafeEqual,
+} from 'node:crypto';
 import { promisify } from 'node:util';
 import jwt from 'jsonwebtoken';
 import { env } from '../../config/env.js';
@@ -13,34 +19,42 @@ import {
   lockAdministration,
   assertAdmin,
 } from './repository.js';
-import { credentials, profile, fail } from './validation.js';
+import { checkNewPassword, credentials, profile, fail } from './validation.js';
 import { clearSessionCookie, readSessionCookie } from './sessionCookie.js';
 
 const deriveKey = promisify(scrypt);
 const dummySalt = randomBytes(16).toString('hex');
 const dummyHash = Buffer.alloc(64);
 
-async function hashPassword(password) {
+export async function hashPassword(password) {
   const salt = randomBytes(16).toString('hex');
   const hash = await deriveKey(password, salt, 64);
   return { salt, passwordHash: hash.toString('hex') };
 }
+export function passwordVersion(user, purpose) {
+  return createHmac('sha256', env.jwtSecret)
+    .update(JSON.stringify([purpose, user.id, user.encodedPassword]))
+    .digest('hex');
+}
 function session(user) {
-  const accessToken = jwt.sign({ role: user.role }, env.jwtSecret, {
-    algorithm: 'HS256',
-    expiresIn: env.jwtLifetimeSeconds,
-    subject: user.id,
-    issuer: env.jwtIssuer,
-    audience: env.jwtAudience,
-    jwtid: randomUUID(),
-  });
+  const accessToken = jwt.sign(
+    { role: user.role, pv: passwordVersion(user, 'session') },
+    env.jwtSecret,
+    {
+      algorithm: 'HS256',
+      expiresIn: env.jwtLifetimeSeconds,
+      subject: user.id,
+      issuer: env.jwtIssuer,
+      audience: env.jwtAudience,
+      jwtid: randomUUID(),
+    },
+  );
   return { user: publicUser(user), accessToken };
 }
 export async function register(body) {
   const { email, password } = credentials(body);
   const details = profile(body);
-  if (!/[a-zA-Z]/.test(password) || !/\d/.test(password))
-    fail(400, 'VALIDATION_ERROR', 'รหัสผ่านต้องมีตัวอักษรอังกฤษและตัวเลข');
+  checkNewPassword(password);
   if (await findByEmail(email))
     fail(409, 'EMAIL_EXISTS', 'อีเมลนี้มีบัญชีอยู่แล้ว');
   const secret = await hashPassword(password);
@@ -54,7 +68,10 @@ export async function register(body) {
   };
   if (!(await insertUser(user)))
     fail(409, 'EMAIL_EXISTS', 'อีเมลนี้มีบัญชีอยู่แล้ว');
-  return session(user);
+  return session({
+    ...user,
+    encodedPassword: `scrypt$${secret.salt}$${secret.passwordHash}`,
+  });
 }
 export async function login(body) {
   const { email, password } = credentials(body);
@@ -99,6 +116,7 @@ export async function authenticate(req, res, next) {
   if (
     !user ||
     user.status !== 'active' ||
+    claims.pv !== passwordVersion(user, 'session') ||
     !claims.jti ||
     !claims.exp ||
     (await isRevoked(claims.jti))
@@ -131,8 +149,7 @@ export async function createUser(body, actorId, bootstrap = false) {
   const { email, password } = credentials(body);
   const details = profile(body);
   const access = permissions(body);
-  if (!/[a-zA-Z]/.test(password) || !/\d/.test(password))
-    fail(400, 'VALIDATION_ERROR', 'รหัสผ่านต้องมีตัวอักษรอังกฤษและตัวเลข');
+  checkNewPassword(password);
   const secret = await hashPassword(password);
   return transaction(async (db) => {
     await lockAdministration(db);
