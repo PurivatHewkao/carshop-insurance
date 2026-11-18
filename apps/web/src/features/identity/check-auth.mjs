@@ -63,12 +63,19 @@ try {
           undefined,
           'New demo accounts must not inherit a shared password',
         );
+        for (const role of ['seller', 'manager', 'finance', 'stock']) {
+          const account = await auth.login({
+            email: `${role}@toyoty.demo`,
+            password: auth.demoAccount.password,
+          });
+          assert.equal(account.role, role);
+        }
         await auth.login({
           email: 'admin@toyoty.demo',
           password: auth.demoAccount.password,
         });
         const users = await auth.listUsers();
-        assert.equal(users.length, 4);
+        assert.equal(users.length, 7);
         await assert.rejects(
           auth.updateUser(auth.getSession().id, {
             role: 'customer',

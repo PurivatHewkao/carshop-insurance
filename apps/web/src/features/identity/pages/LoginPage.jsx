@@ -79,11 +79,11 @@ export default function LoginPage() {
           </button>
         </fieldset>
       </form>
-      {!isDemo && (import.meta.env.PROD || showLocalRoleButtons) && (
+      {(isDemo || import.meta.env.PROD || showLocalRoleButtons) && (
         <section className="auth-demo" aria-label="บัญชีทดลอง">
           <strong>บัญชีทดลอง</strong>
           <p>
-            {showLocalRoleButtons
+            {isDemo || showLocalRoleButtons
               ? 'เลือกบทบาทเพื่อกรอกข้อมูล แล้วกดเข้าสู่ระบบ'
               : 'เลือกบทบาทเพื่อกรอกอีเมล แล้วใส่รหัสผ่านของบัญชีทดลอง'}
           </p>
@@ -95,8 +95,18 @@ export default function LoginPage() {
                 className="s-btn out"
                 disabled={busy}
                 onClick={() => {
-                  setEmail(`role-${role}@carshop.test`);
-                  setPassword(showLocalRoleButtons ? roleTestPassword : '');
+                  setEmail(
+                    isDemo
+                      ? `${role}@toyoty.demo`
+                      : `role-${role}@carshop.test`,
+                  );
+                  setPassword(
+                    isDemo
+                      ? demoAccount.password
+                      : showLocalRoleButtons
+                        ? roleTestPassword
+                        : '',
+                  );
                   setError('');
                 }}
               >
@@ -109,19 +119,6 @@ export default function LoginPage() {
       <p className="auth-switch">
         ยังไม่มีบัญชี? <Link to="/register">สมัครสมาชิก</Link>
       </p>
-      {isDemo && (
-        <div className="auth-demo">
-          <strong>ทดลองใช้งาน</strong>
-          <p>
-            ลูกค้า: {demoAccount.email}
-            <br />
-            ผู้ดูแล: admin@toyoty.demo
-            <br />
-            รหัสผ่านทั้งสองบัญชี: {demoAccount.password}
-          </p>
-          <small>บัญชีสาธิตใช้ทดสอบหน้าจอ ไม่มีการยืนยันตัวตนจริง</small>
-        </div>
-      )}
     </AuthShell>
   );
 }

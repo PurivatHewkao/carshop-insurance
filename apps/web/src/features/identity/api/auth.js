@@ -28,8 +28,16 @@ let users = [
     email: 'seller@toyoty.demo',
     phone: '0823456789',
     role: 'seller',
-    status: 'inactive',
+    status: 'active',
   },
+  ...['manager', 'finance', 'stock'].map((role, index) => ({
+    id: `demo-${index + 4}`,
+    name: `บัญชีสาธิต ${role}`,
+    email: `${role}@toyoty.demo`,
+    phone: `080000000${index}`,
+    role,
+    status: 'active',
+  })),
 ];
 // undefined means the browser session hasn't been checked yet; null means signed out.
 let session = isDemo ? null : undefined;
@@ -84,7 +92,7 @@ export async function login(values) {
     !user.id.startsWith('demo-') ||
     values.password !== demoAccount.password
   )
-    throw new Error('ใช้บัญชีตัวอย่างที่ระบุด้านล่างเพื่อทดลองเข้าสู่ระบบ');
+    throw new Error('เลือกบัญชีทดลองจากปุ่มในหน้าเข้าสู่ระบบ');
   if (user.status !== 'active') throw new Error('บัญชีนี้ถูกระงับการใช้งาน');
   setSession({ ...user });
   return user;
