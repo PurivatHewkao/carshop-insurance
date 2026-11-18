@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { httpError, requireUuid } from '../../utils/httpError.js';
+import { CATALOG_EDITORS, staffOnly } from '../../middleware/auth.js';
 import {
   createPromotion,
   deletePromotion,
@@ -153,13 +154,13 @@ router.get('/:id', async (req, res) => {
   res.set('Cache-Control', 'no-store').json({ data: promotion });
 });
 
-router.post('/', async (req, res) => {
+router.post('/', ...staffOnly(...CATALOG_EDITORS), async (req, res) => {
   const input = parsePromotion(req.body, { partial: false });
   checkRules(input);
   res.status(201).json({ data: await createPromotion(input) });
 });
 
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', ...staffOnly(...CATALOG_EDITORS), async (req, res) => {
   const id = requireUuid(req.params.id);
   const changes = parsePromotion(req.body, { partial: true });
   const current = await getPromotion(id);
@@ -171,7 +172,7 @@ router.patch('/:id', async (req, res) => {
     .json({ data: await updatePromotion(id, changes) });
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', ...staffOnly(...CATALOG_EDITORS), async (req, res) => {
   const id = requireUuid(req.params.id);
   try {
     if (!(await deletePromotion(id))) {
