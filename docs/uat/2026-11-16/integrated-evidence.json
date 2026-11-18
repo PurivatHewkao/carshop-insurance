@@ -1,0 +1,247 @@
+[
+  {
+    "id": "HEALTH-identity",
+    "status": "PASS",
+    "result": "200 health; CORS origin; 404 unknown endpoint"
+  },
+  {
+    "id": "HEALTH-catalog",
+    "status": "PASS",
+    "result": "200 health; CORS origin; 404 unknown endpoint"
+  },
+  {
+    "id": "HEALTH-sales",
+    "status": "PASS",
+    "result": "200 health; CORS origin; 404 unknown endpoint"
+  },
+  {
+    "id": "HEALTH-payment",
+    "status": "PASS",
+    "result": "200 health; CORS origin; 404 unknown endpoint"
+  },
+  {
+    "id": "HEALTH-reporting",
+    "status": "PASS",
+    "result": "200 health; CORS origin; 404 unknown endpoint"
+  },
+  {
+    "id": "CAT-01",
+    "status": "PASS",
+    "result": "200, pagination 3/15"
+  },
+  {
+    "id": "CAT-02",
+    "status": "PASS",
+    "result": "Search returns matches; invalid filter 400; seeded promotions present"
+  },
+  {
+    "id": "CAT-03",
+    "status": "PASS",
+    "result": "Car detail and stock summary 200"
+  },
+  {
+    "id": "SAL-01",
+    "status": "PASS",
+    "result": "Create 201; duplicate 409; past date 400"
+  },
+  {
+    "id": "SAL-02",
+    "status": "PASS",
+    "result": "Manager assign; Seller confirm and complete; Customer sees completed"
+  },
+  {
+    "id": "SAL-03",
+    "status": "PASS",
+    "result": "Seller creates; Manager approves; customer order query returns record"
+  },
+  {
+    "id": "PAY-01",
+    "status": "PASS",
+    "result": "Payment list endpoint 200 in shared database"
+  },
+  {
+    "id": "PAY-02",
+    "status": "PASS",
+    "result": "Sales approved order; Invoice ISSUED; mock card SUCCESS; Sales order and invoice PAID; Finance query sees payment"
+  },
+  {
+    "id": "UI public /",
+    "status": "PASS",
+    "result": "Ferrari 296 GTB"
+  },
+  {
+    "id": "UI public /catalog",
+    "status": "PASS",
+    "result": "ค้นหารถที่ใช่สำหรับคุณ"
+  },
+  {
+    "id": "UI public /promotions",
+    "status": "PASS",
+    "result": "ข้อเสนอที่ทำให้การออกรถง่ายขึ้น"
+  },
+  {
+    "id": "UI public /contact",
+    "status": "PASS",
+    "result": "ติดต่อเรา | ยังไม่เปิดใช้งาน"
+  },
+  {
+    "id": "UI public /login",
+    "status": "PASS",
+    "result": "ยินดีต้อนรับกลับ"
+  },
+  {
+    "id": "UI public /register",
+    "status": "PASS",
+    "result": "เริ่มต้นการเดินทาง"
+  },
+  {
+    "id": "UI public /system-status",
+    "status": "PASS",
+    "result": "System Status"
+  },
+  {
+    "id": "UI public /uat-missing",
+    "status": "PASS",
+    "result": "ไม่พบหน้านี้"
+  },
+  {
+    "id": "UI customer /customer/requests",
+    "status": "PASS",
+    "result": "ระบบนัดหมายโชว์รูม (Customer Appointments)"
+  },
+  {
+    "id": "UI customer /customer/transactions",
+    "status": "PASS",
+    "result": "ประวัติธุรกรรม | โหมดสาธิต"
+  },
+  {
+    "id": "UI customer /customer/insurance",
+    "status": "PASS",
+    "result": "ประกันของฉัน | ยังไม่เปิดใช้งาน"
+  },
+  {
+    "id": "UI customer /customer/profile",
+    "status": "PASS",
+    "result": "โปรไฟล์ของฉัน"
+  },
+  {
+    "id": "UI seller /seller/tasks",
+    "status": "PASS",
+    "result": "งานของ Seller และติดตามลูกค้า (Seller Task Management)"
+  },
+  {
+    "id": "UI seller /seller/appointments",
+    "status": "PASS",
+    "result": "ตารางนัดหมายของฉัน (Seller Appointments)"
+  },
+  {
+    "id": "UI seller /seller/orders",
+    "status": "PASS",
+    "result": "สร้างและติดตามใบสั่งซื้อ (Seller Orders & Insurance)"
+  },
+  {
+    "id": "UI seller /seller/orders/new",
+    "status": "PASS",
+    "result": "สร้างฟอร์มขายและใบจองรถยนต์ (Sales & Insurance Form)"
+  },
+  {
+    "id": "UI seller /seller/customers/uat",
+    "status": "PASS",
+    "result": "รายละเอียดลูกค้า | ยังไม่เปิดใช้งาน"
+  },
+  {
+    "id": "UI seller /seller/finance",
+    "status": "PASS",
+    "result": "ติดต่อการเงิน | โหมดสาธิต"
+  },
+  {
+    "id": "UI manager /manager",
+    "status": "PASS",
+    "result": "Dashboard | ยังไม่เปิดใช้งาน, โหมดสาธิต"
+  },
+  {
+    "id": "UI manager /manager/assignments",
+    "status": "PASS",
+    "result": "มอบหมายงานให้พนักงานขาย (Manager Seller Assignments)"
+  },
+  {
+    "id": "UI manager /manager/approvals",
+    "status": "PASS",
+    "result": "อนุมัติรายการขายและส่วนลด (Manager Order Approvals)"
+  },
+  {
+    "id": "UI manager /manager/appointments",
+    "status": "PASS",
+    "result": "ภาพรวมนัดหมาย | ยังไม่เปิดใช้งาน"
+  },
+  {
+    "id": "UI manager /manager/invoices",
+    "status": "PASS",
+    "result": "ออกบิลส่งการเงิน | โหมดสาธิต"
+  },
+  {
+    "id": "UI manager /manager/reports/insurance",
+    "status": "PASS",
+    "result": "รายงานประกัน / referral | ยังไม่เปิดใช้งาน"
+  },
+  {
+    "id": "UI admin /admin",
+    "status": "PASS",
+    "result": "Dashboard"
+  },
+  {
+    "id": "UI admin /admin/users",
+    "status": "PASS",
+    "result": "จัดการผู้ใช้"
+  },
+  {
+    "id": "UI admin /admin/cars",
+    "status": "PASS",
+    "result": "จัดการรถยนต์"
+  },
+  {
+    "id": "UI admin /admin/stock",
+    "status": "PASS",
+    "result": "สต็อกรถยนต์"
+  },
+  {
+    "id": "UI admin /admin/promotions",
+    "status": "PASS",
+    "result": "จัดการโปรโมชัน"
+  },
+  {
+    "id": "UI admin /admin/requests",
+    "status": "PASS",
+    "result": "จัดการคำขอลูกค้า (Admin Customer Requests)"
+  },
+  {
+    "id": "UI admin /admin/finance",
+    "status": "PASS",
+    "result": "การเงิน | โหมดสาธิต"
+  },
+  {
+    "id": "UI admin /admin/insurance-packages",
+    "status": "PASS",
+    "result": "จัดการแพ็กเกจประกัน | ยังไม่เปิดใช้งาน"
+  },
+  {
+    "id": "UI finance /account",
+    "status": "PASS",
+    "result": "โปรไฟล์ของฉัน"
+  },
+  {
+    "id": "UI finance /admin/finance",
+    "status": "PASS",
+    "result": "ไม่มีสิทธิ์เข้าถึงหน้านี้ | ไม่มีสิทธิ์เข้าถึงหน้านี้"
+  },
+  {
+    "id": "UI stock /account",
+    "status": "PASS",
+    "result": "โปรไฟล์ของฉัน"
+  },
+  {
+    "id": "UI stock /admin/stock",
+    "status": "PASS",
+    "result": "ไม่มีสิทธิ์เข้าถึงหน้านี้ | ไม่มีสิทธิ์เข้าถึงหน้านี้"
+  }
+]

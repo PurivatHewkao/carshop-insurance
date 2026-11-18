@@ -1,3 +1,4 @@
+import { readFile, writeFile } from 'node:fs/promises';
 import { closeMysqlPool } from '../src/config/mysql.js';
 import { findByEmail, listUsers } from '../src/modules/auth/repository.js';
 import { createUser, login, roles } from '../src/modules/auth/service.js';
@@ -19,6 +20,12 @@ try {
     !/^(?=.*[A-Za-z])(?=.*\d).{8,128}$/.test(ROLE_TEST_PASSWORD)
   )
     throw new Error('Set ROLE_TEST_PASSWORD for the local role fixtures.');
+
+  const configureWeb = process.argv.includes('--configure-web');
+  if (configureWeb && !/^[A-Za-z0-9]+$/.test(ROLE_TEST_PASSWORD))
+    throw new Error(
+      'Use only English letters and digits for seed:roles:local.',
+    );
 
   const admin = (await listUsers()).find(
     (user) => user.role === 'admin' && user.status === 'active',
@@ -57,6 +64,33 @@ try {
       admin.id,
     );
     console.log('Created:', role, email);
+  }
+
+  if (configureWeb) {
+    const webEnv = new URL(
+      '../../../apps/web/.env.development.local',
+      import.meta.url,
+    );
+    const key = 'VITE_IDENTITY_ROLE_TEST_PASSWORD';
+    const current = await readFile(webEnv, 'utf8').catch((error) => {
+      if (error.code === 'ENOENT') return '';
+      throw error;
+    });
+    const withoutPassword = current
+      .replace(
+        /^[\t ]*(?:export[\t ]+)?VITE_IDENTITY_ROLE_TEST_PASSWORD[\t ]*=.*(?:\r?\n|$)/gm,
+        '',
+      )
+      .trimEnd();
+    const separator = withoutPassword ? '\n' : '';
+    await writeFile(
+      webEnv,
+      `${withoutPassword}${separator}${key}=${ROLE_TEST_PASSWORD}\n`,
+      {
+        mode: 0o600,
+      },
+    );
+    console.log('Configured local login buttons. Restart Vite.');
   }
 } catch (error) {
   console.error(error.code || error.message);

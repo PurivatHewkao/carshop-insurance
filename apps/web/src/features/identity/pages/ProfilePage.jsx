@@ -1,10 +1,9 @@
 import { useState, useSyncExternalStore } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   authError,
   getProfile,
   getSession,
-  logout,
   subscribeSession,
   updateProfile,
 } from '../api/auth.js';
@@ -113,8 +112,6 @@ function ProfileForm() {
 }
 export default function ProfilePage() {
   const session = useSyncExternalStore(subscribeSession, getSession);
-  const [logoutError, setLogoutError] = useState('');
-  const navigate = useNavigate();
   const location = useLocation();
   return (
     <div className="page-content auth-workspace">
@@ -124,24 +121,7 @@ export default function ProfilePage() {
           <h1>โปรไฟล์ของฉัน</h1>
           <p>จัดการข้อมูลของคุณ เพื่อให้ทุกการติดต่อราบรื่น</p>
         </div>
-        {session && (
-          <button
-            className="s-btn out"
-            onClick={async () => {
-              setLogoutError('');
-              try {
-                await logout();
-                navigate('/login');
-              } catch (error) {
-                setLogoutError(authError(error));
-              }
-            }}
-          >
-            ออกจากระบบ
-          </button>
-        )}
       </header>
-      <Feedback message={logoutError} error />
       <ModeNotice />
       {session ? (
         <>

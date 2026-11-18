@@ -3,9 +3,7 @@ import { pageMenu } from '../routes/pageList.js';
 
 const links = [
   ...pageMenu('manager'),
-  ['/catalog', '◇ ดูรายการรถ'],
-  ['/system-status', '◉ สถานะระบบ'],
-  ['/', '← กลับหน้าเว็บไซต์'],
+  ['/', 'กลับหน้าเว็บไซต์'],
 ];
 
 export default function ManagerLayout() {

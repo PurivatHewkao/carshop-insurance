@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { Brand } from '../components/common/Showroom.jsx';
+import LogoutButton from '../features/identity/components/LogoutButton.jsx';
 
 export default function WorkspaceLayout({ role, links, headerLabel }) {
   // Children can portal their own toolbar here without moving page state into the layout.
@@ -8,7 +9,7 @@ export default function WorkspaceLayout({ role, links, headerLabel }) {
   return (
     <div className="site admin-site">
       <div className="s-adm">
-        <aside
+        <nav
           className="s-side"
           aria-label={
             {
@@ -20,7 +21,6 @@ export default function WorkspaceLayout({ role, links, headerLabel }) {
           }
         >
           <Brand />
-          <p className="grp">WORKSPACE</p>
           {links.map(([to, label, end = true]) => (
             <NavLink
               key={to}
@@ -31,24 +31,13 @@ export default function WorkspaceLayout({ role, links, headerLabel }) {
               {label}
             </NavLink>
           ))}
-          <div className="who">
-            <span className="av">{role.charAt(0)}</span>
-            <div>
-              {role}
-              <small>บัญชีสาธิต</small>
-            </div>
-          </div>
-        </aside>
+        </nav>
+        <header className="s-adm-top">
+          <span className="workspace-header-label">{headerLabel || role}</span>
+          <div className="admin-toolbar-slot" ref={setToolbarTarget} />
+          <LogoutButton />
+        </header>
         <div className="s-adm-main">
-          <header className="s-adm-top">
-            {headerLabel && (
-              <span className="workspace-header-label">{headerLabel}</span>
-            )}
-            <div className="admin-toolbar-slot" ref={setToolbarTarget} />
-            <span className="sp" />
-            <span className="av">{role.charAt(0)}</span>
-            <span>{role}</span>
-          </header>
           <Outlet context={toolbarTarget} />
         </div>
       </div>
