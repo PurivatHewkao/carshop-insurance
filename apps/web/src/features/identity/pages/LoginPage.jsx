@@ -13,6 +13,9 @@ const testRoles = [
 ];
 const roleTestPassword =
   import.meta.env.DEV && import.meta.env.VITE_IDENTITY_ROLE_TEST_PASSWORD;
+const showLocalRoleButtons =
+  roleTestPassword &&
+  ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname);
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -76,49 +79,46 @@ export default function LoginPage() {
           </button>
         </fieldset>
       </form>
-      {roleTestPassword &&
-        !isDemo &&
-        ['localhost', '127.0.0.1', '[::1]'].includes(
-          window.location.hostname,
-        ) && (
-          <section className="auth-demo" aria-label="บัญชีทดสอบในเครื่อง">
-            <strong>บัญชีทดสอบในเครื่อง</strong>
-            <p>เลือกบทบาทเพื่อกรอกข้อมูล แล้วกดเข้าสู่ระบบ</p>
-            <div className="auth-role-buttons">
-              {testRoles.map((role) => (
-                <button
-                  key={role}
-                  type="button"
-                  className="s-btn out"
-                  disabled={busy}
-                  onClick={() => {
-                    setEmail(`role-${role}@carshop.test`);
-                    setPassword(roleTestPassword);
-                    setError('');
-                  }}
-                >
-                  {role.toUpperCase()}
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
+      {(isDemo || import.meta.env.PROD || showLocalRoleButtons) && (
+        <section className="auth-demo" aria-label="บัญชีทดลอง">
+          <strong>บัญชีทดลอง</strong>
+          <p>
+            {isDemo || showLocalRoleButtons
+              ? 'เลือกบทบาทเพื่อกรอกข้อมูล แล้วกดเข้าสู่ระบบ'
+              : 'เลือกบทบาทเพื่อกรอกอีเมล แล้วใส่รหัสผ่านของบัญชีทดลอง'}
+          </p>
+          <div className="auth-role-buttons">
+            {testRoles.map((role) => (
+              <button
+                key={role}
+                type="button"
+                className="s-btn out"
+                disabled={busy}
+                onClick={() => {
+                  setEmail(
+                    isDemo
+                      ? `${role}@toyoty.demo`
+                      : `role-${role}@carshop.test`,
+                  );
+                  setPassword(
+                    isDemo
+                      ? demoAccount.password
+                      : showLocalRoleButtons
+                        ? roleTestPassword
+                        : '',
+                  );
+                  setError('');
+                }}
+              >
+                {role.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
       <p className="auth-switch">
         ยังไม่มีบัญชี? <Link to="/register">สมัครสมาชิก</Link>
       </p>
-      {isDemo && (
-        <div className="auth-demo">
-          <strong>ทดลองใช้งาน</strong>
-          <p>
-            ลูกค้า: {demoAccount.email}
-            <br />
-            ผู้ดูแล: admin@toyoty.demo
-            <br />
-            รหัสผ่านทั้งสองบัญชี: {demoAccount.password}
-          </p>
-          <small>บัญชีสาธิตใช้ทดสอบหน้าจอ ไม่มีการยืนยันตัวตนจริง</small>
-        </div>
-      )}
     </AuthShell>
   );
 }
