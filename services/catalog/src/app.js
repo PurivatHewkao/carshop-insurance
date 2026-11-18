@@ -14,6 +14,8 @@ app.use(
     origin(origin, callback) {
       callback(null, !origin || env.corsOrigins.includes(origin));
     },
+    // The Identity session cookie must reach this service.
+    credentials: true,
   }),
 );
 app.use(express.json({ limit: '6mb' }));

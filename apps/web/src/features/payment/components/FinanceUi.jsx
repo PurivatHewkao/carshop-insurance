@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { downloadInvoicePdf, paymentError } from '../api/paymentApi.js';
 import {
   carLabel,
   invoiceStatus,
@@ -148,6 +149,16 @@ export function InvoiceDialog({ data, invoice, onClose }) {
     );
     window.print();
   }
+  const [pdf, setPdf] = useState({ busy: false, error: '' });
+  async function savePdf() {
+    setPdf({ busy: true, error: '' });
+    try {
+      await downloadInvoicePdf(invoice);
+      setPdf({ busy: false, error: '' });
+    } catch (error) {
+      setPdf({ busy: false, error: paymentError(error) });
+    }
+  }
   return (
     <Dialog title={'ใบแจ้งหนี้ ' + invoice.invoiceNumber} onClose={onClose}>
       <article className="pay-doc">
@@ -232,9 +243,18 @@ export function InvoiceDialog({ data, invoice, onClose }) {
         )}
         <p className="small">เอกสารสำหรับสาธิตระบบ ไม่ใช่ใบกำกับภาษี</p>
       </article>
+      {pdf.error && <FormMessage message={{ ok: false, text: pdf.error }} />}
       <div className="s-btns">
-        <button className="s-btn pri" type="button" onClick={print}>
-          พิมพ์ / บันทึก PDF
+        <button
+          className="s-btn pri"
+          type="button"
+          onClick={savePdf}
+          disabled={pdf.busy}
+        >
+          {pdf.busy ? 'กำลังสร้าง PDF…' : 'ดาวน์โหลด PDF'}
+        </button>
+        <button className="s-btn out" type="button" onClick={print}>
+          พิมพ์
         </button>
         <button className="s-btn out" type="button" onClick={onClose}>
           ปิด

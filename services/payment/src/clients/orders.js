@@ -84,3 +84,28 @@ export async function listOrderOverview(connection, { scope, status, paging }) {
   );
   return { rows, total: Number(total) };
 }
+
+/**
+ * Everything printed on an invoice PDF besides the invoice row itself:
+ * customer, seller, car and the employee who issued it. Null if the order is missing.
+ */
+export async function findInvoiceContext(connection, orderId, issuedBy) {
+  const [rows] = await connection.query(
+    `SELECT o.id, o.status, o.total_amount, o.customer_id, o.seller_id,
+       TRIM(CONCAT(c.first_name, ' ', c.last_name)) AS customer_name,
+       c.phone_number AS customer_phone, c.email AS customer_email,
+       TRIM(CONCAT(e.first_name, ' ', e.last_name)) AS seller_name,
+       (SELECT TRIM(CONCAT(i.first_name, ' ', i.last_name)) FROM employees i
+         WHERE i.id = ?) AS issuer_name,
+       m.brand, m.model_name, car.color, car.manufacture_year, car.vin,
+       car.license_plate
+     FROM orders o
+     JOIN customers c ON c.id = o.customer_id
+     JOIN employees e ON e.id = o.seller_id
+     JOIN cars car ON car.id = o.car_id
+     JOIN car_models m ON m.id = car.car_model_id
+     WHERE o.id = ?`,
+    [issuedBy, orderId],
+  );
+  return rows[0] || null;
+}

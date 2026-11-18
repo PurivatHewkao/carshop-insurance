@@ -1,6 +1,6 @@
-# Deploy บน Vercel (คู่มือเท่านั้น)
+# Deploy บน Vercel
 
-งานนี้ไม่ deploy จริง ใช้ Git repository เดียวสร้าง 6 Vercel Projects แยกกัน ไม่ใช้ multi-service experimental config
+ใช้ Git repository เดียวสร้าง 6 Vercel Projects แยกกัน
 
 | Project           | Root Directory     | Preset/entry                        | Build/output                                  |
 | ----------------- | ------------------ | ----------------------------------- | --------------------------------------------- |
@@ -19,9 +19,17 @@
 4. ตั้ง backend NODE_ENV=production และ CORS_ORIGINS เป็น frontend origins จริงสำหรับ Production/Preview แยกกัน ไม่ใส่ path หรือ slash ท้าย ไม่เปิด wildcard โดยไม่มีเหตุผล
 5. ตั้ง database env ของแต่ละ service ที่ใช้จาก provider ภายนอก ตั้ง TLS และ network allowlist ตาม provider พร้อมจำกัด pool ให้เหมาะกับ Functions; ห้ามใช้ credentials ร่วมกัน
 6. ตั้ง CATALOG_API_URL ของ Sales, SALES_API_URL ของ Payment และ SALES/PAYMENT/CATALOG_API_URL ของ Reporting ให้เป็น HTTPS backend URLs ที่รวม /api/v1 เมื่อเริ่มทำ clients
-7. ตั้ง VITE_IDENTITY_API_URL, VITE_CATALOG_API_URL, VITE_SALES_API_URL, VITE_PAYMENT_API_URL, VITE_REPORTING_API_URL เป็น backend URLs รวม /api/v1 ก่อน frontend build; VITE_ เปิดเผยใน browser
+7. ใน Vercel Project ของ frontend ตั้งตัวแปรตามตารางก่อน deploy โดยใส่ URL ของ backend แต่ละตัวแบบ HTTPS ในคอลัมน์แรก ใช้เฉพาะ origin และเว้นส่วน `/api/v1` ไว้ให้ `apps/web/vercel.mjs` เติม กฎนี้ส่งคำขอผ่านโดเมนหน้าเว็บเพื่อให้ Identity, Catalog และ Payment รับ session cookie จากเบราว์เซอร์ได้
 8. Deploy แต่ละ project เมื่อต้องการภายหลัง แล้วตรวจ health ทุกตัว, CORS จาก frontend และ /system-status; Vercel Deployment Protection ของ preview อาจทำให้ browser เรียก health ไม่ได้ ให้ใช้วิธีที่ platform รองรับ ห้ามฝัง bypass secrets ใน VITE_
-9. React Router ใช้ apps/web/vercel.json rewrite ไป index.html ทดสอบเปิด /catalog และ /system-status โดยตรงและ refresh
+9. React Router ใช้ `apps/web/vercel.mjs` rewrite ไป `index.html` สำหรับ path ของหน้าเว็บ ทดสอบ refresh ที่ `/catalog` และ `/system-status` แล้วทดสอบ Login, `/users/me` และหน้าใบแจ้งหนี้ในเบราว์เซอร์เดียวกัน
+
+| ตั้งเป็น origin ของ backend | ตั้งให้ browser เรียกผ่านโดเมนหน้าเว็บ |
+| --- | --- |
+| `IDENTITY_API_ORIGIN` | `VITE_IDENTITY_API_URL=/api/v1/identity` |
+| `CATALOG_API_ORIGIN` | `VITE_CATALOG_API_URL=/api/v1/catalog` |
+| `SALES_API_ORIGIN` | `VITE_SALES_API_URL=/api/v1/sales` |
+| `PAYMENT_API_ORIGIN` | `VITE_PAYMENT_API_URL=/api/v1/payment` |
+| `REPORTING_API_ORIGIN` | `VITE_REPORTING_API_URL=/api/v1/reporting` |
 
 แต่ละ Express deployment เป็น Function ของตัวเอง ไม่เปิดหลาย ports บน Vercel ค่า PORT มีไว้ local; ห้ามสั่ง root npm run dev บน hosting
 MySQL/MongoDB อยู่บริการฐานข้อมูลภายนอก Vercel; ไม่เก็บข้อมูลธุรกิจถาวรใน memory/local filesystem ของ Functions

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 // If a remote listing photo fails, show another real vehicle photograph rather
 // than reverting to the SVG illustration used elsewhere in the original app.
@@ -15,13 +15,11 @@ const PHOTO_FALLBACKS = {
 export default function CarPhoto({ car, className = '', imageOnly = false }) {
   const fallbackSource = PHOTO_FALLBACKS[car?.type] || PHOTO_FALLBACKS.sedan;
   const preferredSource = car?.imageUrl || fallbackSource;
-  const [source, setSource] = useState(preferredSource);
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    setSource(preferredSource);
-    setFailed(false);
-  }, [preferredSource]);
+  // Remember which photo URL failed, so a new URL starts fresh without an effect.
+  const [fallbackFor, setFallbackFor] = useState(null);
+  const [failedFor, setFailedFor] = useState(null);
+  const source = fallbackFor === preferredSource ? fallbackSource : preferredSource;
+  const failed = failedFor === preferredSource;
 
   if (failed) {
     return (
@@ -38,8 +36,8 @@ export default function CarPhoto({ car, className = '', imageOnly = false }) {
       alt={`${car?.brand || ''} ${car?.name || 'รถยนต์'}`.trim()}
       loading={imageOnly ? 'eager' : 'lazy'}
       onError={() => {
-        if (source !== fallbackSource) setSource(fallbackSource);
-        else setFailed(true);
+        if (source !== fallbackSource) setFallbackFor(preferredSource);
+        else setFailedFor(preferredSource);
       }}
     />
   );

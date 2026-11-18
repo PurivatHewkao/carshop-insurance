@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthShell, Feedback, PasswordField } from '../components/AuthUI.jsx';
 import { authError, demoAccount, isDemo, login } from '../api/auth.js';
 
@@ -19,6 +19,7 @@ const showLocalRoleButtons =
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { state } = useLocation();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [email, setEmail] = useState('');
@@ -38,7 +39,7 @@ export default function LoginPage() {
         customer: '/customer/profile',
         seller: '/seller/tasks',
         manager: '/manager',
-        finance: '/account',
+        finance: '/finance',
         stock: '/account',
       };
       navigate(destinations[user.role] || '/account');
@@ -53,6 +54,13 @@ export default function LoginPage() {
       title="ยินดีต้อนรับกลับ"
       subtitle="เข้าสู่ระบบเพื่อดูแลทุกการเดินทางของคุณ"
     >
+      <Feedback
+        message={
+          state?.passwordReset
+            ? 'เปลี่ยนรหัสผ่านแล้ว เข้าสู่ระบบด้วยรหัสผ่านใหม่ได้เลย'
+            : ''
+        }
+      />
       <form className="auth-form" onSubmit={submit} aria-busy={busy}>
         <fieldset disabled={busy}>
           <label className="s-fld">
@@ -73,6 +81,9 @@ export default function LoginPage() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
+          <p className="auth-switch">
+            <Link to="/forgot-password">ลืมรหัสผ่าน?</Link>
+          </p>
           <Feedback message={error} error />
           <button className="s-btn pri auth-submit" disabled={busy}>
             {busy ? 'กำลังเข้าสู่ระบบ…' : 'เข้าสู่ระบบ →'}

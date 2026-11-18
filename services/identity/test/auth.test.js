@@ -44,6 +44,95 @@ const account = {
   password: 'Secret12345',
 };
 
+test('password recovery emails a usable link, resets once, and revokes old sessions', async (t) => {
+  const body = { ...account, email: 'recovery@example.com' };
+  const registered = await request('/auth/register', { method: 'POST', body });
+  assert.equal(registered.status, 201);
+  const { accessToken } = registered.data.data;
+
+  for (const [name, value] of Object.entries({
+    RESEND_API_KEY: 'test-key',
+    PASSWORD_RESET_FROM: 'accounts@example.com',
+    PASSWORD_RESET_WEB_ORIGIN: 'https://web.example.com',
+  })) {
+    const previous = process.env[name];
+    process.env[name] = value;
+    t.after(() => {
+      if (previous === undefined) delete process.env[name];
+      else process.env[name] = previous;
+    });
+  }
+  const fetchReal = globalThis.fetch;
+  let emailSent;
+  const delivery = new Promise((resolve) => {
+    emailSent = resolve;
+  });
+  const mailer = t.mock.method(globalThis, 'fetch', (url, options) => {
+    if (url !== 'https://api.resend.com/emails') return fetchReal(url, options);
+    emailSent(JSON.parse(options.body));
+    return Promise.resolve(new Response(null, { status: 200 }));
+  });
+
+  const post = (path, body) => request(path, { method: 'POST', body });
+  const known = await post('/auth/forgot-password', { email: body.email });
+  const unknown = await post('/auth/forgot-password', {
+    email: 'missing@example.com',
+  });
+  assert.equal(known.status, 202);
+  assert.equal(unknown.status, 202);
+  assert.deepEqual(known.data, unknown.data);
+  const email = await Promise.race([
+    delivery,
+    new Promise((_resolve, reject) => {
+      const deadline = setTimeout(
+        () => reject(new Error('Email not sent')),
+        3000,
+      );
+      deadline.unref();
+      t.after(() => clearTimeout(deadline));
+    }),
+  ]);
+  assert.deepEqual(email.to, [body.email]);
+  const link = new URL(email.text.match(/https:\/\/\S+/)[0]);
+  assert.equal(
+    link.origin + link.pathname,
+    'https://web.example.com/reset-password',
+  );
+  const token = new URLSearchParams(link.hash.slice(1)).get('token');
+  const password = 'NewPassword42';
+  assert.equal(
+    (await post('/auth/reset-password', { token: accessToken, password }))
+      .status,
+    400,
+  );
+  const results = await Promise.all([
+    post('/auth/reset-password', { token, password }),
+    post('/auth/reset-password', { token, password }),
+  ]);
+  assert.deepEqual(results.map(({ status }) => status).sort(), [204, 400]);
+  assert.equal(
+    (await request('/users/me', { token: accessToken })).status,
+    401,
+  );
+  assert.equal(
+    (await post('/auth/login', { email: body.email, password: body.password }))
+      .status,
+    401,
+  );
+  const login = await post('/auth/login', { email: body.email, password });
+  assert.equal(login.status, 200);
+  assert.equal(
+    (await request('/users/me', { token: login.data.data.accessToken })).status,
+    200,
+  );
+  assert.equal(
+    mailer.mock.calls.filter(
+      ({ arguments: args }) => args[0] === 'https://api.resend.com/emails',
+    ).length,
+    1,
+  );
+});
+
 test('register, login, protected profile, validation and logout', async () => {
   const created = await request('/auth/register', {
     method: 'POST',

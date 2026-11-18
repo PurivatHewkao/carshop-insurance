@@ -5,19 +5,30 @@ export function validateBody(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body))
     fail(400, 'VALIDATION_ERROR', 'กรุณาส่งข้อมูลแบบ JSON object');
 }
-export function credentials(body) {
+export function accountEmail(body) {
   validateBody(body);
   const email =
     typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
   if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     fail(400, 'VALIDATION_ERROR', 'กรุณาระบุอีเมลให้ถูกต้อง');
+  return email;
+}
+export function accountPassword(body) {
+  validateBody(body);
   if (
     typeof body.password !== 'string' ||
     body.password.length < 8 ||
     body.password.length > 128
   )
     fail(400, 'VALIDATION_ERROR', 'รหัสผ่านต้องมีความยาว 8–128 ตัวอักษร');
-  return { email, password: body.password };
+  return body.password;
+}
+export function credentials(body) {
+  return { email: accountEmail(body), password: accountPassword(body) };
+}
+export function checkNewPassword(password) {
+  if (!/[a-zA-Z]/.test(password) || !/\d/.test(password))
+    fail(400, 'VALIDATION_ERROR', 'รหัสผ่านต้องมีตัวอักษรอังกฤษและตัวเลข');
 }
 export function profile(body) {
   validateBody(body);

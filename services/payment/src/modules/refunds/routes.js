@@ -40,6 +40,13 @@ router.get('/refunds', async (req, res) => {
     .json(await listRefunds(req.actor, req.query, readPaging(req.query)));
 });
 
+// The logged-in customer's own refund requests.
+router.get('/me/refunds', requireRoles('customer'), async (req, res) => {
+  res
+    .set('Cache-Control', 'no-store')
+    .json(await listRefunds(req.actor, req.query, readPaging(req.query)));
+});
+
 router.get('/refunds/:id', async (req, res) => {
   const id = requireUuid(req.params.id);
   res
