@@ -198,7 +198,6 @@ export default function PromotionsPage({ adminMode = false }) {
 
       {notice && <div className="catalog-form-feedback" role="status">{notice}<button type="button" onClick={() => setNotice('')} aria-label="ปิดข้อความ">×</button></div>}
       {loadError && <div className="catalog-form-feedback" role="alert">{loadError}<button type="button" onClick={reload} aria-label="ลองโหลดใหม่">↻</button></div>}
-      <div className="catalog-promotion-notice"><span>i</span><p>โปรโมชันและรูปภาพประกอบเก็บในฐานข้อมูลผ่าน catalog API รูปที่เลือกจากเครื่องจะถูกย่อขนาดก่อนบันทึก</p></div>
 
       {adminMode && (
         <section className="catalog-admin-panel catalog-promotion-editor">

@@ -198,7 +198,6 @@ export default function CatalogAdminPage() {
         <div className="catalog-admin-nav"><Link className="is-active" to="/admin/cars">จัดการรถ</Link><Link to="/admin/stock">สต็อกสินค้า</Link><Link to="/admin/promotions">โปรโมชัน</Link><Link to="/catalog">ดูหน้าร้าน ↗</Link></div>
       </header>
 
-      <div className="catalog-admin-notice"><span>i</span><p>รายการรถ ราคา สต็อก และรูปภาพบันทึกในฐานข้อมูลผ่าน catalog API รูปที่เลือกจากเครื่องจะถูกลดขนาดก่อนบันทึก (สูงสุด 6 รูปต่อรุ่น) การลบรุ่นรถทำไม่ได้ถ้ามีออเดอร์หรือนัดหมายอ้างอิงอยู่</p></div>
       {loadError && <div className="catalog-form-feedback" role="alert">{loadError}<button type="button" onClick={reload} aria-label="ลองโหลดใหม่">↻</button></div>}
       {notice && <div className="catalog-form-feedback" role="status">{notice}<button type="button" onClick={() => setNotice('')} aria-label="ปิดข้อความ">×</button></div>}
 
