@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { Brand } from '../components/common/Showroom.jsx';
-import LogoutButton from '../features/identity/components/LogoutButton.jsx';
+import AccountNavbar from '../features/identity/components/AccountNavbar.jsx';
 
 export default function WorkspaceLayout({ role, links, headerLabel }) {
   // Children can portal their own toolbar here without moving page state into the layout.
@@ -35,7 +35,7 @@ export default function WorkspaceLayout({ role, links, headerLabel }) {
         <header className="s-adm-top">
           <span className="workspace-header-label">{headerLabel || role}</span>
           <div className="admin-toolbar-slot" ref={setToolbarTarget} />
-          <LogoutButton />
+          <AccountNavbar />
         </header>
         <div className="s-adm-main">
           <Outlet context={toolbarTarget} />

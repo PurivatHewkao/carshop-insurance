@@ -172,31 +172,76 @@ dd {
 .s-adm > .s-adm-main {
   grid-area: content;
 }
-.s-adm-top .header-logout {
+.s-adm-top .stacking-navbar {
   margin-inline-start: auto;
 }
-.header-logout {
+.stacking-navbar {
   position: relative;
   flex: none;
 }
-.showroom .header-logout .s-btn.out {
-  display: inline-flex;
-}
-.header-logout button {
-  white-space: nowrap;
-}
-.header-logout [role='alert'] {
-  position: absolute;
-  inset-block-start: calc(100% + 6px);
-  inset-inline-end: 0;
-  width: min(260px, 80vw);
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  background: var(--bg);
+.stacking-navbar .account-trigger {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--line2);
+  border-radius: 50%;
   color: var(--ink);
+  cursor: pointer;
+}
+.stacking-navbar .account-trigger:hover,
+.stacking-navbar .account-trigger[aria-expanded='true'] {
+  border-color: var(--red);
+  color: var(--red);
+}
+.account-stack {
+  position: absolute;
+  inset-block-start: calc(100% + 12px);
+  inset-inline-end: 0;
+  z-index: 10;
+  display: grid;
+  gap: 6px;
+  width: min(240px, calc(100vw - 32px));
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+  backdrop-filter: blur(16px);
   box-shadow: var(--shadow);
-  padding: 10px 12px;
+}
+.stacking-navbar .account-stack-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 46px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  color: var(--ink);
+  font: 500 14px/1.4 var(--fd);
+  text-decoration: none;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.stacking-navbar .account-stack-item:hover {
+  background: var(--night);
+  color: var(--on-night);
+}
+.account-stack-item:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.account-stack-error {
   margin: 0;
+  padding: 8px 12px;
+  color: var(--red);
+  font-size: 13px;
 }
 .admin-toolbar-slot {
   display: contents;
@@ -400,8 +445,7 @@ button:focus-visible {
   .showroom .s-util {
     gap: 6px;
   }
-  .showroom .s-util .login-link,
-  .header-logout .s-btn {
+  .showroom .s-util .login-link {
     padding-inline: 12px;
     font-size: 13px;
   }

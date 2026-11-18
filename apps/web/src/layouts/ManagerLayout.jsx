@@ -1,10 +1,7 @@
 import WorkspaceLayout from './WorkspaceLayout.jsx';
 import { pageMenu } from '../routes/pageList.js';
 
-const links = [
-  ...pageMenu('manager'),
-  ['/', 'กลับหน้าเว็บไซต์'],
-];
+const links = pageMenu('manager');
 
 export default function ManagerLayout() {
   return (

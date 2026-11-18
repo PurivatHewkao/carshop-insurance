@@ -3,24 +3,16 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Action, Brand } from '../components/common/Showroom.jsx';
 import design from '../design/toyoty.json';
 import { pageMenu } from '../routes/pageList.js';
-import LogoutButton from '../features/identity/components/LogoutButton.jsx';
+import AccountNavbar from '../features/identity/components/AccountNavbar.jsx';
 import {
   getProfile,
   getSession,
   subscribeSession,
 } from '../features/identity/api/auth.js';
 
-const roleHomes = {
-  customer: ['/customer/requests', 'พื้นที่ลูกค้า'],
-  seller: ['/seller', 'พื้นที่พนักงานขาย'],
-  manager: ['/manager', 'พื้นที่ผู้จัดการ'],
-  admin: ['/admin', 'พื้นที่ผู้ดูแลระบบ'],
-};
-
 export default function ShowroomLayout({ customer = false }) {
   const [open, setOpen] = useState(false);
   const session = useSyncExternalStore(subscribeSession, getSession);
-  const roleHome = session && roleHomes[session.role];
   const [sessionCheckFailed, setSessionCheckFailed] = useState(false);
   const { pathname, hash } = useLocation();
   useEffect(() => {
@@ -67,14 +59,7 @@ export default function ShowroomLayout({ customer = false }) {
               <Link to="/catalog">รถทั้งหมด</Link>
               <Link to="/">กลับหน้าเว็บไซต์</Link>
             </>
-          ) : (
-            session && (
-              <>
-                {roleHome && <Link to={roleHome[0]}>{roleHome[1]}</Link>}
-                <NavLink to="/account">บัญชีของฉัน</NavLink>
-              </>
-            )
-          )}
+          ) : null}
         </nav>
         <div className="s-util">
           {!session && (session === null || sessionCheckFailed) && (
@@ -93,7 +78,7 @@ export default function ShowroomLayout({ customer = false }) {
           >
             {open ? '×' : '☰'}
           </button>
-          {session && <LogoutButton />}
+          <AccountNavbar />
         </div>
       </header>
       <main id="main-content">
@@ -114,7 +99,6 @@ export default function ShowroomLayout({ customer = false }) {
         <div className="s-foot-grid">
           <div>
             <Brand />
-            <p className="tagl">{design.site.tagline}</p>
           </div>
           <div>
             <h4>รถยนต์</h4>
@@ -130,7 +114,7 @@ export default function ShowroomLayout({ customer = false }) {
           </div>
           <div>
             <h4>ติดต่อ</h4>
-            <p>02-xxx-xxxx</p>
+            <p>02-123-4567</p>
             <p>จ–ส 09:00–18:00</p>
           </div>
         </div>

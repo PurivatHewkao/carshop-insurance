@@ -4,7 +4,6 @@ const links = [
   ['/finance', 'การเงิน'],
   ['/catalog', '◇ ดูรายการรถ'],
   ['/account', '◎ บัญชีของฉัน'],
-  ['/', '← กลับหน้าเว็บไซต์'],
 ];
 export default function FinanceLayout() {
   return <WorkspaceLayout role="Finance" links={links} />;

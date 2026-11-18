@@ -4,7 +4,6 @@ const links = [
   ...pageMenu('admin'),
   ['/admin/finance', 'จัดการการเงิน'],
   ['/system-status', 'สถานะระบบ'],
-  ['/', 'กลับหน้าเว็บไซต์'],
 ];
 export default function AdminLayout() {
   return (
