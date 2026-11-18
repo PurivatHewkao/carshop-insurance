@@ -82,6 +82,14 @@ export async function createCarRecord(form) {
   return normalizeCar(data.data);
 }
 
+export async function updateCarRecord(id, form) {
+  const { data } = await catalogClient.patch(
+    'cars/' + encodeURIComponent(id),
+    form,
+  );
+  return normalizeCar(data.data);
+}
+
 export async function saveCarPhotos(id, photos) {
   const { data } = await catalogClient.put(
     'cars/' + encodeURIComponent(id) + '/photos',

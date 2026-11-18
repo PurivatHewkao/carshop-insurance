@@ -6,7 +6,7 @@ import {
   formatBaht,
   stockStatus,
 } from '../data/catalogData.js';
-import { apiErrorMessage, createCarRecord, removeCarRecord, saveCarPhotos, useCars } from '../api/catalogApi.js';
+import { apiErrorMessage, createCarRecord, removeCarRecord, saveCarPhotos, updateCarRecord, useCars } from '../api/catalogApi.js';
 import './catalog.css';
 
 const MAX_PHOTOS_PER_CAR = 6;
@@ -74,9 +74,28 @@ export default function CatalogAdminPage() {
   const [query, setQuery] = useState('');
   const [notice, setNotice] = useState('');
   const [uploadingCarId, setUploadingCarId] = useState('');
+  const [editingId, setEditingId] = useState('');
 
   const visibleCars = useMemo(() => cars.filter((car) => `${car.brand} ${car.name}`.toLowerCase().includes(query.trim().toLowerCase())), [cars, query]);
   const updateField = (event) => setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
+
+  function startEdit(car) {
+    setEditingId(car.id);
+    setSelectedPhotos([]);
+    setForm({
+      brand: car.brand, name: car.name, type: car.type, price: String(car.price), year: String(car.year || 2025),
+      stock: String(car.stock), fuel: car.fuel || 'เบนซิน', engine: car.engine || '', horsepower: String(car.horsepower || ''),
+      seats: String(car.seats || 5), imageUrl: '', variant: car.variant || 'รุ่นมาตรฐาน',
+    });
+    setNotice(`กำลังแก้ไข ${car.brand} ${car.name} — แก้สต็อกที่หน้าสต็อกสินค้า และเพิ่มรูปที่ปุ่ม "+ รูป" ของรถคันนั้น`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function cancelEdit() {
+    setEditingId('');
+    setForm(emptyForm);
+    setNotice('');
+  }
 
   async function handlePhotoFiles(event) {
     const input = event.currentTarget;
@@ -110,8 +129,27 @@ export default function CatalogAdminPage() {
       setNotice('กรุณากรอกยี่ห้อ รุ่น และราคาที่มากกว่า 0 ให้ครบถ้วน');
       return;
     }
-    if (cars.some((car) => `${car.brand} ${car.name}`.toLowerCase() === `${brand} ${name}`.toLowerCase())) {
+    if (cars.some((car) => car.id !== editingId && `${car.brand} ${car.name}`.toLowerCase() === `${brand} ${name}`.toLowerCase())) {
       setNotice('มีรุ่นรถนี้อยู่ในรายการแล้ว');
+      return;
+    }
+
+    if (editingId) {
+      setBusy(true);
+      try {
+        await updateCarRecord(editingId, {
+          brand, name, type: form.type, price, year: Number(form.year) || 2025, fuel: form.fuel,
+          variant: form.variant.trim() || 'รุ่นมาตรฐาน', engine: form.engine.trim(), horsepower: Number(form.horsepower) || 0, seats: Number(form.seats) || 5,
+        });
+        reload();
+        setEditingId('');
+        setForm(emptyForm);
+        setNotice(`บันทึกการแก้ไข ${brand} ${name} แล้ว`);
+      } catch (error) {
+        setNotice(apiErrorMessage(error));
+      } finally {
+        setBusy(false);
+      }
       return;
     }
 
@@ -182,6 +220,7 @@ export default function CatalogAdminPage() {
     setBusy(true);
     try {
       await removeCarRecord(car.id);
+      if (car.id === editingId) cancelEdit();
       reload();
       setNotice(`ลบ ${car.brand} ${car.name} ออกจากรายการแล้ว`);
     } catch (error) {
@@ -204,21 +243,21 @@ export default function CatalogAdminPage() {
 
       <div className="catalog-admin-layout">
         <section className="catalog-admin-panel">
-          <div className="catalog-admin-panel-head"><div><p className="catalog-eyebrow">NEW VEHICLE</p><h2>เพิ่มรถยนต์รุ่นใหม่</h2></div><span className="catalog-number-tag">+ เพิ่มรุ่น</span></div>
+          <div className="catalog-admin-panel-head"><div><p className="catalog-eyebrow">NEW VEHICLE</p><h2>{editingId ? 'แก้ไขข้อมูลรถยนต์' : 'เพิ่มรถยนต์รุ่นใหม่'}</h2></div><span className="catalog-number-tag">{editingId ? '✎ แก้ไข' : '+ เพิ่มรุ่น'}</span></div>
           <form className="catalog-admin-form" onSubmit={handleSubmit}>
             <label>ยี่ห้อ<input name="brand" value={form.brand} onChange={updateField} placeholder="เช่น McLaren" required /></label>
             <label>ชื่อรุ่น<input name="name" value={form.name} onChange={updateField} placeholder="เช่น Artura" required /></label>
             <label>ประเภทรถ<select name="type" value={form.type} onChange={updateField}>{Object.entries(CATEGORY_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
             <label>ราคา (บาท)<input name="price" type="number" min="1" value={form.price} onChange={updateField} placeholder="เช่น 18000000" required /></label>
             <label>ปีรุ่น<input name="year" type="number" min="1990" max="2035" value={form.year} onChange={updateField} /></label>
-            <label>สต็อกเริ่มต้น<input name="stock" type="number" min="0" value={form.stock} onChange={updateField} /></label>
+            <label>{editingId ? 'สต็อก (แก้ที่หน้าสต็อก)' : 'สต็อกเริ่มต้น'}<input name="stock" type="number" min="0" value={form.stock} onChange={updateField} disabled={Boolean(editingId)} /></label>
             <label>พลังงาน<select name="fuel" value={form.fuel} onChange={updateField}><option>เบนซิน</option><option>ดีเซล</option><option>ไฮบริด</option><option>Plug-in Hybrid</option><option>ไฟฟ้า 100%</option></select></label>
             <label>รุ่นย่อย<input name="variant" value={form.variant} onChange={updateField} placeholder="เช่น Performance" /></label>
             <label className="catalog-form-wide">เครื่องยนต์ / มอเตอร์<input name="engine" value={form.engine} onChange={updateField} placeholder="เช่น 3.0L V6 Twin-Turbo" /></label>
             <label>กำลัง (แรงม้า)<input name="horsepower" type="number" min="0" value={form.horsepower} onChange={updateField} placeholder="เช่น 600" /></label>
             <label>จำนวนที่นั่ง<input name="seats" type="number" min="1" max="12" value={form.seats} onChange={updateField} /></label>
 
-            <div className="catalog-photo-upload-box catalog-form-wide">
+            {!editingId && <div className="catalog-photo-upload-box catalog-form-wide">
               <div className="catalog-photo-upload-heading"><strong>รูปภาพรถจากเครื่อง</strong><span>{selectedPhotos.length}/{MAX_PHOTOS_PER_CAR} รูป</span></div>
               <label className="catalog-upload-button">
                 <input type="file" accept="image/*" multiple onChange={handlePhotoFiles} />
@@ -226,11 +265,12 @@ export default function CatalogAdminPage() {
               </label>
               <p className="catalog-form-help">เลือกรูปด้านหน้า ด้านข้าง ด้านหลัง หรือภายในรถได้สูงสุด {MAX_PHOTOS_PER_CAR} รูป รูปจะถูกลดขนาดก่อนบันทึก</p>
               {selectedPhotos.length > 0 && <div className="catalog-upload-preview-grid">{selectedPhotos.map((photo, index) => <div className="catalog-upload-preview" key={`${photo.name}-${index}`}><img src={photo.dataUrl} alt={photo.name} /><span title={photo.name}>{photo.name}</span><button type="button" onClick={() => setSelectedPhotos((current) => current.filter((_, photoIndex) => photoIndex !== index))} aria-label={`ลบรูป ${photo.name}`}>×</button><small>{index === 0 ? 'ภาพหลัก' : `ภาพ ${index + 1}`}</small></div>)}</div>}
-            </div>
+            </div>}
 
-            <label className="catalog-form-wide">URL รูปรถสำรอง (ไม่บังคับ)<input name="imageUrl" type="url" value={form.imageUrl} onChange={updateField} placeholder="https://example.com/car.jpg" /></label>
-            <p className="catalog-form-help">ถ้าเลือกไฟล์จากเครื่อง รูปที่เลือกจะเป็นภาพหลักและแกลเลอรีก่อน ส่วน URL ด้านบนจะถูกเพิ่มเป็นภาพต่อท้าย</p>
-            <button className="catalog-primary-button catalog-form-wide" type="submit" disabled={busy}>＋ เพิ่มรถเข้ารายการ</button>
+            {!editingId && <><label className="catalog-form-wide">URL รูปรถสำรอง (ไม่บังคับ)<input name="imageUrl" type="url" value={form.imageUrl} onChange={updateField} placeholder="https://example.com/car.jpg" /></label>
+            <p className="catalog-form-help">ถ้าเลือกไฟล์จากเครื่อง รูปที่เลือกจะเป็นภาพหลักและแกลเลอรีก่อน ส่วน URL ด้านบนจะถูกเพิ่มเป็นภาพต่อท้าย</p></>}
+            <button className="catalog-primary-button catalog-form-wide" type="submit" disabled={busy}>{editingId ? '✓ บันทึกการแก้ไข' : '＋ เพิ่มรถเข้ารายการ'}</button>
+            {editingId && <button className="catalog-form-wide" type="button" onClick={cancelEdit} disabled={busy}>ยกเลิกการแก้ไข</button>}
           </form>
         </section>
 
@@ -241,7 +281,7 @@ export default function CatalogAdminPage() {
             {visibleCars.map((car) => {
               const status = stockStatus(car.stock);
               const photoCount = getCarPhotos(car).length;
-              return <article key={car.id} className="catalog-admin-car-row"><div className="catalog-admin-car-thumb"><CarPhoto car={car} className="catalog-admin-thumb-photo" /></div><div className="catalog-admin-car-main"><strong>{car.brand} {car.name}</strong><span>{CATEGORY_LABELS[car.type] || car.type} · {formatBaht(car.price)}</span><small className={`catalog-inline-status ${status.tone}`}>{status.label} · {car.stock} คัน</small><small className="catalog-admin-photo-count">{photoCount} รูปในแกลเลอรี</small></div><div className="catalog-admin-car-actions"><Link to={`/catalog/${encodeURIComponent(car.id)}`} title="ดูรายละเอียด" aria-label={`ดูรายละเอียด ${car.name}`}>↗</Link><label className={`catalog-admin-photo-add ${uploadingCarId === car.id ? 'is-uploading' : ''}`} title="เพิ่มรูปภาพรถ">{uploadingCarId === car.id ? '...' : '+ รูป'}<input type="file" accept="image/*" multiple disabled={uploadingCarId === car.id} onChange={(event) => addPhotosToExistingCar(car, event)} aria-label={`เพิ่มรูปให้ ${car.name}`} /></label><button type="button" title="นำออกจากรายการ" aria-label={`ลบ ${car.name}`} onClick={() => removeCar(car)} disabled={busy}>ลบ</button></div></article>;
+              return <article key={car.id} className="catalog-admin-car-row"><div className="catalog-admin-car-thumb"><CarPhoto car={car} className="catalog-admin-thumb-photo" /></div><div className="catalog-admin-car-main"><strong>{car.brand} {car.name}</strong><span>{CATEGORY_LABELS[car.type] || car.type} · {formatBaht(car.price)}</span><small className={`catalog-inline-status ${status.tone}`}>{status.label} · {car.stock} คัน</small><small className="catalog-admin-photo-count">{photoCount} รูปในแกลเลอรี</small></div><div className="catalog-admin-car-actions"><button type="button" title="แก้ไขข้อมูลรถ" aria-label={`แก้ไข ${car.name}`} onClick={() => startEdit(car)} disabled={busy}>แก้ไข</button><Link to={`/catalog/${encodeURIComponent(car.id)}`} title="ดูรายละเอียด" aria-label={`ดูรายละเอียด ${car.name}`}>↗</Link><label className={`catalog-admin-photo-add ${uploadingCarId === car.id ? 'is-uploading' : ''}`} title="เพิ่มรูปภาพรถ">{uploadingCarId === car.id ? '...' : '+ รูป'}<input type="file" accept="image/*" multiple disabled={uploadingCarId === car.id} onChange={(event) => addPhotosToExistingCar(car, event)} aria-label={`เพิ่มรูปให้ ${car.name}`} /></label><button type="button" title="นำออกจากรายการ" aria-label={`ลบ ${car.name}`} onClick={() => removeCar(car)} disabled={busy}>ลบ</button></div></article>;
             })}
             {loading && !loadError && <p className="catalog-muted">กำลังโหลดรายการรถ...</p>}
             {!loading && !loadError && !visibleCars.length && <p className="catalog-muted">ไม่พบรุ่นรถจากคำค้นหานี้</p>}
