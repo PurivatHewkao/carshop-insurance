@@ -35,7 +35,7 @@ export default function LoginPage() {
         customer: '/customer/profile',
         seller: '/seller/tasks',
         manager: '/manager',
-        finance: '/account',
+        finance: '/finance',
         stock: '/account',
       };
       navigate(destinations[user.role] || '/account');

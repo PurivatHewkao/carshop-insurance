@@ -15,6 +15,7 @@ export default function WorkspaceLayout({ role, links, headerLabel }) {
               Admin: 'เมนูผู้ดูแล',
               Manager: 'เมนูผู้จัดการ',
               Seller: 'เมนูพนักงานขาย',
+              Finance: 'เมนูฝ่ายการเงิน',
             }[role]
           }
         >

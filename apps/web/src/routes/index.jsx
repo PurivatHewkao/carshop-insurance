@@ -35,7 +35,9 @@ import {
   sellerPaymentRoutes,
   managerPaymentRoutes,
   adminPaymentRoutes,
+  financePaymentRoutes,
 } from '../features/payment/routes.jsx';
+import FinanceLayout from '../layouts/FinanceLayout.jsx';
 import {
   reportingRoutes,
   managerReportingRoutes,
@@ -103,6 +105,18 @@ export const router = createBrowserRouter([
       ...adminSalesRoutes,
       ...adminPaymentRoutes,
       ...plannedRoutes('admin', null),
+      { path: '*', element: <NotFoundPage /> },
+    ],
+  },
+  {
+    path: 'finance',
+    element: (
+      <RequireRole roles={['finance', 'admin']}>
+        <FinanceLayout />
+      </RequireRole>
+    ),
+    children: [
+      ...financePaymentRoutes,
       { path: '*', element: <NotFoundPage /> },
     ],
   },

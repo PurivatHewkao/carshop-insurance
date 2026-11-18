@@ -20,3 +20,7 @@ export const managerPaymentRoutes = plannedRoutes('manager', 'payment', {
 export const adminPaymentRoutes = [
   { path: 'finance', element: <AdminFinancePage /> },
 ];
+// บัญชี role finance มีพื้นที่ทำงานของตัวเองที่ /finance (หน้าเดียวกับ Admin)
+export const financePaymentRoutes = [
+  { index: true, element: <AdminFinancePage /> },
+];

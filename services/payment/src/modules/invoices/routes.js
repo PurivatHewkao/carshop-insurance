@@ -8,6 +8,7 @@ import {
   listInvoices,
   listOrderInvoices,
 } from './service.js';
+import { renderInvoicePdf } from './pdf.js';
 
 // Mounted at /api/v1 after requireSession + loadActor (src/app.js).
 // Issue: seller (own orders), manager, finance. Cancel: manager, finance.
@@ -35,6 +36,25 @@ router.get('/invoices', async (req, res) => {
   res
     .set('Cache-Control', 'no-store')
     .json(await listInvoices(req.actor, req.query, readPaging(req.query)));
+});
+
+// The logged-in customer's own invoices (same data as GET /invoices for a customer).
+router.get('/me/invoices', requireRoles('customer'), async (req, res) => {
+  res
+    .set('Cache-Control', 'no-store')
+    .json(await listInvoices(req.actor, req.query, readPaging(req.query)));
+});
+
+router.get('/invoices/:id/pdf', async (req, res) => {
+  const id = requireUuid(req.params.id);
+  const { fileName, buffer } = await renderInvoicePdf(req.actor, id);
+  res
+    .set({
+      'Cache-Control': 'no-store',
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'inline; filename="' + fileName + '"',
+    })
+    .send(buffer);
 });
 
 router.get('/invoices/:id', async (req, res) => {
