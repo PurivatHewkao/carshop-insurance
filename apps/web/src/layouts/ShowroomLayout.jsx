@@ -3,11 +3,13 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Action, Brand } from '../components/common/Showroom.jsx';
 import design from '../design/toyoty.json';
 import { pageMenu } from '../routes/pageList.js';
+import AccountNavbar from '../features/identity/components/AccountNavbar.jsx';
 import {
   getProfile,
   getSession,
   subscribeSession,
 } from '../features/identity/api/auth.js';
+
 export default function ShowroomLayout({ customer = false }) {
   const [open, setOpen] = useState(false);
   const session = useSyncExternalStore(subscribeSession, getSession);
@@ -52,34 +54,22 @@ export default function ShowroomLayout({ customer = false }) {
               </NavLink>
             ),
           )}
-          {customer && (
+          {customer ? (
             <>
               <Link to="/catalog">รถทั้งหมด</Link>
               <Link to="/">กลับหน้าเว็บไซต์</Link>
             </>
-          )}
+          ) : null}
         </nav>
         <div className="s-util">
-          {session ? (
-            <Link className="s-btn out login-link" to="/account">
-              บัญชีของฉัน
+          {!session && (session === null || sessionCheckFailed) && (
+            <Link className="s-btn out login-link" to="/login">
+              เข้าสู่ระบบ
             </Link>
-          ) : (
-            (session === null || sessionCheckFailed) && (
-              <Link className="s-btn out login-link" to="/login">
-                เข้าสู่ระบบ
-              </Link>
-            )
           )}
-          <NavLink
-            className="s-user"
-            to="/customer/requests"
-            aria-label="คำขอของฉัน"
-          >
-            <span className="av">ค</span>
-            <span className="nm">คำขอของฉัน</span>
-          </NavLink>
-          <Action to="/requests?type=นัดดูรถ">นัดทดลองขับ</Action>
+          {!customer && (!session || session.role === 'customer') && (
+            <Action to="/requests?type=นัดดูรถ">นัดทดลองขับ</Action>
+          )}
           <button
             className="s-burger"
             aria-label={open ? 'ปิดเมนู' : 'เปิดเมนู'}
@@ -88,6 +78,7 @@ export default function ShowroomLayout({ customer = false }) {
           >
             {open ? '×' : '☰'}
           </button>
+          <AccountNavbar />
         </div>
       </header>
       <main id="main-content">
@@ -108,7 +99,6 @@ export default function ShowroomLayout({ customer = false }) {
         <div className="s-foot-grid">
           <div>
             <Brand />
-            <p className="tagl">{design.site.tagline}</p>
           </div>
           <div>
             <h4>รถยนต์</h4>
@@ -124,12 +114,8 @@ export default function ShowroomLayout({ customer = false }) {
           </div>
           <div>
             <h4>ติดต่อ</h4>
-            <p>02-xxx-xxxx</p>
+            <p>02-123-4567</p>
             <p>จ–ส 09:00–18:00</p>
-            <Link to="/admin">Dashboard ผู้ดูแล (ตัวอย่าง)</Link>
-            <Link to="/manager">พื้นที่ผู้จัดการ (ตัวอย่าง)</Link>
-            <Link to="/seller">พื้นที่พนักงานขาย (ตัวอย่าง)</Link>
-            <Link to="/system-status">System Status</Link>
           </div>
         </div>
         <div className="copy">{design.site.copy}</div>

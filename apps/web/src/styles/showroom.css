@@ -157,9 +157,91 @@ dd {
 }
 .s-adm {
   min-height: 100vh;
+  grid-template-areas: 'sidebar header' 'sidebar content';
+  grid-template-rows: auto 1fr;
 }
-.s-adm-top .sp {
-  flex: 1;
+.s-adm > .s-side {
+  grid-area: sidebar;
+}
+.s-adm > .s-adm-top {
+  grid-area: header;
+  min-width: 0;
+  position: relative;
+  z-index: 4;
+}
+.s-adm > .s-adm-main {
+  grid-area: content;
+}
+.s-adm-top .stacking-navbar {
+  margin-inline-start: auto;
+}
+.stacking-navbar {
+  position: relative;
+  flex: none;
+}
+.stacking-navbar .account-trigger {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--line2);
+  border-radius: 50%;
+  color: var(--ink);
+  cursor: pointer;
+}
+.stacking-navbar .account-trigger:hover,
+.stacking-navbar .account-trigger[aria-expanded='true'] {
+  border-color: var(--red);
+  color: var(--red);
+}
+.account-stack {
+  position: absolute;
+  inset-block-start: calc(100% + 12px);
+  inset-inline-end: 0;
+  z-index: 10;
+  display: grid;
+  gap: 6px;
+  width: min(240px, calc(100vw - 32px));
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow);
+}
+.stacking-navbar .account-stack-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 46px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  color: var(--ink);
+  font: 500 14px/1.4 var(--fd);
+  text-decoration: none;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.stacking-navbar .account-stack-item:hover {
+  background: var(--night);
+  color: var(--on-night);
+}
+.account-stack-item:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.account-stack-error {
+  margin: 0;
+  padding: 8px 12px;
+  color: var(--red);
+  font-size: 13px;
 }
 .admin-toolbar-slot {
   display: contents;
@@ -316,9 +398,18 @@ button:focus-visible {
 .workspace-header-label {
   font: 500 15px var(--fd);
 }
-@media (max-width: 860px) {
-  .s-adm > .s-side .who {
-    display: none;
+@container site (max-width: 860px) {
+  .s-adm {
+    grid-template-areas: 'header' 'sidebar' 'content';
+    grid-template-rows: auto auto 1fr;
+  }
+  .s-adm-top {
+    flex-wrap: wrap;
+  }
+  .s-adm-top .s-search {
+    order: 1;
+    flex-basis: 100%;
+    max-width: none;
   }
 }
 @media (max-width: 520px) {
@@ -348,9 +439,6 @@ button:focus-visible {
   margin-block: 24px;
 }
 @media (max-width: 780px) {
-  .showroom .s-util .s-user {
-    display: none;
-  }
   .showroom .s-nav {
     gap: 8px;
   }

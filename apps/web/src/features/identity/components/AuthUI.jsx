@@ -5,11 +5,10 @@ import { isDemo } from '../api/auth.js';
 import '../styles/auth.css';
 
 export function ModeNotice() {
+  if (!isDemo) return null;
   return (
     <p className="auth-mode">
-      {isDemo
-        ? 'โหมดสาธิต · ข้อมูลตัวอย่างในหน่วยความจำ รีเฟรชแล้วเริ่มใหม่'
-        : 'เซสชันเข้าสู่ระบบมีอายุ 1 ชั่วโมง'}
+      โหมดสาธิต · ข้อมูลตัวอย่างในหน่วยความจำ รีเฟรชแล้วเริ่มใหม่
     </p>
   );
 }

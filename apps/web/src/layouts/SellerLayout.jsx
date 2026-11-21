@@ -9,7 +9,6 @@ export default function SellerLayout() {
       links={[
         ...pageMenu('seller'),
         ['/catalog', 'ดูรายการรถ', false],
-        ['/', 'กลับหน้าเว็บไซต์', true],
       ]}
     />
   );

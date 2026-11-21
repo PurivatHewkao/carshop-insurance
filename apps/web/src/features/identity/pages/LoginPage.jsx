@@ -8,8 +8,6 @@ const testRoles = [
   'seller',
   'admin',
   'manager',
-  'finance',
-  'stock',
 ];
 const roleTestPassword =
   import.meta.env.DEV && import.meta.env.VITE_IDENTITY_ROLE_TEST_PASSWORD;

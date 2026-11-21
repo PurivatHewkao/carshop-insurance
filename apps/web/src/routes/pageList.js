@@ -71,7 +71,7 @@ export const pageList = [
   {
     role: 'seller',
     path: 'finance',
-    title: 'ติดต่อการเงิน',
+    title: 'ส่งเรื่องการเงิน',
     feature: 'payment',
   },
   {
@@ -111,7 +111,7 @@ export const pageList = [
   {
     role: 'manager',
     path: 'assignments',
-    title: 'มอบหมาย Seller',
+    title: 'มอบหมายงานขาย',
     feature: 'sales',
   },
   {
@@ -123,7 +123,7 @@ export const pageList = [
   {
     role: 'manager',
     path: 'invoices',
-    title: 'ออกบิลส่งการเงิน',
+    title: 'ออกใบแจ้งหนี้',
     feature: 'payment',
   },
   {

@@ -50,6 +50,8 @@ Register สร้าง customers ส่วนพนักงานสร้า
 
 ### บัญชีทดสอบตามบทบาทบนเครื่อง
 
+หลังตั้ง MySQL ในเครื่อง รัน migrate และสร้าง Admin คนแรกแล้ว ให้ตั้ง `ROLE_TEST_PASSWORD` ใน `services/identity/.env` เป็นรหัสทดสอบที่ใช้ตัวอักษรอังกฤษและตัวเลขเท่านั้น ความยาว 8–128 ตัวและมีทั้งสองอย่าง จาก root ของโปรเจกต์รัน `npm --prefix services/identity run seed:roles:local` คำสั่งนี้เตรียมบัญชีครบ 6 บทบาทและตั้งค่าปุ่มกรอกอัตโนมัติใน `apps/web/.env.development.local` ให้ด้วย จากนั้นรีสตาร์ต Vite แล้วเปิด `http://localhost:5173/login`
+
 ตั้ง `ROLE_TEST_PASSWORD` ใน `services/identity/.env` เป็นรหัสทดสอบที่มีตัวอักษรอังกฤษและตัวเลข 8–128 ตัว แล้วรัน `npm --prefix services/identity run seed:roles` หลังสร้าง Admin คนแรก คำสั่งสร้างบัญชี `role-<role>@carshop.test` ทั้ง 6 บทบาทใน MySQL บนเครื่อง และใช้รหัสเดิมเมื่อรันซ้ำ
 
 สำหรับปุ่มกรอกอัตโนมัติ ให้ตั้ง `VITE_IDENTITY_ROLE_TEST_PASSWORD` เป็นรหัสทดสอบเดียวกันใน `apps/web/.env.development.local` แล้วรีสตาร์ต Vite ปุ่มจะแสดงบนหน้า `/login` เมื่อเปิดผ่าน localhost ในโหมดพัฒนา รหัสนี้จะถูกส่งให้เบราว์เซอร์ในโหมดดังกล่าว จึงใช้เฉพาะรหัสของบัญชีทดสอบ
