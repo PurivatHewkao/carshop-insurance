@@ -56,7 +56,7 @@ function HomePromotionCard({ promotion, index }) {
       <div className="big">{promotion.value || promotion.title}</div>
       <h3>{promotion.title}</h3>
       <p>{promotion.description || promotion.subtitle}</p>
-      <Action variant={index < 2 ? 'glass' : 'out'} to="/promotions">ดูรายละเอียดโปรโมชัน →</Action>
+      <Action variant={index < 2 ? 'glass' : 'out'} to={`/promotions/${encodeURIComponent(promotion.id)}`}>ดูรายละเอียดโปรโมชัน →</Action>
     </article>
   );
 }

@@ -118,6 +118,7 @@ function fromApiPromotion(row) {
     conditions: row.conditions || '',
     appliesTo: row.appliesTo || 'รถทุกรุ่น',
     imageUrl: row.imageUrl || '',
+    steps: row.steps || '',
     startDate: row.startDate.slice(0, 10),
     endDate: endYear >= NO_END_DATE_YEAR ? '' : row.endDate.slice(0, 10),
     active: row.status === 'ACTIVE',
@@ -141,6 +142,7 @@ function promotionBody(form) {
     conditions: form.conditions,
     appliesTo: form.appliesTo,
     imageUrl: form.imageUrl,
+    steps: form.steps,
     endDate: (form.endDate || NO_END_DATE_YEAR + '-12-31') + 'T23:59:59Z',
     status: form.active ? 'ACTIVE' : 'INACTIVE',
   };
