@@ -5,6 +5,8 @@ import { useAction, useActorChoice, useSalesData } from '../hooks/useSalesData.j
 import { ActionError, ActorSwitcher, LoadStatus } from '../components/SalesState.jsx';
 import '../sales.css';
 
+const STAGES = [['PENDING', 'รอดำเนินการ'], ['CONFIRMED', 'ยืนยันแล้ว'], ['COMPLETED', 'เสร็จสิ้น'], ['CANCELLED', 'ยกเลิก']];
+
 export default function SellerTasksPage() {
   const actor = useActorChoice('SELLER', fetchSellers, (a) => a.employeeId);
   const list = useSalesData(
@@ -18,12 +20,10 @@ export default function SellerTasksPage() {
   const [filter, setFilter] = useState('ALL');
   // A task is an appointment assigned to this seller; taskStatus is derived by the API.
   const tasks = (list.data ?? [])
-    .filter((a) => a.taskStatus !== 'CANCELLED')
     .map((a) => ({ ...a, status: a.taskStatus, taskTitle: `${a.type} - ${a.carModel}` }));
 
   const handleStatusChange = async (taskId, nextStatus) => {
-    const dbStatus = nextStatus === 'IN_PROGRESS' ? 'CONFIRMED' : 'COMPLETED';
-    const result = await action.run(() => setAppointmentStatus(taskId, dbStatus));
+    const result = await action.run(() => setAppointmentStatus(taskId, nextStatus));
     if (result.ok) list.reload();
   };
 
@@ -36,6 +36,7 @@ export default function SellerTasksPage() {
     { key: 'PENDING', label: 'รอดำเนินการ', count: tasks.filter(t => t.status === 'PENDING').length },
     { key: 'IN_PROGRESS', label: 'กำลังดูแล', count: tasks.filter(t => t.status === 'IN_PROGRESS').length },
     { key: 'COMPLETED', label: 'เสร็จสิ้น', count: tasks.filter(t => t.status === 'COMPLETED').length },
+    { key: 'CANCELLED', label: 'ยกเลิก', count: tasks.filter(t => t.status === 'CANCELLED').length },
   ];
 
   return (
@@ -150,14 +151,13 @@ export default function SellerTasksPage() {
                 <th style={{ width: '20%' }}>ข้อมูลลูกค้า</th>
                 <th style={{ width: '31%' }}>รายละเอียดงาน</th>
                 <th style={{ width: '15%' }}>กำหนดเวลา</th>
-                <th style={{ width: '11%', textAlign: 'center' }}>สถานะ</th>
-                <th style={{ width: '12%', textAlign: 'center' }}>ดำเนินการ</th>
+                <th style={{ width: '17%', textAlign: 'center' }}>Stage</th>
               </tr>
             </thead>
             <tbody>
               {visibleTasks.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="sales-empty">ไม่พบรายการงานในหมวดหมู่นี้</td>
+                  <td colSpan="5" className="sales-empty">ไม่พบรายการงานในหมวดหมู่นี้</td>
                 </tr>
               ) : (
                 visibleTasks.map((task) => (
@@ -179,61 +179,9 @@ export default function SellerTasksPage() {
                     </td>
                     <td style={{ fontSize: '0.85rem' }}>{task.dueDate}</td>
                     <td style={{ textAlign: 'center' }}>
-                      <span className={`sales-badge ${
-                        task.status === 'PENDING' ? 'badge-pending' :
-                        task.status === 'IN_PROGRESS' ? 'badge-progress' : 'badge-completed'
-                      }`}>
-                        {task.status}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}>
-                        {task.status === 'PENDING' && (
-                          <button
-                            disabled={action.busy}
-                            onClick={() => handleStatusChange(task.id, 'IN_PROGRESS')}
-                            style={{
-                              background: '#2563eb',
-                              color: '#ffffff',
-                              border: 'none',
-                              padding: '6px 14px',
-                              borderRadius: '6px',
-                              fontSize: '0.8rem',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
-                              whiteSpace: 'nowrap'
-                            }}
-                          >
-                            รับงาน
-                          </button>
-                        )}
-                        {task.status === 'IN_PROGRESS' && (
-                          <button
-                            disabled={action.busy}
-                            onClick={() => handleStatusChange(task.id, 'COMPLETED')}
-                            style={{
-                              background: '#16a34a',
-                              color: '#ffffff',
-                              border: 'none',
-                              padding: '6px 14px',
-                              borderRadius: '6px',
-                              fontSize: '0.8rem',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
-                              whiteSpace: 'nowrap'
-                            }}
-                          >
-                            เสร็จสิ้น
-                          </button>
-                        )}
-                        {task.status === 'COMPLETED' && (
-                          <span style={{ fontSize: '0.8rem', color: '#16a34a', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                            ปิดงานแล้ว
-                          </span>
-                        )}
-                      </div>
+                      <select aria-label={`เปลี่ยน stage ${task.code}`} className="sales-select sales-stage-select" value={task.dbStatus} onChange={(event) => handleStatusChange(task.id, event.target.value)} disabled={action.busy}>
+                        {STAGES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                      </select>
                     </td>
                   </tr>
                 ))

@@ -38,8 +38,7 @@ export function useOrderForm({ onCreated } = {}) {
 
   const customerId = form.customerId || customers[0]?.id || '';
   const carId = form.carId || cars[0]?.id || '';
-  const sellerId =
-    form.sellerId || (!actor?.isStandIn && actor?.employeeId) || sellers[0]?.id || '';
+  const sellerId = (!actor?.isStandIn && actor?.employeeId) || sellers[0]?.id || '';
   const customer = customers.find((item) => item.id === customerId);
   const car = cars.find((item) => item.id === carId);
   const insurance = insurances.find((item) => item.id === form.insuranceId);

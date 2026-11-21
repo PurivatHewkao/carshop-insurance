@@ -73,6 +73,16 @@ export async function listAppointments({ customerId, sellerId, status }) {
   return rows.map(toAppointment);
 }
 
+export async function listBookedTimes(appointmentDate) {
+  const [rows] = await getMysqlPool().query(
+    `SELECT DISTINCT TIME_FORMAT(appointment_time, '%H:%i') AS appointment_time
+       FROM appointments
+      WHERE appointment_date = ? AND status <> 'CANCELLED'`,
+    [appointmentDate],
+  );
+  return rows.map((row) => row.appointment_time);
+}
+
 async function getAppointment(db, id) {
   const [rows] = await db.query(SELECT + ' WHERE a.id = ?', [id]);
   if (!rows[0]) throw httpError(404, 'APPOINTMENT_NOT_FOUND', 'Appointment not found');
@@ -81,49 +91,81 @@ async function getAppointment(db, id) {
 
 export async function createAppointment(input) {
   const pool = getMysqlPool();
-  const [customers] = await pool.query('SELECT id FROM customers WHERE id = ?', [input.customerId]);
-  if (!customers[0]) throw httpError(400, 'CUSTOMER_NOT_FOUND', 'Customer not found');
-  const [cars] = await pool.query('SELECT status FROM cars WHERE id = ?', [input.carId]);
-  if (!cars[0]) throw httpError(400, 'CAR_NOT_FOUND', 'Car not found');
-  if (['SOLD', 'INACTIVE'].includes(cars[0].status))
-    throw httpError(409, 'CAR_NOT_BOOKABLE', 'This car is no longer available for appointments');
-  const [dup] = await pool.query(
-    `SELECT id FROM appointments
-      WHERE customer_id = ? AND car_id = ? AND appointment_date = ? AND appointment_time = ?
-        AND status IN ('PENDING','CONFIRMED') LIMIT 1`,
-    [input.customerId, input.carId, input.appointmentDate, input.appointmentTime],
-  );
-  if (dup[0]) throw httpError(409, 'DUPLICATE_APPOINTMENT', 'You already have this appointment');
-  const id = randomUUID();
-  await pool.query(
-    `INSERT INTO appointments (id, customer_id, car_id, appointment_type, appointment_date, appointment_time, note)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [id, input.customerId, input.carId, input.appointmentType, input.appointmentDate, input.appointmentTime, input.note],
-  );
-  return getAppointment(pool, id);
-}
+  const conn = await pool.getConnection();
+  // Serialize slot checks for the date so simultaneous requests cannot claim overlapping hours.
+  const slotLock = `appointment-day:${input.appointmentDate}`;
+  let lockAcquired = false;
+  try {
+    const [customers] = await conn.query('SELECT id FROM customers WHERE id = ?', [input.customerId]);
+    if (!customers[0]) throw httpError(400, 'CUSTOMER_NOT_FOUND', 'Customer not found');
+    const [cars] = await conn.query('SELECT status FROM cars WHERE id = ?', [input.carId]);
+    if (!cars[0]) throw httpError(400, 'CAR_NOT_FOUND', 'Car not found');
+    if (['SOLD', 'INACTIVE'].includes(cars[0].status))
+      throw httpError(409, 'CAR_NOT_BOOKABLE', 'This car is no longer available for appointments');
 
-// Allowed moves. CONFIRMED additionally needs a seller (checked in the SQL).
-const TRANSITIONS = {
-  CONFIRMED: ['PENDING'],
-  COMPLETED: ['CONFIRMED'],
-  CANCELLED: ['PENDING', 'CONFIRMED'],
-};
+    const [locks] = await conn.query('SELECT GET_LOCK(?, 10) AS acquired', [slotLock]);
+    if (Number(locks[0]?.acquired) !== 1)
+      throw httpError(409, 'APPOINTMENT_SLOT_UNAVAILABLE', 'ช่วงเวลานี้มีผู้จองแล้ว กรุณาเลือกเวลาอื่น');
+    lockAcquired = true;
+    const [existing] = await conn.query(
+      `SELECT id FROM appointments
+        WHERE appointment_date = ? AND ABS(TIME_TO_SEC(appointment_time) - TIME_TO_SEC(?)) < 3600
+          AND status <> 'CANCELLED'
+        LIMIT 1`,
+      [input.appointmentDate, input.appointmentTime],
+    );
+    if (existing[0])
+      throw httpError(409, 'APPOINTMENT_SLOT_UNAVAILABLE', 'ช่วงเวลานี้มีผู้จองแล้ว กรุณาเลือกเวลาอื่น');
+
+    const id = randomUUID();
+    await conn.query(
+      `INSERT INTO appointments (id, customer_id, car_id, appointment_type, appointment_date, appointment_time, note)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [id, input.customerId, input.carId, input.appointmentType, input.appointmentDate, input.appointmentTime, input.note],
+    );
+    return await getAppointment(conn, id);
+  } finally {
+    if (lockAcquired) await conn.query('SELECT RELEASE_LOCK(?)', [slotLock]);
+    conn.release();
+  }
+}
 
 export async function changeStatus(id, next) {
   const pool = getMysqlPool();
-  const from = TRANSITIONS[next];
-  const [result] = await pool.query(
-    `UPDATE appointments SET status = ?
-      WHERE id = ? AND status IN (${from.map(() => '?').join(',')})
-        ${next === 'CONFIRMED' ? 'AND seller_id IS NOT NULL' : ''}`,
-    [next, id, ...from],
-  );
-  if (result.affectedRows === 0) {
-    const current = await getAppointment(pool, id); // 404 if missing
-    if (next === 'CONFIRMED' && !current.sellerId)
-      throw httpError(409, 'NO_SELLER', 'Assign a seller before accepting the job');
-    throw httpError(409, 'INVALID_TRANSITION', `Cannot change ${current.dbStatus} to ${next}`);
+  const [rows] = await pool.query('SELECT id, customer_id, seller_id, status, appointment_date, appointment_time FROM appointments WHERE id = ?', [id]);
+  const current = rows[0];
+  if (!current) throw httpError(404, 'APPOINTMENT_NOT_FOUND', 'Appointment not found');
+  if (next === 'CONFIRMED' && !current.seller_id)
+    throw httpError(409, 'NO_SELLER', 'Assign a seller before accepting the job');
+  const conn = await pool.getConnection();
+  const slotLock = `appointment-day:${current.appointment_date}`;
+  let lockAcquired = false;
+  try {
+    if (next !== 'CANCELLED') {
+      const [locks] = await conn.query('SELECT GET_LOCK(?, 10) AS acquired', [slotLock]);
+      if (Number(locks[0]?.acquired) !== 1)
+        throw httpError(409, 'APPOINTMENT_SLOT_UNAVAILABLE', 'ช่วงเวลานี้มีผู้จองแล้ว กรุณาเลือกเวลาอื่น');
+      lockAcquired = true;
+      const [conflicts] = await conn.query(
+        `SELECT id FROM appointments
+          WHERE appointment_date = ? AND ABS(TIME_TO_SEC(appointment_time) - TIME_TO_SEC(?)) < 3600
+            AND status <> 'CANCELLED' AND id <> ?
+          LIMIT 1`,
+        [current.appointment_date, current.appointment_time, id],
+      );
+      if (conflicts[0])
+        throw httpError(409, 'APPOINTMENT_SLOT_UNAVAILABLE', 'ช่วงเวลานี้มีผู้จองแล้ว กรุณาเลือกเวลาอื่น');
+    }
+    if (next === 'PENDING' && current.seller_id) {
+      await conn.query("UPDATE assignments SET status = 'CANCELLED' WHERE customer_id = ? AND seller_id = ? AND status = 'ACTIVE'", [current.customer_id, current.seller_id]);
+    }
+    await conn.query(
+      `UPDATE appointments SET status = ?, seller_id = CASE WHEN ? = 'PENDING' THEN NULL ELSE seller_id END WHERE id = ?`,
+      [next, next, id],
+    );
+  } finally {
+    if (lockAcquired) await conn.query('SELECT RELEASE_LOCK(?)', [slotLock]);
+    conn.release();
   }
   return getAppointment(pool, id);
 }

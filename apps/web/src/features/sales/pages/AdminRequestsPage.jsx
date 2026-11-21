@@ -5,6 +5,11 @@ import { useAction, useSalesData } from '../hooks/useSalesData.js';
 import { ActionError, LoadStatus } from '../components/SalesState.jsx';
 import '../sales.css';
 
+const STAGES = [
+  ['PENDING', 'รอดำเนินการ'], ['CONFIRMED', 'ยืนยันแล้ว'],
+  ['COMPLETED', 'เสร็จสิ้น'], ['CANCELLED', 'ยกเลิก'],
+];
+
 export default function AdminRequestsPage() {
   const list = useSalesData((signal) => fetchAppointments({}, signal), []);
   const action = useAction();
@@ -142,24 +147,9 @@ export default function AdminRequestsPage() {
                     </td>
                     <td>
                       <div className="sales-actions">
-                        {req.dbStatus === 'CONFIRMED' && (
-                          <button
-                            onClick={() => updateStatus(req.id, 'COMPLETED')}
-                            disabled={action.busy}
-                            className="sales-btn sales-btn-success sales-btn-sm"
-                          >
-                            ปิดงาน
-                          </button>
-                        )}
-                        {['PENDING', 'CONFIRMED'].includes(req.dbStatus) && (
-                          <button
-                            onClick={() => updateStatus(req.id, 'CANCELLED')}
-                            disabled={action.busy}
-                            className="sales-btn sales-btn-outline sales-btn-sm"
-                          >
-                            ยกเลิก
-                          </button>
-                        )}
+                        <select aria-label={`เปลี่ยน stage ${req.code}`} className="sales-select sales-stage-select" value={req.dbStatus} onChange={(event) => updateStatus(req.id, event.target.value)} disabled={action.busy}>
+                          {STAGES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                        </select>
                         <button
                           onClick={() => deleteRequest(req.id)}
                           disabled={action.busy}

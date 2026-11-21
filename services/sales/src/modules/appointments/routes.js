@@ -3,7 +3,7 @@ import {
   httpError, readOptionalText, requireBody, requireEnum, requireUuid,
 } from '../../utils/httpError.js';
 import {
-  assignSeller, changeStatus, createAppointment, deleteAppointment, listAppointments,
+  assignSeller, changeStatus, createAppointment, deleteAppointment, listAppointments, listBookedTimes,
 } from './repository.js';
 
 const router = Router();
@@ -38,6 +38,11 @@ router.get('/', async (req, res) => {
   res.json({ data: await listAppointments(filters) });
 });
 
+router.get('/availability', async (req, res) => {
+  const date = readDate(String(req.query.date || ''));
+  res.json({ data: { bookedTimes: await listBookedTimes(date) } });
+});
+
 router.post('/', async (req, res) => {
   const body = requireBody(req.body);
   const appointment = await createAppointment({
@@ -55,7 +60,7 @@ router.post('/', async (req, res) => {
 router.patch('/:id/status', async (req, res) => {
   const id = requireUuid(req.params.id);
   const { status } = requireBody(req.body);
-  requireEnum(status, ['CONFIRMED', 'COMPLETED', 'CANCELLED'], 'status');
+  requireEnum(status, DB_STATUSES, 'status');
   res.json({ data: await changeStatus(id, status) });
 });
 

@@ -253,3 +253,29 @@ button.sales-btn-danger:not(.s-btn):not(.s-var):not(.s-sw) { background-color: #
 button.sales-btn-danger:not(.s-btn):not(.s-var):not(.s-sw):hover:not(:disabled) { background-color: #b91c1c; }
 button.sales-btn-outline:not(.s-btn):not(.s-var):not(.s-sw) { background-color: #ffffff; }
 button.sales-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.sales-picker-trigger {
+  width: 100%; min-height: 54px; display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 10px 14px; text-align: left; color: #0f172a; background: #fff;
+  border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer;
+}
+.sales-picker-trigger:hover:not(:disabled) { border-color: #2563eb; box-shadow: 0 0 0 3px #dbeafe; }
+.sales-picker-trigger:disabled { opacity: .6; cursor: not-allowed; }
+.sales-picker-trigger span { display: grid; gap: 2px; }
+.sales-picker-trigger small, .sales-picker-trigger em { color: #64748b; font-size: .78rem; font-style: normal; }
+.sales-picker-trigger strong { font-size: .95rem; }
+.sales-picker-trigger > b { font-size: 1.25rem; color: #2563eb; }
+.sales-picker-dialog { width: min(520px, calc(100vw - 28px)); max-height: min(680px, calc(100dvh - 32px)); padding: 22px; border: 0; border-radius: 18px; box-shadow: 0 24px 80px #0f172a44; }
+.sales-picker-dialog::backdrop { background: #0f172a88; backdrop-filter: blur(3px); }
+.sales-picker-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+.sales-picker-head small { color: #64748b; }
+.sales-picker-head h2 { margin: 3px 0 0; }
+.sales-picker-head button { border: 0; background: #f1f5f9; border-radius: 50%; width: 36px; height: 36px; font-size: 1.4rem; cursor: pointer; }
+.sales-picker-options { display: grid; gap: 6px; overflow: auto; max-height: min(450px, 52dvh); margin-top: 12px; }
+.sales-picker-options > button { display: grid; gap: 3px; text-align: left; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; color: #0f172a; cursor: pointer; }
+.sales-picker-options > button:hover, .sales-picker-options > button[aria-selected="true"] { border-color: #2563eb; background: #eff6ff; }
+.sales-picker-options small, .sales-picker-empty { color: #64748b; }
+.sales-picker-locked { display: grid; gap: 3px; border: 1px solid #dbeafe; background: #eff6ff; border-radius: 8px; padding: 12px 14px; }
+.sales-picker-locked small { color: #64748b; }
+.sales-stage-select { min-width: 140px; font-size: .82rem; }
+.sales-select option:disabled { color: #94a3b8; background: #f1f5f9; }
+.sales-slot-help { display: block; color: #64748b; margin-top: 6px; line-height: 1.5; }

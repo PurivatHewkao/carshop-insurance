@@ -31,6 +31,8 @@ export const fetchEmployees = (role, signal) =>
 // ---- Appointments (customer requests, seller tasks, assignments) --------------
 export const fetchAppointments = (params, signal) =>
   salesClient.get('appointments', { params, signal }).then(unwrap);
+export const fetchAppointmentAvailability = (date, signal) =>
+  salesClient.get('appointments/availability', { params: { date }, signal }).then(unwrap);
 export const createAppointment = (body) =>
   salesClient.post('appointments', body).then(unwrap);
 export const setAppointmentStatus = (id, status) =>
