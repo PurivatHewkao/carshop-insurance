@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { getMysqlPool } from '../../config/mysql.js';
 
 const COLUMNS =
-  'id, title, description, discount_type, discount_value, start_date, end_date, status, badge, subtitle, offer_text, conditions, applies_to, image_url';
+  'id, title, description, discount_type, discount_value, start_date, end_date, status, badge, subtitle, offer_text, conditions, applies_to, image_url, steps';
 
 function toPromotion(row) {
   return {
@@ -15,6 +15,7 @@ function toPromotion(row) {
     conditions: row.conditions,
     appliesTo: row.applies_to,
     imageUrl: row.image_url,
+    steps: row.steps,
     discountType: row.discount_type,
     discountValue: row.discount_value,
     currency: 'THB',
@@ -60,8 +61,8 @@ export async function createPromotion(input) {
   const id = randomUUID();
   await getMysqlPool().query(
     `INSERT INTO promotions (id, title, description, discount_type, discount_value, start_date, end_date, status,
-       badge, subtitle, offer_text, conditions, applies_to, image_url)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       badge, subtitle, offer_text, conditions, applies_to, image_url, steps)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       input.title,
@@ -77,6 +78,7 @@ export async function createPromotion(input) {
       input.conditions,
       input.appliesTo,
       input.imageUrl,
+      input.steps,
     ],
   );
   return getPromotion(id);
@@ -96,6 +98,7 @@ const FIELD_COLUMNS = {
   conditions: 'conditions',
   appliesTo: 'applies_to',
   imageUrl: 'image_url',
+  steps: 'steps',
 };
 
 export async function updatePromotion(id, changes) {

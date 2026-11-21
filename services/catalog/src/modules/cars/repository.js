@@ -293,6 +293,48 @@ export async function createModel(input) {
   return fetchModelById(getMysqlPool(), modelId);
 }
 
+/** Edits the details of a model. The slug stays the same so existing links keep working. */
+export async function updateModel(ref, input) {
+  const pool = getMysqlPool();
+  const modelId = await withTransaction(async (connection) => {
+    const id = await resolveModelId(connection, ref);
+    if (!id) return null;
+    await connection.query(
+      'SELECT id FROM car_models WHERE id = ? FOR UPDATE',
+      [id],
+    );
+    const [same] = await connection.query(
+      'SELECT id FROM car_models WHERE LOWER(brand) = LOWER(?) AND LOWER(model_name) = LOWER(?) AND id <> ? LIMIT 1',
+      [input.brand, input.name, id],
+    );
+    if (same.length) {
+      throw httpError(409, 'CAR_EXISTS', 'This brand and model already exist');
+    }
+    await connection.query(
+      `UPDATE car_models SET brand = ?, model_name = ?, body_type = ?, variant = ?, engine = ?,
+         horsepower = ?, fuel = ?, seats = ? WHERE id = ?`,
+      [
+        input.brand,
+        input.name,
+        input.type,
+        input.variant,
+        input.engine,
+        input.horsepower,
+        input.fuel,
+        input.seats,
+        id,
+      ],
+    );
+    // Sold cars keep the price they were sold at.
+    await connection.query(
+      "UPDATE cars SET price = ?, manufacture_year = ? WHERE car_model_id = ? AND status <> 'SOLD'",
+      [input.price, input.year, id],
+    );
+    return id;
+  });
+  return modelId ? fetchModelById(pool, modelId) : null;
+}
+
 /** Replaces all photos of a model. The first one is the main image. */
 export async function replacePhotos(ref, photos) {
   const pool = getMysqlPool();

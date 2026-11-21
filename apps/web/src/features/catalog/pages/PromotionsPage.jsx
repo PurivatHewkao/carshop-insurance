@@ -14,7 +14,7 @@ const icons = ['↗', '✦', '◈', '◆', '◉'];
 
 const EMPTY_FORM = {
   title: '', subtitle: '', badge: 'แคมเปญใหม่', value: '', description: '',
-  conditions: '', appliesTo: 'รถทุกรุ่น', startDate: '', endDate: '',
+  conditions: '', steps: '', appliesTo: 'รถทุกรุ่น', startDate: '', endDate: '',
   active: true, imageUrl: '',
 };
 
@@ -153,6 +153,7 @@ export default function PromotionsPage({ adminMode = false }) {
       value: form.value.trim(),
       description: form.description.trim(),
       conditions: form.conditions.trim() || 'โปรดสอบถามเงื่อนไขเพิ่มเติม',
+      steps: form.steps.trim(),
       appliesTo: form.appliesTo.trim() || 'รถทุกรุ่น',
     };
     const saved = await runRequest(async () => {
@@ -211,6 +212,7 @@ export default function PromotionsPage({ adminMode = false }) {
             <label className="catalog-promo-form-wide">รายละเอียดโปรโมชัน *<textarea name="description" value={form.description} onChange={updateField} rows="3" placeholder="อธิบายสิทธิประโยชน์ของโปรโมชัน" required /></label>
             <label>รถที่ร่วมรายการ<input name="appliesTo" value={form.appliesTo} onChange={updateField} placeholder="เช่น รถไฮบริดที่ร่วมรายการ" /></label>
             <label>เงื่อนไข<input name="conditions" value={form.conditions} onChange={updateField} placeholder="เงื่อนไขที่ลูกค้าควรทราบ" /></label>
+            <label className="catalog-promo-form-wide">ขั้นตอนการรับสิทธิ์ (1 ขั้นตอนต่อ 1 บรรทัด รูปแบบ “หัวข้อ | รายละเอียด”)<textarea name="steps" value={form.steps} onChange={updateField} rows="4" placeholder={'เลือกรถที่ร่วมรายการ | ดูรุ่นที่เข้าร่วมแคมเปญ\nส่งคำขอให้ทีมขาย | ทีมขายจะติดต่อกลับ'} /></label>
             <label>วันเริ่มต้น<input name="startDate" type="date" value={form.startDate} onChange={updateField} /></label>
             <label>วันสิ้นสุด<input name="endDate" type="date" value={form.endDate} onChange={updateField} /></label>
             <label className="catalog-promo-form-wide">URL รูปภาพ (ไม่บังคับ)<input name="imageUrl" value={form.imageUrl.startsWith('data:') ? '' : form.imageUrl} onChange={updateField} placeholder="https://... หรือเลือกไฟล์รูปด้านล่าง" /></label>
@@ -239,7 +241,7 @@ export default function PromotionsPage({ adminMode = false }) {
               </div>
               <div className="catalog-promotion-body">
                 <p className="catalog-promotion-subtitle">{promotion.subtitle || 'ข้อเสนอพิเศษ'}</p>
-                <h3>{promotion.title}</h3>
+                <h3>{adminMode ? promotion.title : <Link className="catalog-promotion-stretch" to={`/promotions/${encodeURIComponent(promotion.id)}`}>{promotion.title}</Link>}</h3>
                 <strong className="catalog-promotion-value">{promotion.value}</strong>
                 <p className="catalog-promotion-description">{promotion.description}</p>
                 <div className="catalog-promotion-meta">
@@ -254,7 +256,7 @@ export default function PromotionsPage({ adminMode = false }) {
                     <div className="catalog-promo-manage-actions"><button type="button" onClick={() => startEditing(promotion)}>แก้ไข</button><button type="button" onClick={() => deletePromotion(promotion)} disabled={busy}>ลบโปรโมชัน</button></div>
                   </>
                 ) : (
-                  <Link className="catalog-promotion-link" to="/catalog">เลือกรถที่ร่วมรายการ <span>↗</span></Link>
+                  <Link className="catalog-promotion-link" to={`/promotions/${encodeURIComponent(promotion.id)}`}>อ่านรายละเอียดโปรโมชัน <span>↗</span></Link>
                 )}
               </div>
             </article>
