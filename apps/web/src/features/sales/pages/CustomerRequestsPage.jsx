@@ -1,5 +1,6 @@
 // apps/web/src/features/sales/pages/CustomerRequestsPage.jsx
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   createAppointment,
   fetchAppointments,
@@ -24,7 +25,19 @@ function slotIsTaken(slot, bookedTimes) {
   });
 }
 
+function normalizeModel(value) {
+  return String(value || '').toLocaleLowerCase().replace(/[^a-z0-9ก-๙]/g, '');
+}
+
+function matchesRequestedModel(car, requestedName, requestedBrand) {
+  const model = normalizeModel(car.modelName);
+  const requested = normalizeModel(requestedName);
+  const brandMatches = !requestedBrand || normalizeModel(car.brand) === normalizeModel(requestedBrand);
+  return Boolean(requested && brandMatches && (model === requested || model.includes(requested) || requested.includes(model)));
+}
+
 export default function CustomerRequestsPage() {
+  const [searchParams] = useSearchParams();
   const actor = useActorChoice('CUSTOMER', (a) => a.customerId);
   const cars = useSalesData((signal) => fetchCars(signal), []);
   const list = useSalesData(
@@ -37,6 +50,20 @@ export default function CustomerRequestsPage() {
   const action = useAction();
   const requests = list.data ?? [];
   const carOptions = cars.data ?? [];
+  const requestedModel = searchParams.get('car') || '';
+  const requestedBrand = searchParams.get('brand') || '';
+  const requestedColor = searchParams.get('color') || '';
+  const catalogMatch = carOptions.find((car) =>
+    matchesRequestedModel(car, requestedModel, requestedBrand) &&
+    requestedColor && normalizeModel(car.color).includes(normalizeModel(requestedColor)),
+  ) || carOptions.find((car) => matchesRequestedModel(car, requestedModel, requestedBrand));
+  const uniqueModels = new Map();
+  for (const car of carOptions) {
+    const key = car.modelId || normalizeModel(car.modelLabel || car.label);
+    if (!uniqueModels.has(key)) uniqueModels.set(key, car);
+  }
+  if (catalogMatch) uniqueModels.set(catalogMatch.modelId || normalizeModel(catalogMatch.modelLabel || catalogMatch.label), catalogMatch);
+  const appointmentCars = [...uniqueModels.values()];
   const [form, setForm] = useState({
     carId: '',
     appointmentType: 'TEST_DRIVE',
@@ -48,7 +75,7 @@ export default function CustomerRequestsPage() {
     (signal) => fetchAppointmentAvailability(form.appointmentDate, signal),
     [form.appointmentDate],
   );
-  const selectedCarId = form.carId || carOptions[0]?.id || '';
+  const selectedCarId = form.carId || catalogMatch?.id || (requestedModel ? '' : appointmentCars[0]?.id) || '';
   const bookedTimes = availability.data?.bookedTimes ?? [];
   const hasAvailableTimes = TIME_SLOTS.some((time) => !slotIsTaken(time, bookedTimes));
   const appointmentTime = form.appointmentTime && !slotIsTaken(form.appointmentTime, bookedTimes)
@@ -125,10 +152,12 @@ export default function CustomerRequestsPage() {
                 onChange={(e) => setForm({ ...form, carId: e.target.value })}
                 required
               >
-                {carOptions.map((car) => (
-                  <option key={car.id} value={car.id}>{car.label}</option>
+                {!selectedCarId && <option value="" disabled>เลือกรุ่นรถที่สนใจ</option>}
+                {appointmentCars.map((car) => (
+                  <option key={car.modelId || car.id} value={car.id}>{car.modelLabel || car.label}</option>
                 ))}
               </select>
+              {requestedModel && !catalogMatch && <small className="sales-slot-help">ไม่พบรุ่น “{requestedModel}” ในรายการนัดหมาย กรุณาเลือกรุ่นจากรายการ</small>}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
