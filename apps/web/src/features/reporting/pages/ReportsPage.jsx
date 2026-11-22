@@ -42,16 +42,17 @@ const number = (value) => (value == null ? '—' : new Intl.NumberFormat('th-TH'
 
 function Cards({ items, error }) {
   return (
-    <section className="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {items.map(([label, value, money]) => (
-        <article key={label} className="s-card">
-          <p className="text-sm" style={{ color: 'var(--mute)' }}>{label}</p>
-          <p className="mt-2 text-2xl font-semibold">
-            {value == null ? (error ? '—' : '…') : money ? formatMoney(value) : number(value)}
-          </p>
-          {error && <p className="mt-2 text-xs" style={{ color: 'var(--bad)' }}>โหลดไม่สำเร็จ</p>}
-        </article>
-      ))}
+    <section className="s-kpis mb-5">
+      {items.map(([label, value, money]) => {
+        const text = value == null ? (error ? '—' : '…') : money ? formatMoney(value) : number(value);
+        return (
+          <article key={label} className="s-card s-kpi">
+            <span className="l">{label}</span>
+            <strong className="v" title={text}>{text}</strong>
+            {error && <span className="text-xs" style={{ color: 'var(--bad)' }}>โหลดไม่สำเร็จ</span>}
+          </article>
+        );
+      })}
     </section>
   );
 }

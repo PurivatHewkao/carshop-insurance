@@ -1284,14 +1284,18 @@ div.s-in.ta {
   gap: 2px;
   padding: 18px 20px;
   position: relative;
+  min-width: 0;
+  /* ตัวเลขย่อตามความกว้างการ์ดเอง (cqi) จึงไม่ล้นการ์ดเมื่อยอดเงินยาว */
+  container-type: inline-size;
 }
 .s-kpi .l {
   color: var(--mute);
   font-size: 13px;
 }
 .s-kpi .v {
-  font: 600 clamp(26px, 3.2cqi, 34px)/1.25 var(--fd);
+  font: 600 clamp(18px, 10cqi, 32px)/1.25 var(--fd);
   font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 .s-kpi .r2 {
   display: flex;
