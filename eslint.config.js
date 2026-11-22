@@ -34,7 +34,7 @@ export default [
     },
   },
   {
-    files: ['apps/web/src/**/*.{js,jsx}'],
+    files: ['apps/web/src/**/*.{js,jsx}', 'insurance/frontend/src/**/*.{js,jsx}'],
     languageOptions: {
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },

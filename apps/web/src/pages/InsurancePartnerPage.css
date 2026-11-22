@@ -1,0 +1,226 @@
+.toyoty-insurance {
+  color: #172940;
+}
+.ti-hero {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  align-items: center;
+  gap: 24px;
+  padding: 65px max(6%, 24px);
+  background: linear-gradient(115deg, #f0f5fc, #e5edfa);
+  overflow: hidden;
+}
+.ti-hero h1 {
+  font-size: clamp(28px, 3vw, 44px);
+  line-height: 1.5;
+  margin: 20px 0;
+  font-weight: 750;
+}
+.ti-sub {
+  font-size: 16px;
+  color: #65758b;
+  line-height: 1.9;
+  margin-bottom: 26px;
+}
+.toyoty-insurance small {
+  display: block;
+  color: #77859b;
+  font-size: 12px;
+  margin-top: 15px;
+}
+.ti-art {
+  position: relative;
+  min-width: 0;
+  padding-top: 75px;
+}
+.ti-art .car-art {
+  width: 110%;
+  position: relative;
+  margin-left: -5%;
+}
+.ti-shield {
+  position: absolute;
+  top: 0;
+  left: 35%;
+  color: #356cce;
+  filter: drop-shadow(0 10px 20px #366fbd35);
+}
+.ti-content {
+  max-width: 1120px;
+  width: calc(100% - 48px);
+  margin: auto;
+  padding-block: 58px 70px;
+}
+.ti-heading {
+  text-align: center;
+  margin-bottom: 35px;
+}
+.ti-heading h2 {
+  font-size: 28px;
+  margin: 13px 0;
+  font-weight: 700;
+}
+.ti-heading p {
+  color: #708198;
+  font-size: 14px;
+}
+.ti-partner {
+  display: grid;
+  grid-template-columns: 0.85fr 1.4fr;
+  border: 1px solid #dde5ef;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 12px 36px #18375609;
+  background: white;
+}
+.ti-brand {
+  background: linear-gradient(135deg, #17345e, #2359ae);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px 25px;
+  min-height: 350px;
+  transition: filter 0.2s;
+}
+.ti-brand:hover {
+  filter: brightness(1.1);
+}
+.ti-brand strong {
+  font-family: system-ui;
+  font-size: 30px;
+  letter-spacing: -1px;
+  margin-top: 20px;
+}
+.ti-brand strong span {
+  font-weight: 350;
+}
+.ti-brand small {
+  color: #b5c9e9;
+  letter-spacing: 2px;
+  font-size: 9px;
+}
+.ti-partner-label {
+  font-size: 12px;
+  border: 1px solid #ffffff35;
+  border-radius: 20px;
+  padding: 6px 16px;
+  margin-top: 35px;
+}
+.ti-info {
+  padding: 40px 45px;
+}
+.ti-offer {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #eaf2ff;
+  color: #285db5;
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+}
+.ti-info h2 {
+  font-family: system-ui;
+  font-size: 28px;
+  margin: 19px 0 12px;
+  font-weight: 750;
+}
+.ti-info p {
+  font-size: 14px;
+  color: #6d7d93;
+  line-height: 1.8;
+}
+.ti-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 25px 0;
+  display: grid;
+  gap: 12px;
+}
+.ti-info li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: #465f7d;
+}
+.ti-info li svg {
+  color: #2e64bd;
+  flex-shrink: 0;
+}
+.ti-notes {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  background: #f5f7fb;
+  padding: 22px 25px;
+  border-radius: 12px;
+  margin-top: 25px;
+  color: #657b97;
+}
+.ti-notes svg {
+  flex-shrink: 0;
+}
+.ti-notes p {
+  font-size: 12px;
+  line-height: 1.9;
+  margin: 0;
+}
+.toyoty-insurance a:focus-visible {
+  outline: 3px solid #3476db;
+  outline-offset: 5px;
+}
+@media (max-width: 760px) {
+  .ti-hero {
+    grid-template-columns: 1fr;
+    padding: 38px 24px 22px;
+  }
+  .ti-hero h1 {
+    font-size: 30px;
+  }
+  .ti-sub {
+    font-size: 14px;
+  }
+  .ti-art {
+    width: min(100%, 430px);
+    margin: auto;
+    padding-top: 45px;
+  }
+  .ti-shield {
+    width: 75px;
+    height: 75px;
+  }
+  .ti-content {
+    width: calc(100% - 36px);
+    padding-block: 40px;
+  }
+  .ti-heading h2 {
+    font-size: 24px;
+  }
+  .ti-partner {
+    grid-template-columns: 1fr;
+  }
+  .ti-brand {
+    min-height: 270px;
+    padding: 30px;
+  }
+  .ti-info {
+    padding: 28px 24px;
+  }
+  .ti-info li {
+    font-size: 13px;
+  }
+  .ti-notes {
+    padding: 19px;
+  }
+  .ti-notes p {
+    font-size: 11px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ti-brand {
+    transition: none;
+  }
+}
