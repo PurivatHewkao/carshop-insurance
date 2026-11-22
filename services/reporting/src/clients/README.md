@@ -1,8 +1,9 @@
-# HTTP clients ที่วางแผนไว้
+# Reporting source API client
 
-- reporting → sales: เพิ่ม sales.js เมื่อ contract พร้อม ใช้ SALES_API_URL ซึ่งรวม /api/v1
-- reporting → payment: เพิ่ม payment.js เมื่อ contract พร้อม ใช้ PAYMENT_API_URL ซึ่งรวม /api/v1
-- reporting → catalog: เพิ่ม catalog.js เมื่อ contract พร้อม ใช้ CATALOG_API_URL ซึ่งรวม /api/v1
+`source-api.js` calls the configured Sales, Payment and Catalog base URLs (`SALES_API_URL`, `PAYMENT_API_URL`, `CATALOG_API_URL`), each including `/api/v1`.
 
-ใช้ fetch ของ Node.js พร้อม timeout, ตรวจ HTTP status, validation, authentication และ error mapping ตาม contract ห้าม query database หรือ import logic ของอีก service
-ยังไม่มีการเรียก business API ปลายทางที่ไม่ได้พัฒนา เพิ่ม INTERNAL_API_SECRET ใน backend เมื่อทีมตกลง internal authentication เท่านั้น
+- Sales: `GET /orders`, `GET /appointments`
+- Payment: `GET /order-balances` (requires a valid Manager/Admin Identity session)
+- Catalog: `GET /cars`, `GET /cars/stock-summary` (requires a valid Manager/Admin Identity session)
+
+The client uses Node.js `fetch`, a bounded timeout, status/error mapping, and forwards only the incoming Authorization header or Identity session cookie. It never queries source databases or imports another service's business logic. Base URLs come only from server environment configuration, never request input.

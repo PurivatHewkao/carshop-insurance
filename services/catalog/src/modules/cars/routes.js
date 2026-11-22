@@ -14,6 +14,7 @@ import {
   listModels,
   replacePhotos,
   setStock,
+  updateModel,
 } from './repository.js';
 
 const router = Router();
@@ -232,6 +233,13 @@ router.get(
 
 router.post('/', ...staffOnly(...CATALOG_EDITORS), async (req, res) => {
   res.status(201).json({ data: await createModel(parseCar(req.body)) });
+});
+
+// PATCH /cars/:id  — edit details (brand, name, type, price, year, variant, engine, horsepower, fuel, seats)
+router.patch('/:id', ...staffOnly(...CATALOG_EDITORS), async (req, res) => {
+  const model = await updateModel(readRef(req.params.id), parseCar(req.body));
+  if (!model) throw httpError(404, 'CAR_NOT_FOUND', 'Car model not found');
+  res.set('Cache-Control', 'no-store').json({ data: model });
 });
 
 router.get('/:id', async (req, res) => {

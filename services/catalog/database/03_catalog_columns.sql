@@ -59,6 +59,8 @@ CALL add_column_if_missing('promotions', 'offer_text', 'VARCHAR(200) NULL');
 CALL add_column_if_missing('promotions', 'conditions', 'TEXT NULL');
 CALL add_column_if_missing('promotions', 'applies_to', 'VARCHAR(200) NULL');
 CALL add_column_if_missing('promotions', 'image_url', 'MEDIUMTEXT NULL');
+-- one redemption step per line, "title | detail" (detail optional)
+CALL add_column_if_missing('promotions', 'steps', 'TEXT NULL');
 
 -- Photos can be uploaded files (data: URLs), which do not fit in VARCHAR(2048).
 ALTER TABLE car_images MODIFY image_path MEDIUMTEXT NOT NULL;

@@ -1,13 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CarImage } from '../../../components/common/Showroom.jsx';
 import CarPhoto from '../components/CarPhoto.jsx';
 import {
   CATEGORY_LABELS,
   formatBaht,
   stockStatus,
 } from '../data/catalogData.js';
-import { useCars, usePromotions } from '../api/catalogApi.js';
+import { useCars, useCovers, usePromotions } from '../api/catalogApi.js';
 import './catalog.css';
 
 export default function CarsPage() {
@@ -17,8 +16,13 @@ export default function CarsPage() {
   const [budget, setBudget] = useState('');
   const [sort, setSort] = useState('recommended');
   const { promotions: allPromotions } = usePromotions();
+  const { covers } = useCovers();
   const promotions = useMemo(() => allPromotions.filter((item) => item.active).slice(0, 3), [allPromotions]);
   const categories = [...new Set(cars.map((car) => car.type))];
+  const showcaseCar = useMemo(() => {
+    const car = cars.find((item) => item.id === covers.catalog.carId) || cars.find((item) => item.featured) || cars[0];
+    return car && covers.catalog.imageUrl ? { ...car, imageUrl: covers.catalog.imageUrl } : car;
+  }, [cars, covers.catalog]);
 
   const filteredCars = cars
     .filter((car) => {
@@ -37,22 +41,27 @@ export default function CarsPage() {
 
   return (
     <div className="page-content catalog-page">
-      <header className="catalog-hero">
-        <div className="catalog-hero-copy">
+      <header className="catalog-showcase">
+        {showcaseCar && <CarPhoto car={showcaseCar} className="catalog-showcase-photo" imageOnly />}
+        <div className="catalog-showcase-shade" aria-hidden="true" />
+        <div className="catalog-showcase-copy">
           <p className="catalog-eyebrow">TOYOTY · CAR COLLECTION</p>
-          <h1>ค้นหารถที่ใช่สำหรับคุณ</h1>
-          <p>ตั้งแต่รถใช้งานประจำวัน รถครอบครัว รถยนต์ไฟฟ้า ไปจนถึงสปอร์ตและซูเปอร์คาร์</p>
-          <div className="catalog-hero-stats">
+          <h1>{showcaseCar ? `${showcaseCar.brand} ${showcaseCar.name}` : 'ค้นหารถที่ใช่สำหรับคุณ'}</h1>
+          <p>{showcaseCar ? `เริ่มต้น ${formatBaht(showcaseCar.price)}` : 'รถใช้งานประจำวัน รถครอบครัว รถยนต์ไฟฟ้า สปอร์ต และซูเปอร์คาร์'}</p>
+        </div>
+        <div className="catalog-showcase-bottom">
+          {showcaseCar && (
+            <div className="catalog-showcase-actions">
+              <Link className="catalog-cta solid" to={`/catalog/${encodeURIComponent(showcaseCar.id)}`}>ดูรายละเอียด</Link>
+              <Link className="catalog-cta ghost" to={`/requests?brand=${encodeURIComponent(showcaseCar.brand)}&car=${encodeURIComponent(showcaseCar.name)}&type=${encodeURIComponent('ทดลองขับ')}`}>นัดทดลองขับ</Link>
+            </div>
+          )}
+          <div className="catalog-showcase-stats">
             <span><strong>{cars.length}</strong> รุ่นในแคตตาล็อก</span>
             <span><strong>{cars.filter((car) => Number(car.stock) > 0).length}</strong> รุ่นมีสต็อก</span>
             <Link to="/promotions">ดูโปรโมชันทั้งหมด ↗</Link>
           </div>
         </div>
-        {/* <div className="catalog-hero-art" aria-hidden="true">
-          <span className="catalog-orbit" />
-          {heroCar && <CarPhoto car={heroCar} className="catalog-hero-photo" />}
-          <span className="catalog-hero-label">DRIVE YOUR NEXT</span>
-        </div> */}
       </header>
 
       {promotions.length > 0 && (
@@ -63,7 +72,7 @@ export default function CarsPage() {
           </div>
           <div className="catalog-promo-mini-grid">
             {promotions.map((promo) => (
-              <Link key={promo.id} to="/promotions" className="catalog-promo-mini">
+              <Link key={promo.id} to={`/promotions/${encodeURIComponent(promo.id)}`} className="catalog-promo-mini">
                 <span className="catalog-promo-mini-badge">{promo.badge}</span>
                 <strong>{promo.title}</strong>
                 <span>{promo.value}</span>
@@ -80,13 +89,10 @@ export default function CarsPage() {
           <span className="catalog-results-count">พบ {filteredCars.length} รุ่น</span>
         </div>
 
-        <div className="catalog-categories" aria-label="กรองตามประเภทรถ">
-          <button type="button" className={!category ? 'is-active' : ''} onClick={() => setCategory('')} aria-pressed={!category}>
-            <span className="catalog-category-symbol">▦</span> ทุกรุ่น
-          </button>
+        <div className="catalog-tabs" aria-label="กรองตามประเภทรถ">
+          <button type="button" className={!category ? 'is-active' : ''} onClick={() => setCategory('')} aria-pressed={!category}>ทุกรุ่น</button>
           {categories.map((type) => (
             <button key={type} type="button" className={category === type ? 'is-active' : ''} onClick={() => setCategory(type)} aria-pressed={category === type}>
-              <CarImage type={type} outline />
               {CATEGORY_LABELS[type] || type}
             </button>
           ))}
@@ -124,24 +130,26 @@ export default function CarsPage() {
         ) : loadError ? (
           <div className="catalog-empty-state" role="alert"><h3>โหลดรายการรถไม่สำเร็จ</h3><p>{loadError}</p></div>
         ) : filteredCars.length ? (
-          <div className="catalog-car-grid">
+          <div className="catalog-tile-grid">
             {filteredCars.map((car) => {
               const status = stockStatus(car.stock);
+              const detailUrl = `/catalog/${encodeURIComponent(car.id)}`;
+              const requestUrl = `/requests?brand=${encodeURIComponent(car.brand)}&car=${encodeURIComponent(car.name)}&type=${encodeURIComponent('ทดลองขับ')}`;
               return (
-                <article className="catalog-car-card" key={car.id}>
-                  <Link to={`/catalog/${encodeURIComponent(car.id)}`} className="catalog-car-photo-wrap" aria-label={`ดูรายละเอียด ${car.brand} ${car.name}`}>
-                    <span className="catalog-car-badge">{car.tag}</span>
-                    <CarPhoto car={car} className="catalog-car-photo" />
-                    <span className={`catalog-stock-dot ${status.tone}`}><i />{status.label}</span>
+                <article className="catalog-tile" key={car.id}>
+                  <Link to={detailUrl} className="catalog-tile-link" aria-label={`ดูรายละเอียด ${car.brand} ${car.name}`}>
+                    <CarPhoto car={car} className="catalog-tile-photo" />
+                    <span className="catalog-tile-shade" aria-hidden="true" />
                   </Link>
-                  <div className="catalog-car-card-body">
-                    <p className="catalog-car-brand">{car.brand} · {CATEGORY_LABELS[car.type] || car.type}</p>
-                    <Link to={`/catalog/${encodeURIComponent(car.id)}`} className="catalog-car-title">{car.name}</Link>
-                    <div className="catalog-car-spec-line"><span>{car.year}</span><span>{car.fuel}</span><span>{car.seats} ที่นั่ง</span></div>
-                    <div className="catalog-car-card-footer">
-                      <div><small>ราคาเริ่มต้น</small><strong>{formatBaht(car.price)}</strong></div>
-                      <Link className="catalog-detail-arrow" to={`/catalog/${encodeURIComponent(car.id)}`} aria-label={`รายละเอียด ${car.name}`}>↗</Link>
-                    </div>
+                  <div className="catalog-tile-copy">
+                    <p className="catalog-tile-brand">{car.brand} · {CATEGORY_LABELS[car.type] || car.type}</p>
+                    <h3><Link to={detailUrl}>{car.name}</Link></h3>
+                    <p className="catalog-tile-price">เริ่มต้น <strong>{formatBaht(car.price)}</strong></p>
+                  </div>
+                  <span className={`catalog-tile-status ${status.tone}`}><i />{status.label}</span>
+                  <div className="catalog-tile-actions">
+                    <Link className="catalog-cta solid" to={detailUrl}>ดูรายละเอียด</Link>
+                    <Link className="catalog-cta ghost" to={requestUrl}>นัดทดลองขับ</Link>
                   </div>
                 </article>
               );

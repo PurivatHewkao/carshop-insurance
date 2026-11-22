@@ -321,3 +321,211 @@
 @media (max-width: 760px) {
   .home-promo-art { margin-inline: -24px; }
 }
+/* ==========================================================================
+   Home decoration: full-screen hero, navbar blended into the photo, motion.
+   Scoped to the homepage hero, so other pages keep their own look.
+   Delete this block to undo.
+   ========================================================================== */
+.showroom:has(.home-photo-hero) .s-nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: transparent;
+  border-bottom-color: transparent;
+}
+.s-hero.home-photo-hero {
+  min-height: 100vh;
+  min-height: 100svh;
+  padding-top: calc(68px + clamp(32px, 5vw, 72px));
+  padding-bottom: clamp(72px, 9vw, 120px);
+}
+/* Brighter photo + red glow so the full-screen hero feels alive */
+.s-hero.home-photo-hero .home-real-hero-car { width: 78%; }
+.s-hero.home-photo-hero .home-hero-car-photo { filter: brightness(.86) contrast(1.08) saturate(1.12); }
+.s-hero.home-photo-hero::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  z-index: 2;
+  background: linear-gradient(90deg, transparent, #e51b32 30%, #ff6a7a 50%, #e51b32 70%, transparent);
+  opacity: .8;
+}
+/* Scroll cue */
+.s-hero.home-photo-hero .home-hero-copy::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: calc(-1 * clamp(48px, 7vw, 84px));
+  width: 22px; height: 36px;
+  border: 1.5px solid #ffffff80;
+  border-radius: 12px;
+  background: radial-gradient(circle at 50% 28%, #fff 0 2.5px, transparent 3px);
+  animation: home-cue 1.8s ease-in-out infinite;
+}
+@keyframes home-cue { 0%, 100% { opacity: .5; transform: translateY(0); } 50% { opacity: 1; transform: translateY(6px); } }
+
+/* Entrance */
+@keyframes home-rise { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+@keyframes home-zoom { from { transform: scale(1.1); opacity: 0; } to { transform: none; opacity: 1; } }
+.s-hero.home-photo-hero .home-real-hero-car { animation: home-zoom 1.6s cubic-bezier(.2, .7, .2, 1) both; }
+.home-hero-copy .s-eyebrow { animation: home-rise .7s .1s cubic-bezier(.2, .7, .2, 1) both; }
+.home-hero-copy h1 { animation: home-rise .8s .22s cubic-bezier(.2, .7, .2, 1) both; }
+.home-hero-copy .s-hero-sub { animation: home-rise .8s .36s cubic-bezier(.2, .7, .2, 1) both; }
+.home-hero-copy .s-hero-price { animation: home-rise .8s .46s cubic-bezier(.2, .7, .2, 1) both; }
+.home-hero-copy .s-actions { animation: home-rise .8s .58s cubic-bezier(.2, .7, .2, 1) both; }
+
+/* Navbar text turns white while it floats over the hero photo */
+.showroom:has(.home-photo-hero) .s-logo,
+.showroom:has(.home-photo-hero) .s-user,
+.showroom:has(.home-photo-hero) .s-burger { color: #fff; }
+.showroom:has(.home-photo-hero) .s-links a { color: #ffffffcc; }
+.showroom:has(.home-photo-hero) .s-links a:hover,
+.showroom:has(.home-photo-hero) .s-links a.on { color: #fff; }
+.showroom:has(.home-photo-hero) .s-nav .s-btn.out { background: #ffffff1a; border-color: #ffffff59; color: #fff; backdrop-filter: blur(10px); }
+@media (max-width: 1150px) {
+  .showroom:has(.home-photo-hero) .s-links.mobile-open { background: #0b0c10f2; backdrop-filter: blur(14px); }
+}
+
+/* Section headings get a red accent bar */
+.home-content .s-sec-h h2 { position: relative; padding-left: 16px; }
+.home-content .s-sec-h h2::before {
+  content: '';
+  position: absolute;
+  left: 0; top: .18em; bottom: .18em;
+  width: 4px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #ff6a7a, #e51b32);
+}
+
+/* Hover polish */
+.home-content .home-real-car-card:hover { box-shadow: 0 18px 40px rgba(229, 27, 50, .16); }
+.home-content .home-card-car-photo { transition: transform .5s cubic-bezier(.2, .7, .2, 1); }
+.home-content .home-real-car-card:hover .home-card-car-photo { transform: scale(1.04); }
+.home-content .home-real-promo { transition: transform .25s ease, box-shadow .25s ease; }
+.home-content .home-real-promo:hover { transform: translateY(-4px); box-shadow: 0 22px 46px rgba(0, 0, 0, .4); }
+.home-content .s-feat { transition: transform .25s ease; }
+.home-content .s-feat:hover { transform: translateY(-3px); }
+.home-content .s-feat .ic-b { box-shadow: 0 0 0 6px rgba(229, 27, 50, .12); }
+
+/* Scroll reveal (progressive: browsers without scroll timelines just show it) */
+@supports (animation-timeline: view()) {
+  .home-content > section,
+  .home-photo-hero ~ .spec-strip {
+    animation: home-rise linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 35%;
+  }
+}
+
+@media (max-width: 760px) {
+  .s-hero.home-photo-hero { min-height: 100svh; padding-top: calc(68px + 24px); }
+  .s-hero.home-photo-hero .home-real-hero-car { width: 100%; }
+  .s-hero.home-photo-hero .home-hero-copy::after { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .s-hero.home-photo-hero *, .s-hero.home-photo-hero, .home-content > section, .home-photo-hero ~ .spec-strip {
+    animation: none !important;
+  }
+}
+
+/* ==========================================================================
+   Home featured-cars cards: bordered tiles, tag on top (no overlap with the
+   model name), same-size photos, hover lift. Delete this block to undo.
+   ========================================================================== */
+.home-content .home-real-car-card {
+  gap: 4px;
+  padding: 18px 18px 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fff 0%, var(--bg2) 100%);
+  box-shadow: 0 1px 2px rgba(15, 16, 20, .04);
+  overflow: hidden;
+  transition: transform .3s cubic-bezier(.2, .7, .2, 1), box-shadow .3s, border-color .3s;
+}
+.home-content .home-real-car-card:hover {
+  transform: translateY(-6px);
+  border-color: #e51b3266;
+  background: linear-gradient(180deg, #fff 0%, var(--bg2) 100%);
+  box-shadow: 0 22px 44px rgba(15, 16, 20, .12), 0 0 0 1px #e51b3233;
+}
+/* red line grows in along the top edge on hover */
+.home-content .home-real-car-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #e51b32, #ff6a7a);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .4s cubic-bezier(.2, .7, .2, 1);
+}
+.home-content .home-real-car-card:hover::before { transform: scaleX(1); }
+.home-content .home-real-car-card .tag {
+  position: static;
+  order: -1;
+  align-self: flex-start;
+  margin-bottom: 6px;
+}
+.home-content .home-real-car-card h3 {
+  padding-right: 0;
+  min-height: 2.7em;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+}
+.home-content .home-real-car-card .pr { font-weight: 600; color: var(--ink); }
+.home-content .home-real-car-image {
+  margin-top: 12px;
+  flex: none;
+  min-height: 0;
+  height: auto;
+  border-radius: 12px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 60%, #fff 0%, #eceef2 100%);
+}
+.home-content .home-real-car-image .home-card-car-photo,
+.home-content .home-real-car-image img {
+  width: 100%;
+  height: 170px;
+  display: block;
+  aspect-ratio: auto;
+  object-fit: cover;
+  border-radius: 0;
+}
+.home-content .home-real-car-card .go {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-weight: 600;
+  color: var(--ink2);
+}
+.home-content .home-real-car-card .go::after {
+  content: '';
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--red-soft, #fdecef) center / 14px no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e51b32' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E");
+  transition: transform .3s, background-color .3s;
+}
+.home-content .home-real-car-card:hover .go::after { transform: translateX(4px); background-color: #fbd5db; }
+.home-content .s-cars > .home-real-car-card { animation: home-rise .7s cubic-bezier(.2, .7, .2, 1) both; }
+.home-content .s-cars > .home-real-car-card:nth-child(2) { animation-delay: .08s; }
+.home-content .s-cars > .home-real-car-card:nth-child(3) { animation-delay: .16s; }
+.home-content .s-cars > .home-real-car-card:nth-child(4) { animation-delay: .24s; }
+@media (max-width: 600px) {
+  .home-content .home-real-car-image .home-card-car-photo,
+  .home-content .home-real-car-image img { height: 130px; }
+  .home-content .home-real-car-card h3 { min-height: 0; font-size: 15px; }
+  .home-content .home-real-car-card { padding: 14px 12px 12px; }
+  .home-content .home-real-car-card .go { font-size: 11.5px; gap: 6px; }
+  .home-content .home-real-car-card .go::after { flex: none; width: 24px; height: 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-content .s-cars > .home-real-car-card { animation: none !important; }
+}
+.home-content .home-real-car-card .home-real-car-image { min-height: 0; }

@@ -82,6 +82,14 @@ export async function createCarRecord(form) {
   return normalizeCar(data.data);
 }
 
+export async function updateCarRecord(id, form) {
+  const { data } = await catalogClient.patch(
+    'cars/' + encodeURIComponent(id),
+    form,
+  );
+  return normalizeCar(data.data);
+}
+
 export async function saveCarPhotos(id, photos) {
   const { data } = await catalogClient.put(
     'cars/' + encodeURIComponent(id) + '/photos',
@@ -92,6 +100,23 @@ export async function saveCarPhotos(id, photos) {
 
 export async function removeCarRecord(id) {
   await catalogClient.delete('cars/' + encodeURIComponent(id));
+}
+
+// ---- Covers (which car is on the home / catalog cover) ---------------------
+
+/** { home: { carId, imageUrl }, catalog: { carId, imageUrl } } — null means automatic / the car's own photo. */
+export async function fetchCovers(signal) {
+  const { data } = await catalogClient.get('covers', { signal });
+  return data.data;
+}
+
+/** patch: { carId?: string | null, imageUrl?: string | null } — a field that is left out stays as it was. */
+export async function saveCover(slot, patch) {
+  const { data } = await catalogClient.put(
+    'covers/' + encodeURIComponent(slot),
+    patch,
+  );
+  return data.data;
 }
 
 // ---- Promotions -----------------------------------------------------------
@@ -110,6 +135,7 @@ function fromApiPromotion(row) {
     conditions: row.conditions || '',
     appliesTo: row.appliesTo || 'รถทุกรุ่น',
     imageUrl: row.imageUrl || '',
+    steps: row.steps || '',
     startDate: row.startDate.slice(0, 10),
     endDate: endYear >= NO_END_DATE_YEAR ? '' : row.endDate.slice(0, 10),
     active: row.status === 'ACTIVE',
@@ -133,6 +159,7 @@ function promotionBody(form) {
     conditions: form.conditions,
     appliesTo: form.appliesTo,
     imageUrl: form.imageUrl,
+    steps: form.steps,
     endDate: (form.endDate || NO_END_DATE_YEAR + '-12-31') + 'T23:59:59Z',
     status: form.active ? 'ACTIVE' : 'INACTIVE',
   };
@@ -228,6 +255,17 @@ export function useCars({ gallery = false } = {}) {
     NO_ITEMS,
   );
   return { cars: data, loading, error, reload };
+}
+
+const NO_COVERS = {
+  home: { carId: null, imageUrl: null },
+  catalog: { carId: null, imageUrl: null },
+};
+
+/** Cover car picked by the admin for each slot. Falls back to automatic if it cannot load. */
+export function useCovers() {
+  const { data, loading, reload } = useLoader(fetchCovers, NO_COVERS);
+  return { covers: data, loading, reload };
 }
 
 const NO_CAR = null;

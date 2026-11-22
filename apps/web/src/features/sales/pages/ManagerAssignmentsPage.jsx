@@ -5,6 +5,7 @@ import { resolveManagerId } from '../api/actor.js';
 import { useAction, useSalesData } from '../hooks/useSalesData.js';
 import { ActionError, LoadStatus } from '../components/SalesState.jsx';
 import '../sales.css';
+import SearchPicker from '../components/SearchPicker.jsx';
 
 export default function ManagerAssignmentsPage() {
   const sellerList = useSalesData((signal) => fetchSellers(signal), []);
@@ -104,17 +105,7 @@ export default function ManagerAssignmentsPage() {
                     </span>
                   </td>
                   <td>
-                    <select
-                      className="sales-select"
-                      value={selectedSellers[req.id] || req.sellerId || sellers[0]?.id || ''}
-                      onChange={(e) =>
-                        setSelectedSellers({ ...selectedSellers, [req.id]: e.target.value })
-                      }
-                    >
-                      {sellers.map((s) => (
-                        <option key={s.id} value={s.id}>{s.name}</option>
-                      ))}
-                    </select>
+                    <SearchPicker label="ผู้รับผิดชอบ" value={selectedSellers[req.id] || req.sellerId || sellers[0]?.id || ''} options={sellers.map((s) => ({ id: s.id, name: s.name, detail: s.branch || '' }))} onChange={(sellerId) => setSelectedSellers({ ...selectedSellers, [req.id]: sellerId })} placeholder="ค้นหาชื่อพนักงานขาย…" disabled={action.busy} />
                   </td>
                   <td>
                     <button

@@ -1,15 +1,18 @@
 // apps/web/src/features/sales/pages/SellerAppointmentsPage.jsx
 import React from 'react';
-import { fetchAppointments, fetchSellers } from '../api/salesApi.js';
-import { useActorChoice, useSalesData } from '../hooks/useSalesData.js';
-import { ActorSwitcher, LoadStatus } from '../components/SalesState.jsx';
+import { Link } from 'react-router-dom';
+import { fetchAppointments, setAppointmentStatus } from '../api/salesApi.js';
+import { useAction, useActorChoice, useSalesData } from '../hooks/useSalesData.js';
+import { ActionError, LoadStatus } from '../components/SalesState.jsx';
 import '../sales.css';
+
+const STAGES = [['PENDING', 'รอดำเนินการ'], ['CONFIRMED', 'ยืนยันแล้ว'], ['COMPLETED', 'เสร็จสิ้น'], ['CANCELLED', 'ยกเลิก']];
 
 const today = () =>
   new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' });
 
 export default function SellerAppointmentsPage() {
-  const actor = useActorChoice('SELLER', fetchSellers, (a) => a.employeeId);
+  const actor = useActorChoice('SELLER', (a) => a.employeeId);
   const list = useSalesData(
     (signal) =>
       actor.actorId
@@ -18,6 +21,11 @@ export default function SellerAppointmentsPage() {
     [actor.actorId],
   );
   const appointments = list.data ?? [];
+  const action = useAction();
+  async function updateStage(id, status) {
+    const result = await action.run(() => setAppointmentStatus(id, status));
+    if (result.ok) list.reload();
+  }
 
   return (
     <div className="sales-container">
@@ -34,14 +42,7 @@ export default function SellerAppointmentsPage() {
         hasData={list.data !== null}
         onRetry={() => { list.reload(); actor.reload(); }}
       />
-      <ActorSwitcher
-        label="Seller"
-        options={actor.options}
-        value={actor.actorId}
-        onChange={actor.pick}
-        isStandIn={actor.isStandIn}
-      />
-
+      <ActionError message={action.error} onClose={action.clearError} />
       <div className="sales-stats-grid">
         <div className="sales-stat-card">
           <div className="sales-stat-label">นัดหมายทั้งหมด</div>
@@ -72,7 +73,7 @@ export default function SellerAppointmentsPage() {
                 <th style={{ width: '22%' }}>ชื่อลูกค้า / เบอร์โทร</th>
                 <th style={{ width: '28%' }}>ประเภทนัดหมาย / รุ่นรถ</th>
                 <th style={{ width: '20%' }}>วันและเวลานัดหมาย</th>
-                <th style={{ width: '15%', textAlign: 'center' }}>สถานะคิว</th>
+                <th style={{ width: '15%', textAlign: 'center' }}>Stage / สถานะคิว</th>
               </tr>
             </thead>
             <tbody>
@@ -85,7 +86,7 @@ export default function SellerAppointmentsPage() {
                   <tr key={item.id}>
                     <td><strong style={{ color: '#2563eb' }}>{item.code}</strong></td>
                     <td>
-                      <div style={{ fontWeight: 600 }}>{item.customerName}</div>
+                      <Link className="sales-customer-link" to={`/seller/customers/${encodeURIComponent(item.customerId)}`}>{item.customerName}</Link>
                       <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{item.phone}</div>
                     </td>
                     <td>
@@ -104,6 +105,9 @@ export default function SellerAppointmentsPage() {
                       }`}>
                         {item.status}
                       </span>
+                      <select aria-label={`เปลี่ยน stage ${item.code}`} className="sales-select sales-stage-select" value={item.dbStatus} onChange={(event) => updateStage(item.id, event.target.value)} disabled={action.busy}>
+                        {STAGES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                      </select>
                     </td>
                   </tr>
                 ))

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useOrderForm } from '../hooks/useOrderForm.js';
 import { ActionError, LoadStatus } from '../components/SalesState.jsx';
 import '../sales.css';
+import SearchPicker from '../components/SearchPicker.jsx';
 
 export default function SellerSalesFormPage() {
     const [successMsg, setSuccessMsg] = useState('');
@@ -58,16 +59,7 @@ export default function SellerSalesFormPage() {
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                             <div className="sales-form-group">
                                 <label>ลูกค้า *</label>
-                                <select
-                                    className="sales-select"
-                                    value={customerId}
-                                    onChange={(e) => setForm({ ...form, customerId: e.target.value })}
-                                    required
-                                >
-                                    {customers.map((c) => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
-                                </select>
+                                <SearchPicker label="ลูกค้า" value={customerId} options={customers.map((c) => ({ id: c.id, name: c.name, detail: c.phone || c.email || '' }))} onChange={(id) => setForm({ ...form, customerId: id })} placeholder="ค้นหาชื่อลูกค้าหรือเบอร์โทร…" />
                             </div>
                             <div className="sales-form-group">
                                 <label>เบอร์โทรศัพท์ลูกค้า</label>
@@ -77,16 +69,7 @@ export default function SellerSalesFormPage() {
 
                         <div className="sales-form-group">
                             <label>รถยนต์ที่จอง (เฉพาะคันที่ยังว่าง)</label>
-                            <select
-                                className="sales-select"
-                                value={carId}
-                                onChange={(e) => setForm({ ...form, carId: e.target.value })}
-                                required
-                            >
-                                {cars.map((c) => (
-                                    <option key={c.id} value={c.id}>{c.label}</option>
-                                ))}
-                            </select>
+                            <SearchPicker label="รถยนต์ที่จอง" value={carId} options={cars.map((c) => ({ id: c.id, name: c.label, detail: c.price ? `฿${Number(c.price).toLocaleString()}` : '' }))} onChange={(id) => setForm({ ...form, carId: id })} placeholder="ค้นหารุ่นรถ…" />
                         </div>
 
                         <div className="sales-form-group">
@@ -136,16 +119,7 @@ export default function SellerSalesFormPage() {
 
                         <div className="sales-form-group">
                             <label>พนักงานขายผู้รับผิดชอบ (Seller)</label>
-                            <select
-                                className="sales-select"
-                                value={sellerId}
-                                onChange={(e) => setForm({ ...form, sellerId: e.target.value })}
-                                required
-                            >
-                                {sellers.map((x) => (
-                                    <option key={x.id} value={x.id}>{x.name}{x.branch ? ` (${x.branch})` : ''}</option>
-                                ))}
-                            </select>
+                            <div className="sales-picker-locked"><strong>{sellers.find((item) => item.id === sellerId)?.name || 'กำลังโหลดชื่อพนักงานขาย'}</strong><small>ล็อกเป็นผู้ใช้ที่เข้าสู่ระบบ</small></div>
                         </div>
 
                         <div className="sales-form-group">

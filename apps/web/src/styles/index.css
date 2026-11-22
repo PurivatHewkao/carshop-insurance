@@ -16,12 +16,22 @@
     @apply focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-600;
   }
 }
+/* Shared components use the theme tokens from toyoty.css (--card, --ink, ...)
+   so text stays readable in both light and dark mode. Fixed Tailwind colours
+   such as bg-white broke dark mode: --ink turns near-white on a white card. */
 @layer components {
   .panel {
-    @apply rounded-2xl border border-slate-200 bg-white p-6 sm:p-10;
+    @apply rounded-2xl border p-6 sm:p-10;
+    background: var(--card);
+    border-color: var(--line);
+    color: var(--ink);
+  }
+  .panel p {
+    color: var(--ink2);
   }
   .eyebrow {
-    @apply mb-3 text-xs font-bold tracking-widest text-teal-700;
+    @apply mb-3 text-xs font-bold tracking-widest;
+    color: var(--red-ink);
   }
   .nav-link {
     @apply rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100;
@@ -30,21 +40,36 @@
     @apply bg-teal-50 font-semibold text-teal-800;
   }
   .notice {
-    @apply mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900;
+    @apply mt-6 rounded-xl border p-4 text-sm;
+    background: var(--warn-bg);
+    border-color: color-mix(in srgb, var(--warn) 30%, transparent);
+    color: var(--warn);
   }
   .button {
-    @apply cursor-pointer rounded-lg bg-teal-800 px-5 py-3 text-sm font-semibold text-white hover:bg-teal-900;
+    @apply cursor-pointer rounded-lg bg-teal-800 px-5 py-3 text-sm font-semibold text-white hover:bg-teal-900 disabled:cursor-not-allowed disabled:opacity-60;
   }
   .status {
     @apply rounded-full px-3 py-1 text-xs font-semibold;
   }
   .status.loading {
-    @apply bg-slate-100 text-slate-600;
+    background: var(--bg2);
+    color: var(--mute);
   }
   .status.online {
-    @apply bg-emerald-50 text-emerald-800;
+    background: var(--good-bg);
+    color: var(--good);
   }
   .status.unavailable {
-    @apply bg-red-50 text-red-800;
+    background: var(--bad-bg);
+    color: var(--bad);
+  }
+  .status-card {
+    @apply flex items-center justify-between gap-4 rounded-xl border p-5;
+    background: var(--bg);
+    border-color: var(--line);
+  }
+  .status-card .meta {
+    @apply mt-1 block text-xs;
+    color: var(--mute);
   }
 }

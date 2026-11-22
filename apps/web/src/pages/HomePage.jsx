@@ -3,7 +3,7 @@ import './HomePage.css';
 import { Link } from 'react-router-dom';
 import design from '../design/toyoty.json';
 import { Action, Pill, Specs } from '../components/common/Showroom.jsx';
-import { useCars, usePromotions } from '../features/catalog/api/catalogApi.js';
+import { useCars, useCovers, usePromotions } from '../features/catalog/api/catalogApi.js';
 import CarPhoto from '../features/catalog/components/CarPhoto.jsx';
 import {
   formatBaht,
@@ -56,7 +56,7 @@ function HomePromotionCard({ promotion, index }) {
       <div className="big">{promotion.value || promotion.title}</div>
       <h3>{promotion.title}</h3>
       <p>{promotion.description || promotion.subtitle}</p>
-      <Action variant={index < 2 ? 'glass' : 'out'} to="/promotions">ดูรายละเอียดโปรโมชัน →</Action>
+      <Action variant={index < 2 ? 'glass' : 'out'} to={`/promotions/${encodeURIComponent(promotion.id)}`}>ดูรายละเอียดโปรโมชัน →</Action>
     </article>
   );
 }
@@ -66,9 +66,12 @@ export default function HomePage() {
   const { cars: catalogCars, loading: carsLoading } = useCars();
   const { promotions: allPromotions, loading: promotionsLoading, error: promotionsError } = usePromotions();
   const activePromotions = useMemo(() => allPromotions.filter((promotion) => promotion.active), [allPromotions]);
-  const heroCar = catalogCars.find((car) => car.id === 'ferrari-296-gtb')
+  const { covers } = useCovers();
+  const heroBase = catalogCars.find((car) => car.id === covers.home.carId)
+    || catalogCars.find((car) => car.id === 'ferrari-296-gtb')
     || catalogCars.find((car) => car.type === 'supercar')
     || catalogCars[0];
+  const heroCar = heroBase && covers.home.imageUrl ? { ...heroBase, imageUrl: covers.home.imageUrl } : heroBase;
 
   return (
     <>

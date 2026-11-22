@@ -104,7 +104,6 @@ export default function StockPage() {
         <div><p className="catalog-eyebrow">INVENTORY CONTROL</p><h1>สต็อกรถยนต์</h1><p>ตรวจจำนวนรถ ปรับยอดสต็อก และดูรุ่นที่ใกล้หมดสต็อก</p></div>
         <div className="catalog-admin-nav"><Link to="/admin/cars">จัดการรถ</Link><Link className="is-active" to="/admin/stock">สต็อกสินค้า</Link><Link to="/admin/promotions">โปรโมชัน</Link><Link to="/catalog">ดูหน้าร้าน ↗</Link></div>
       </header>
-      <div className="catalog-admin-notice"><span>i</span><p>ยอดสต็อกอ่านและบันทึกจากฐานข้อมูลผ่าน catalog API สต็อกของแต่ละรุ่นคือจำนวนรถสถานะ “พร้อมขาย” การเพิ่มหรือลดจะเพิ่มหรือปิดรายการรถรายคัน โดยไม่ลบข้อมูลเดิม</p></div>
       {notice && <div className="catalog-form-feedback" role="status">{notice}<button type="button" onClick={() => setNotice('')} aria-label="ปิดข้อความ">×</button></div>}
       {result.error && <div className="catalog-form-feedback" role="alert">{result.error}<button type="button" onClick={reload} aria-label="ลองโหลดใหม่">↻</button></div>}
 

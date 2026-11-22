@@ -74,6 +74,7 @@ function parsePromotion(body, { partial }) {
   readOptionalText(body, 'subtitle', 200, out);
   readOptionalText(body, 'value', 200, out);
   readOptionalText(body, 'conditions', 5000, out);
+  readOptionalText(body, 'steps', 3000, out);
   readOptionalText(body, 'appliesTo', 200, out);
   readOptionalText(body, 'imageUrl', MAX_IMAGE_LENGTH, out);
   if (out.imageUrl && !/^(https?:\/\/|data:image\/)/i.test(out.imageUrl)) {
@@ -86,6 +87,7 @@ function parsePromotion(body, { partial }) {
     'subtitle',
     'value',
     'conditions',
+    'steps',
     'appliesTo',
     'imageUrl',
   ]) {

@@ -3,19 +3,29 @@ import React, { useState } from 'react';
 import {
   createAppointment,
   fetchAppointments,
+  fetchAppointmentAvailability,
   fetchCars,
-  fetchCustomers,
   setAppointmentStatus,
 } from '../api/salesApi.js';
 import { useAction, useActorChoice, useSalesData } from '../hooks/useSalesData.js';
-import { ActionError, ActorSwitcher, LoadStatus } from '../components/SalesState.jsx';
+import { ActionError, LoadStatus } from '../components/SalesState.jsx';
 import '../sales.css';
 
 const today = () =>
   new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' });
+const TIME_SLOTS = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00'];
+const SLOT_DURATION_MINUTES = 60;
+
+function slotIsTaken(slot, bookedTimes) {
+  const slotMinutes = Number(slot.slice(0, 2)) * 60 + Number(slot.slice(3, 5));
+  return bookedTimes.some((time) => {
+    const bookedMinutes = Number(String(time).slice(0, 2)) * 60 + Number(String(time).slice(3, 5));
+    return Math.abs(slotMinutes - bookedMinutes) < SLOT_DURATION_MINUTES;
+  });
+}
 
 export default function CustomerRequestsPage() {
-  const actor = useActorChoice('CUSTOMER', fetchCustomers, (a) => a.customerId);
+  const actor = useActorChoice('CUSTOMER', (a) => a.customerId);
   const cars = useSalesData((signal) => fetchCars(signal), []);
   const list = useSalesData(
     (signal) =>
@@ -34,7 +44,16 @@ export default function CustomerRequestsPage() {
     appointmentTime: '10:00',
     note: '',
   });
+  const availability = useSalesData(
+    (signal) => fetchAppointmentAvailability(form.appointmentDate, signal),
+    [form.appointmentDate],
+  );
   const selectedCarId = form.carId || carOptions[0]?.id || '';
+  const bookedTimes = availability.data?.bookedTimes ?? [];
+  const hasAvailableTimes = TIME_SLOTS.some((time) => !slotIsTaken(time, bookedTimes));
+  const appointmentTime = form.appointmentTime && !slotIsTaken(form.appointmentTime, bookedTimes)
+    ? form.appointmentTime
+    : TIME_SLOTS.find((time) => !slotIsTaken(time, bookedTimes)) || '';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,13 +64,16 @@ export default function CustomerRequestsPage() {
         carId: selectedCarId,
         appointmentType: form.appointmentType,
         appointmentDate: form.appointmentDate,
-        appointmentTime: form.appointmentTime,
+        appointmentTime,
         note: form.note,
       }),
     );
     if (result.ok) {
       setForm({ ...form, note: '' });
       list.reload();
+      availability.reload();
+    } else {
+      availability.reload();
     }
   };
 
@@ -71,19 +93,11 @@ export default function CustomerRequestsPage() {
 
       <ActionError message={action.error} onClose={action.clearError} />
       <LoadStatus
-        loading={list.loading || actor.loading || cars.loading}
-        error={list.error || actor.error || cars.error}
+        loading={list.loading || actor.loading || cars.loading || availability.loading}
+        error={list.error || actor.error || cars.error || availability.error}
         hasData={list.data !== null}
-        onRetry={() => { list.reload(); actor.reload(); cars.reload(); }}
+        onRetry={() => { list.reload(); actor.reload(); cars.reload(); availability.reload(); }}
       />
-      <ActorSwitcher
-        label="ลูกค้า"
-        options={actor.options}
-        value={actor.actorId}
-        onChange={actor.pick}
-        isStandIn={actor.isStandIn}
-      />
-
       <div className="sales-grid-layout">
         {/* ฟอร์มสร้างนัดหมาย */}
         <div className="sales-card">
@@ -130,12 +144,20 @@ export default function CustomerRequestsPage() {
               </div>
               <div className="sales-form-group">
                 <label>เวลานัดหมาย</label>
-                <input
-                  type="time"
-                  className="sales-input"
-                  value={form.appointmentTime}
+                <select
+                  className="sales-select"
+                  value={appointmentTime}
                   onChange={(e) => setForm({ ...form, appointmentTime: e.target.value })}
-                />
+                  required
+                  disabled={availability.loading || Boolean(availability.error) || !hasAvailableTimes}
+                >
+                  {!appointmentTime && <option value="" disabled>ไม่มีช่วงเวลาว่าง</option>}
+                  {TIME_SLOTS.map((time) => {
+                    const unavailable = slotIsTaken(time, bookedTimes);
+                    return <option key={time} value={time} disabled={unavailable}>{time} น. {unavailable ? '· มีผู้จองแล้ว' : ''}</option>;
+                  })}
+                </select>
+                <small className="sales-slot-help">แต่ละช่วงใช้เวลา 1 ชั่วโมง เวลาที่มีคิวแล้วจะเลือกไม่ได้</small>
               </div>
             </div>
 
@@ -150,7 +172,7 @@ export default function CustomerRequestsPage() {
               />
             </div>
 
-            <button type="submit" disabled={action.busy || !actor.actorId || !selectedCarId} className="sales-btn sales-btn-primary" style={{ width: '100%', padding: '12px' }}>
+            <button type="submit" disabled={action.busy || availability.loading || Boolean(availability.error) || !actor.actorId || !selectedCarId || !appointmentTime} className="sales-btn sales-btn-primary" style={{ width: '100%', padding: '12px' }}>
               + บันทึกการนัดหมาย
             </button>
           </form>

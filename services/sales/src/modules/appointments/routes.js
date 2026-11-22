@@ -3,12 +3,18 @@ import {
   httpError, readOptionalText, requireBody, requireEnum, requireUuid,
 } from '../../utils/httpError.js';
 import {
-  assignSeller, changeStatus, createAppointment, deleteAppointment, listAppointments,
+  assignSeller, changeStatus, createAppointment, deleteAppointment, listAppointments, listBookedTimes,
 } from './repository.js';
+import { requireRoles } from '../../../../../packages/auth/index.js';
+import { requireCustomer, requireEmployee } from '../../middleware/actor.js';
+import { getMysqlPool } from '../../config/mysql.js';
 
 const router = Router();
 const TYPES = ['VIEW_CAR', 'TEST_DRIVE'];
 const DB_STATUSES = ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'];
+const customerOnly = requireRoles('customer');
+const managementOnly = requireRoles('manager', 'admin');
+const signedIn = requireRoles('customer', 'seller', 'manager', 'admin');
 
 const bangkokToday = () =>
   new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' });
@@ -30,18 +36,27 @@ function readTime(value) {
   return value + ':00';
 }
 
-router.get('/', async (req, res) => {
+router.get('/', signedIn, async (req, res) => {
   const filters = {};
-  if (req.query.customerId) filters.customerId = requireUuid(req.query.customerId, 'customerId');
-  if (req.query.sellerId) filters.sellerId = requireUuid(req.query.sellerId, 'sellerId');
+  if (req.user.role === 'customer') filters.customerId = await actorId(req, 'customer');
+  else if (req.user.role === 'seller') filters.sellerId = await actorId(req, 'employee');
+  else {
+    if (req.query.customerId) filters.customerId = requireUuid(req.query.customerId, 'customerId');
+    if (req.query.sellerId) filters.sellerId = requireUuid(req.query.sellerId, 'sellerId');
+  }
   if (req.query.status) filters.status = requireEnum(String(req.query.status), DB_STATUSES, 'status');
   res.json({ data: await listAppointments(filters) });
 });
 
-router.post('/', async (req, res) => {
+router.get('/availability', customerOnly, async (req, res) => {
+  const date = readDate(String(req.query.date || ''));
+  res.json({ data: { bookedTimes: await listBookedTimes(date) } });
+});
+
+router.post('/', customerOnly, requireCustomer, async (req, res) => {
   const body = requireBody(req.body);
   const appointment = await createAppointment({
-    customerId: requireUuid(body.customerId, 'customerId'),
+    customerId: req.salesActor.customerId,
     carId: requireUuid(body.carId, 'carId'),
     appointmentType: requireEnum(body.appointmentType, TYPES, 'appointmentType'),
     appointmentDate: readDate(body.appointmentDate),
@@ -51,30 +66,49 @@ router.post('/', async (req, res) => {
   res.status(201).json({ data: appointment });
 });
 
-// Seller accepts (CONFIRMED), finishes (COMPLETED) or anyone cancels (CANCELLED).
-router.patch('/:id/status', async (req, res) => {
+// Sellers update their assigned work; customers can cancel their own pending request.
+router.patch('/:id/status', signedIn, async (req, res) => {
   const id = requireUuid(req.params.id);
   const { status } = requireBody(req.body);
-  requireEnum(status, ['CONFIRMED', 'COMPLETED', 'CANCELLED'], 'status');
-  res.json({ data: await changeStatus(id, status) });
+  requireEnum(status, DB_STATUSES, 'status');
+  let actor = {};
+  if (req.user.role === 'customer') {
+    if (status !== 'CANCELLED') throw httpError(403, 'FORBIDDEN', 'Customers may only cancel their own requests');
+    actor = { role: 'customer', customerId: await actorId(req, 'customer') };
+  } else if (req.user.role === 'seller') {
+    if (!['CONFIRMED', 'COMPLETED', 'CANCELLED'].includes(status)) throw httpError(403, 'FORBIDDEN', 'Invalid seller status transition');
+    actor = { role: 'seller', employeeId: await actorId(req, 'employee') };
+  } else if (req.user.role !== 'manager' && req.user.role !== 'admin') {
+    throw httpError(403, 'FORBIDDEN', 'บัญชีนี้ไม่มีสิทธิ์ดำเนินการ');
+  }
+  res.json({ data: await changeStatus(id, status, actor) });
 });
 
 // Manager hands the appointment to a seller (creates an `assignments` row).
-router.patch('/:id/assign', async (req, res) => {
+router.patch('/:id/assign', managementOnly, requireEmployee, async (req, res) => {
   const id = requireUuid(req.params.id);
   const body = requireBody(req.body);
   res.json({
     data: await assignSeller(id, {
       sellerId: requireUuid(body.sellerId, 'sellerId'),
-      assignedBy: requireUuid(body.assignedBy, 'assignedBy'),
+      assignedBy: req.salesActor.employeeId,
       note: readOptionalText(body.note, 'note', 2000),
     }),
   });
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireRoles('admin'), async (req, res) => {
   await deleteAppointment(requireUuid(req.params.id));
   res.status(204).end();
 });
+
+async function actorId(req, kind) {
+  const [rows] = await getMysqlPool().query(
+    `SELECT id FROM ${kind === 'customer' ? 'customers' : 'employees'} WHERE user_id = ? LIMIT 1`,
+    [req.user.id],
+  );
+  if (!rows[0]) throw httpError(403, 'SALES_PROFILE_NOT_LINKED', 'บัญชีนี้ยังไม่มีข้อมูลในระบบขาย');
+  return rows[0].id;
+}
 
 export default router;

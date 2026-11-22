@@ -42,6 +42,7 @@ import FinanceLayout from '../layouts/FinanceLayout.jsx';
 import {
   reportingRoutes,
   managerReportingRoutes,
+  adminReportingRoutes,
 } from '../features/reporting/routes.jsx';
 export const router = createBrowserRouter([
   {
@@ -105,6 +106,7 @@ export const router = createBrowserRouter([
       ...adminIdentityRoutes,
       ...adminSalesRoutes,
       ...adminPaymentRoutes,
+      ...adminReportingRoutes,
       ...plannedRoutes('admin', null),
       { path: '*', element: <NotFoundPage /> },
     ],

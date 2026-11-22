@@ -41,7 +41,7 @@ export default function CarDetailPage() {
   const photos = colorPhotos.filter((url, index, all) => Boolean(url) && all.indexOf(url) === index).slice(0, 6);
   const activePhotoIndex = Math.min(photoIndex, Math.max(photos.length - 1, 0));
   const selectedImageCar = { ...car, imageUrl: photos[activePhotoIndex] || '' };
-  const requestParams = new URLSearchParams({ car: car.name, variant: car.variant || 'รุ่นมาตรฐาน', color: activeColor?.name || car.color || 'สีมาตรฐาน' });
+  const requestParams = new URLSearchParams({ brand: car.brand, car: car.name, variant: car.variant || 'รุ่นมาตรฐาน', color: activeColor?.name || car.color || 'สีมาตรฐาน' });
   const requestUrl = `/requests?${requestParams.toString()}`;
   const matchingPromotions = promotions.filter((promo) => {
     const target = `${promo.appliesTo} ${promo.title} ${promo.subtitle}`.toLowerCase();
@@ -54,25 +54,28 @@ export default function CarDetailPage() {
   return (
     <div className="page-content catalog-page catalog-detail-page">
       <p className="catalog-breadcrumb"><Link to="/catalog">รถทั้งหมด</Link><span>/</span>{car.brand}<span>/</span><strong>{car.name}</strong></p>
-      <section className="catalog-detail-top">
-        <div className="catalog-detail-gallery">
-          <div className="catalog-detail-main-photo"><CarPhoto key={`${car.id}-${photoIndex}`} car={selectedImageCar} className="catalog-detail-photo" /></div>
-          {photos.length > 1 && <div className="catalog-detail-thumbnails" aria-label="เลือกรูปรถ">{photos.map((photo, index) => <button className={activePhotoIndex === index ? 'is-active' : ''} key={`${photo}-${index}`} type="button" onClick={() => setPhotoIndex(index)} aria-label={`ดูรูปที่ ${index + 1}`}><img src={photo} alt={`${car.name} มุมที่ ${index + 1}`} loading="lazy" /></button>)}</div>}
-          <div className="catalog-color-options"><span>เลือกสีตัวถัง</span><div>{colorOptions.map((color) => <button key={color.name} type="button" title={color.name} aria-label={`เลือกสี${color.name}`} aria-pressed={activeColor?.name === color.name} className={activeColor?.name === color.name ? 'is-active' : ''} style={{ '--swatch': color.value }} onClick={() => { setSelectedColor(color.name); setPhotoIndex(0); }} />)}</div><strong>{activeColor?.name || 'สีมาตรฐาน'}</strong></div>
-          {activeColor?.images?.length > 0 && <p className="catalog-color-note">ภาพรถเปลี่ยนตามสีที่เลือกเมื่อมีรูปภาพสีดังกล่าว</p>}
-        </div>
 
-        <div className="catalog-detail-summary">
+      <section className="catalog-model-hero">
+        <CarPhoto key={`${car.id}-${photoIndex}`} car={selectedImageCar} className="catalog-model-photo" imageOnly />
+        <div className="catalog-model-shade" aria-hidden="true" />
+        <div className="catalog-model-title">
           <p className="catalog-eyebrow">{car.brand.toUpperCase()} · {CATEGORY_LABELS[car.type] || car.type}</p>
-          <div className="catalog-detail-title-line"><h1>{car.name}</h1><span className={`catalog-status-chip ${status.tone}`}><i />{status.label}</span></div>
+          <h1>{car.name}</h1>
           <p className="catalog-detail-variant">{car.year} · {car.variant || 'รุ่นมาตรฐาน'} · {car.fuel}</p>
-          <p className="catalog-detail-description">{car.description}</p>
-          <div className="catalog-detail-price"><div><small>ราคาเริ่มต้น (ข้อมูลตัวอย่าง)</small><strong>{formatBaht(car.price)}</strong></div><span>{car.stock > 0 ? `มี ${car.stock} คันในสต็อกตัวอย่าง` : 'สามารถส่งคำขอสอบถามรถได้'}</span></div>
-          <div className="catalog-detail-actions"><Action to={`${requestUrl}&type=จอง`}>ส่งคำขอจองรถ</Action><Action to={`${requestUrl}&type=นัดดูรถ`} variant="out">นัดทดลองขับ</Action></div>
-          <div className="catalog-trust-notes"><span>✓ ข้อมูลรถและออปชันตามรุ่น</span><span>✓ สอบถามเงื่อนไขกับที่ปรึกษาการขาย</span><span>✓ ราคาและสต็อกเป็นข้อมูลจำลอง</span></div>
+        </div>
+        <div className="catalog-model-bottom">
+          <dl className="catalog-model-stats">
+            <div><dt>กำลังสูงสุด</dt><dd>{car.horsepower ? <>{car.horsepower.toLocaleString('th-TH')}<small> แรงม้า</small></> : '—'}</dd></div>
+            <div><dt>จำนวนที่นั่ง</dt><dd>{car.seats || '—'}<small> ที่นั่ง</small></dd></div>
+            <div><dt>พลังงาน</dt><dd>{car.fuel || '—'}</dd></div>
+          </dl>
+          {photos.length > 1 && <div className="catalog-detail-thumbnails catalog-model-thumbs" aria-label="เลือกรูปรถ">{photos.map((photo, index) => <button className={activePhotoIndex === index ? 'is-active' : ''} key={`${photo}-${index}`} type="button" onClick={() => setPhotoIndex(index)} aria-label={`ดูรูปที่ ${index + 1}`}><img src={photo} alt={`${car.name} มุมที่ ${index + 1}`} loading="lazy" /></button>)}</div>}
         </div>
       </section>
 
+      <div className="catalog-model-layout">
+        <div className="catalog-model-main">
+          <p className="catalog-detail-description">{car.description}</p>
       <section className="catalog-detail-spec-section">
         <div className="catalog-section-heading"><div><p className="catalog-eyebrow">KEY SPECIFICATIONS</p><h2>ข้อมูลทางเทคนิค</h2></div><span className="catalog-results-count">ข้อมูลเบื้องต้น</span></div>
         <div className="catalog-spec-grid">
@@ -86,11 +89,22 @@ export default function CarDetailPage() {
           <div><span>สถานที่รถ</span><strong>{car.location || 'สอบถามผู้จำหน่าย'}</strong></div>
         </div>
       </section>
-
       <section className="catalog-detail-lower-grid">
         <div className="catalog-detail-panel"><p className="catalog-eyebrow">HIGHLIGHTS</p><h2>จุดเด่นของรุ่นนี้</h2><ul>{(car.features || []).map((feature) => <li key={feature}><span>✓</span>{feature}</li>)}</ul><div className="catalog-warranty"><span>การรับประกัน</span><strong>{car.warranty || 'โปรดสอบถามเงื่อนไขผู้จำหน่าย'}</strong></div></div>
         <div className="catalog-detail-panel"><p className="catalog-eyebrow">RECOMMENDED OFFERS</p><h2>โปรโมชันที่แนะนำ</h2>{matchingPromotions.length ? <div className="catalog-detail-promos">{matchingPromotions.map((promo) => <Link to="/promotions" key={promo.id} className="catalog-detail-promo"><span className="catalog-promo-mini-badge">{promo.badge}</span><strong>{promo.title}</strong><b>{promo.value}</b><small>{promo.description}</small></Link>)}</div> : <p className="catalog-muted">ขณะนี้ยังไม่มีโปรโมชันที่ตรงกับรุ่นนี้ โปรดสอบถามข้อเสนอจากทีมขาย</p>}<Link className="catalog-text-link" to="/promotions">สำรวจโปรโมชันทั้งหมด →</Link></div>
       </section>
+        </div>
+
+        <aside className="catalog-order-card" aria-label="สรุปรุ่นรถและการสั่งจอง">
+          <p className="catalog-eyebrow">ORDER</p>
+          <div className="catalog-detail-title-line"><h2>{car.brand} {car.name}</h2><span className={`catalog-status-chip ${status.tone}`}><i />{status.label}</span></div>
+          <div className="catalog-detail-price"><div><small>ราคาเริ่มต้น (ข้อมูลตัวอย่าง)</small><strong>{formatBaht(car.price)}</strong></div><span>{car.stock > 0 ? `มี ${car.stock} คันในสต็อกตัวอย่าง` : 'สามารถส่งคำขอสอบถามรถได้'}</span></div>
+          <div className="catalog-color-options"><span>เลือกสีตัวถัง</span><div>{colorOptions.map((color) => <button key={color.name} type="button" title={color.name} aria-label={`เลือกสี${color.name}`} aria-pressed={activeColor?.name === color.name} className={activeColor?.name === color.name ? 'is-active' : ''} style={{ '--swatch': color.value }} onClick={() => { setSelectedColor(color.name); setPhotoIndex(0); }} />)}</div><strong>{activeColor?.name || 'สีมาตรฐาน'}</strong></div>
+{activeColor?.images?.length > 0 && <p className="catalog-color-note">ภาพรถเปลี่ยนตามสีที่เลือกเมื่อมีรูปภาพสีดังกล่าว</p>}
+          <div className="catalog-detail-actions"><Action to={`${requestUrl}&type=จอง`}>ส่งคำขอจองรถ</Action><Action to={`${requestUrl}&type=ทดลองขับ`} variant="out">นัดทดลองขับ</Action></div>
+          <div className="catalog-trust-notes"><span>✓ ข้อมูลรถและออปชันตามรุ่น</span><span>✓ สอบถามเงื่อนไขกับที่ปรึกษาการขาย</span><span>✓ ราคาและสต็อกเป็นข้อมูลจำลอง</span></div>
+        </aside>
+      </div>
       <p className="catalog-demo-note">ข้อมูลรถ รายละเอียดทางเทคนิค สต็อก และราคาเป็นข้อมูลตัวอย่างเพื่อพัฒนาหน้า Frontend เท่านั้น ไม่ใช่ใบเสนอราคาหรือคำยืนยันจากผู้ผลิต</p>
     </div>
   );

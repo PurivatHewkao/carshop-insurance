@@ -146,6 +146,16 @@ ON DUPLICATE KEY UPDATE
   conditions = COALESCE(conditions, VALUES(conditions)),
   applies_to = COALESCE(applies_to, VALUES(applies_to));
 
+-- redemption steps shown on the promotion detail page (only fills rows that have none yet)
+UPDATE promotions SET steps = CASE id
+  WHEN '4af47561-714b-5a29-938c-e345af31f716' THEN 'นำรถคันเดิมมาประเมินราคา | ทีมงานตรวจสภาพรถและแจ้งมูลค่าประเมินภายในวันเดียว\nเลือกรถคันใหม่ที่ร่วมรายการ | ดูรุ่นและสีที่ต้องการจากแคตตาล็อก\nนำมูลค่ารถเดิมเป็นส่วนลด | หักออกจากราคารถคันใหม่ในใบเสนอราคา\nยืนยันการจองและทำสัญญา | ตรวจเอกสารและเงื่อนไขก่อนลงนาม'
+  WHEN 'dd65c76c-85c9-5339-82ab-cabcb3ff363f' THEN 'เลือกรถที่ร่วมรายการ | ดูรุ่นที่เข้าร่วมแพ็กเกจ Premium Care\nแจ้งความสนใจแพ็กเกจกับทีมขาย | ระบุในคำขอใบเสนอราคาหรือขณะจอง\nรับสิทธิ์ในวันส่งมอบรถ | ทีมงานบันทึกสิทธิ์ลงในบัญชีของคุณ\nนัดเข้ารับบริการตามระยะ | ใช้สิทธิ์ได้ที่ศูนย์บริการที่ร่วมรายการ'
+  WHEN 'f1cdcb54-c531-58da-942e-01ef5f31a533' THEN 'เลือกรถไฮบริดที่ร่วมรายการ | เช่น Corolla Altis Hybrid, Corolla Cross Hybrid, Yaris Cross HEV\nขอใบเสนอราคา | ทีมขายจะคำนวณข้อเสนอที่ใช้ได้กับรุ่นที่เลือก\nยืนยันการจองภายในระยะเวลาแคมเปญ | แคมเปญสิ้นสุดวันที่ 30 พฤศจิกายน\nรับสิทธิ์พร้อมส่งมอบรถ'
+  WHEN 'eed82ba0-1118-55b5-8db9-037db26cf821' THEN 'เลือกซูเปอร์คาร์ที่สนใจ | ดูรุ่นในหมวดซูเปอร์คาร์และสปอร์ตของแคตตาล็อก\nนัดพบทีมงานเฉพาะ | ผู้ดูแลส่วนตัวจะติดต่อกลับเพื่อกำหนดวัน\nเตรียมการส่งมอบ | จัดเตรียมรถและเอกสารตามเวลาที่นัด\nรับมอบรถพร้อมคำแนะนำการใช้งาน | แนะนำฟังก์ชันและการดูแลรักษาแบบตัวต่อตัว'
+  WHEN '6cf27df2-0692-5f35-8c5b-731fc0ebc4fb' THEN 'เลือกรุ่นที่อยากลอง | เลือกได้มากกว่าหนึ่งรุ่นเพื่อเปรียบเทียบ\nนัดวันทดลองขับ | กรอกคำขอนัดทดลองขับบนเว็บไซต์\nเข้าทดลองขับที่โชว์รูม | นำใบขับขี่มาด้วย\nรับคำแนะนำเปรียบเทียบรุ่น | ทีมขายสรุปข้อดีและราคาให้หลังทดลองขับ'
+  ELSE steps END
+WHERE steps IS NULL;
+
 -- Check
 SELECT m.slug, m.brand, m.model_name, m.tag, m.featured, SUM(c.status = 'AVAILABLE') AS stock, MIN(c.price) AS price
 FROM car_models m JOIN cars c ON c.car_model_id = m.id GROUP BY m.id ORDER BY m.brand, m.model_name;
