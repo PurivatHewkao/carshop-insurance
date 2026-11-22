@@ -1,5 +1,5 @@
 import { ShieldCheck, BadgePercent, Check, CarFront } from 'lucide-react';
-import { CarImage } from '../components/common/Showroom.jsx';
+import mountainPhoto from '../assets/cars/camry-mountain.jpg';
 import './InsurancePartnerPage.css';
 
 function partnerUrl() {
@@ -40,8 +40,25 @@ export default function InsurancePartnerPage() {
           <small>พาคุณไปยังเว็บไซต์ Partner โดยไม่ส่งข้อมูลบัญชี TOYOTY</small>
         </div>
         <div className="ti-art">
-          <ShieldCheck className="ti-shield" size={100} strokeWidth={1.2} />
-          <CarImage type="sedan" color="#c4d5ee" />
+          <img
+            className="ti-car-photo"
+            src={mountainPhoto}
+            alt="Toyota Camry สีเงินขับบนถนนโค้งท่ามกลางภูเขา"
+            width="1200"
+            height="700"
+            fetchPriority="high"
+          />
+          <div className="ti-photo-caption">
+            <span>CONFIDENCE IN EVERY MILE</span>
+            <strong>ทุกเส้นทาง อุ่นใจไปด้วยกัน</strong>
+          </div>
+          <div className="ti-protection">
+            <ShieldCheck size={30} strokeWidth={1.5} aria-hidden="true" />
+            <div>
+              <strong>พร้อมดูแลทุกการเดินทาง</strong>
+              <span>กับ NOVA INSURE</span>
+            </div>
+          </div>
         </div>
       </section>
       <div className="ti-content">

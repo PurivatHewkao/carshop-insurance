@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CarImage } from '../../../components/common/Showroom.jsx';
+import journeyPhoto from '../../../assets/cars/camry-journey.jpg';
 import { isDemo } from '../api/auth.js';
 import '../styles/auth.css';
 
@@ -62,6 +62,14 @@ export function AuthShell({ title, subtitle, children }) {
     <div className="page-content auth-page">
       <div className="auth-shell">
         <aside className="auth-story">
+          <img
+            className="auth-story-photo"
+            src={journeyPhoto}
+            alt="Toyota Camry สีขาวบนถนนท่ามกลางแสงอาทิตย์และภูเขา"
+            width="1920"
+            height="1280"
+            fetchPriority="high"
+          />
           <span className="auth-overline">YOUR NEXT CHAPTER</span>
           <h2>
             ทุกการเดินทาง
@@ -73,7 +81,6 @@ export function AuthShell({ title, subtitle, children }) {
             <br />
             นัดทดลองขับ และติดตามคำขอของคุณ
           </p>
-          <CarImage type="suv" color="#c9cbd0" />
           <div className="auth-story-foot">
             <span>01 / บัญชี TOYOTY</span>
             <Link to="/catalog">ค้นหารถของคุณ ↗</Link>

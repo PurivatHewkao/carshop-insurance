@@ -5,7 +5,7 @@
   display: grid;
   grid-template-columns: 1.2fr 1fr;
   align-items: center;
-  gap: 24px;
+  gap: 48px;
   padding: 65px max(6%, 24px);
   background: linear-gradient(115deg, #f0f5fc, #e5edfa);
   overflow: hidden;
@@ -31,19 +31,70 @@
 .ti-art {
   position: relative;
   min-width: 0;
-  padding-top: 75px;
+  aspect-ratio: 1.12;
+  border: 6px solid #ffffff;
+  border-radius: 28px;
+  box-shadow: 0 24px 60px #18375626;
+  isolation: isolate;
 }
-.ti-art .car-art {
-  width: 110%;
-  position: relative;
-  margin-left: -5%;
+.ti-car-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 57% center;
+  border-radius: 22px;
 }
-.ti-shield {
+.ti-art::after {
+  content: '';
   position: absolute;
-  top: 0;
-  left: 35%;
-  color: #356cce;
-  filter: drop-shadow(0 10px 20px #366fbd35);
+  inset: 0;
+  border-radius: 22px;
+  background: linear-gradient(180deg, transparent 55%, #0c203bd9);
+  pointer-events: none;
+}
+.ti-photo-caption {
+  position: absolute;
+  bottom: 28px;
+  left: 28px;
+  right: 20px;
+  z-index: 1;
+  color: #fff;
+}
+.ti-photo-caption span {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  margin-bottom: 9px;
+}
+.ti-photo-caption strong {
+  font-size: clamp(18px, 1.6vw, 24px);
+  font-weight: 600;
+}
+.ti-protection {
+  position: absolute;
+  top: 24px;
+  left: -24px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border: 1px solid #ffffff;
+  border-radius: 16px;
+  background: #fffffff2;
+  color: #285db5;
+  box-shadow: 0 8px 28px #1729401a;
+}
+.ti-protection strong,
+.ti-protection span {
+  display: block;
+  font-size: 12px;
+}
+.ti-protection span {
+  color: #65758b;
+  margin-top: 4px;
+  font-size: 10px;
 }
 .ti-content {
   max-width: 1120px;
@@ -186,11 +237,16 @@
   .ti-art {
     width: min(100%, 430px);
     margin: auto;
-    padding-top: 45px;
+    aspect-ratio: 1.25;
   }
-  .ti-shield {
-    width: 75px;
-    height: 75px;
+  .ti-protection {
+    left: 12px;
+    top: 12px;
+    padding: 12px;
+  }
+  .ti-photo-caption {
+    left: 20px;
+    bottom: 20px;
   }
   .ti-content {
     width: calc(100% - 36px);
