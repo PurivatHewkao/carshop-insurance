@@ -1,13 +1,16 @@
 import { Router } from 'express';
 import { getMysqlPool } from '../../config/mysql.js';
+import { requireRoles } from '../../../../../packages/auth/index.js';
 import { httpError, requireUuid } from '../../utils/httpError.js';
 
 // Read-only lists that fill the dropdowns on the sales pages.
 // The single local database (db schema/01_mysql_schema.sql) allows joins here.
 const router = Router();
 const fullName = (first, last) => (first + ' ' + last).trim();
+const allowSales = requireRoles('seller', 'manager', 'admin');
+const allowSignedIn = requireRoles('customer', 'seller', 'manager', 'admin');
 
-router.get('/cars', async (req, res) => {
+router.get('/cars', allowSignedIn, async (req, res) => {
   const onlyAvailable = req.query.status !== 'ALL';
   const [rows] = await getMysqlPool().query(
     `SELECT c.id, c.price, c.color, c.manufacture_year, c.status, c.vin,
@@ -33,7 +36,7 @@ router.get('/cars', async (req, res) => {
   });
 });
 
-router.get('/customers', async (_req, res) => {
+router.get('/customers', allowSales, async (_req, res) => {
   const [rows] = await getMysqlPool().query(
     `SELECT c.id, c.first_name, c.last_name, c.phone_number
        FROM customers c JOIN users u ON u.id = c.user_id
@@ -49,8 +52,46 @@ router.get('/customers', async (_req, res) => {
   });
 });
 
+router.get('/customers/:id', allowSales, async (req, res) => {
+  const customerId = requireUuid(req.params.id, 'customerId');
+  const pool = getMysqlPool();
+  if (req.user.role === 'seller') {
+    const [employees] = await pool.query(
+      'SELECT id FROM employees WHERE user_id = ? LIMIT 1',
+      [req.user.id],
+    );
+    const employeeId = employees[0]?.id;
+    if (!employeeId) throw httpError(404, 'CUSTOMER_NOT_FOUND', 'Customer not found');
+    const [related] = await pool.query(
+      `SELECT 1 FROM appointments WHERE customer_id = ? AND seller_id = ?
+       UNION ALL
+       SELECT 1 FROM orders WHERE customer_id = ? AND seller_id = ?
+       LIMIT 1`,
+      [customerId, employeeId, customerId, employeeId],
+    );
+    if (!related[0]) throw httpError(404, 'CUSTOMER_NOT_FOUND', 'Customer not found');
+  }
+
+  const [rows] = await pool.query(
+    `SELECT c.id, c.first_name, c.last_name, c.phone_number, u.email
+       FROM customers c JOIN users u ON u.id = c.user_id
+      WHERE c.id = ? AND u.status = 'ACTIVE' LIMIT 1`,
+    [customerId],
+  );
+  if (!rows[0]) throw httpError(404, 'CUSTOMER_NOT_FOUND', 'Customer not found');
+  const customer = rows[0];
+  res.json({
+    data: {
+      id: customer.id,
+      name: fullName(customer.first_name, customer.last_name),
+      phone: customer.phone_number || '',
+      email: customer.email,
+    },
+  });
+});
+
 // Sellers with how many open (PENDING / CONFIRMED) appointments each one holds.
-router.get('/sellers', async (_req, res) => {
+router.get('/sellers', allowSales, async (_req, res) => {
   const [rows] = await getMysqlPool().query(
     `SELECT e.id, e.first_name, e.last_name, e.position_name, e.department_name,
             (SELECT COUNT(*) FROM appointments a
@@ -70,7 +111,7 @@ router.get('/sellers', async (_req, res) => {
   });
 });
 
-router.get('/insurances', async (_req, res) => {
+router.get('/insurances', allowSignedIn, async (_req, res) => {
   const [rows] = await getMysqlPool().query(
     `SELECT id, insurance_company, insurance_name, premium
        FROM insurances WHERE status = 'ACTIVE'
@@ -85,51 +126,18 @@ router.get('/insurances', async (_req, res) => {
   });
 });
 
-// Who is this user? Maps an Identity user id to a customer or employee record.
-// There is no login service yet, so this does NOT authenticate anyone: it only
-// resolves ids once the web app has a real user id (UUID) from Identity.
-router.get('/actor', async (req, res) => {
-  const userId = requireUuid(req.query.userId, 'userId');
-  const pool = getMysqlPool();
-  const [users] = await pool.query(
-    'SELECT id, role, status FROM users WHERE id = ?',
-    [userId],
-  );
-  const user = users[0];
-  if (!user) throw httpError(404, 'USER_NOT_FOUND', 'User not found');
-  const [customers] = await pool.query(
-    'SELECT id FROM customers WHERE user_id = ?',
-    [userId],
-  );
-  const [employees] = await pool.query(
-    'SELECT id FROM employees WHERE user_id = ?',
-    [userId],
-  );
+// Resolve the authenticated session only; never accept a user id from query/body.
+router.get('/actor', allowSignedIn, async (req, res) => {
+  const { id: userId, role } = req.user;
+  const [customers] = await getMysqlPool().query('SELECT id FROM customers WHERE user_id = ?', [userId]);
+  const [employees] = await getMysqlPool().query('SELECT id FROM employees WHERE user_id = ?', [userId]);
   res.json({
     data: {
       userId,
-      role: user.role,
+      role,
       customerId: customers[0]?.id ?? null,
       employeeId: employees[0]?.id ?? null,
     },
-  });
-});
-
-// First active employee of a role (MANAGER / SELLER) — used only as a temporary
-// stand-in for "the logged-in user" until Identity provides real sessions.
-router.get('/employees', async (req, res) => {
-  const role = String(req.query.role || '').toUpperCase();
-  if (!['SELLER', 'MANAGER', 'ADMIN'].includes(role))
-    throw httpError(400, 'INVALID_ROLE', 'role must be SELLER, MANAGER or ADMIN');
-  const [rows] = await getMysqlPool().query(
-    `SELECT e.id, e.first_name, e.last_name
-       FROM employees e JOIN users u ON u.id = e.user_id
-      WHERE u.role = ? AND u.status = 'ACTIVE'
-      ORDER BY e.first_name, e.last_name LIMIT 100`,
-    [role],
-  );
-  res.json({
-    data: rows.map((r) => ({ id: r.id, name: fullName(r.first_name, r.last_name) })),
   });
 });
 

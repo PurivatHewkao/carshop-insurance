@@ -1,8 +1,9 @@
 // apps/web/src/features/sales/pages/SellerAppointmentsPage.jsx
 import React from 'react';
-import { fetchAppointments, fetchSellers, setAppointmentStatus } from '../api/salesApi.js';
+import { Link } from 'react-router-dom';
+import { fetchAppointments, setAppointmentStatus } from '../api/salesApi.js';
 import { useAction, useActorChoice, useSalesData } from '../hooks/useSalesData.js';
-import { ActionError, ActorSwitcher, LoadStatus } from '../components/SalesState.jsx';
+import { ActionError, LoadStatus } from '../components/SalesState.jsx';
 import '../sales.css';
 
 const STAGES = [['PENDING', 'รอดำเนินการ'], ['CONFIRMED', 'ยืนยันแล้ว'], ['COMPLETED', 'เสร็จสิ้น'], ['CANCELLED', 'ยกเลิก']];
@@ -11,7 +12,7 @@ const today = () =>
   new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' });
 
 export default function SellerAppointmentsPage() {
-  const actor = useActorChoice('SELLER', fetchSellers, (a) => a.employeeId);
+  const actor = useActorChoice('SELLER', (a) => a.employeeId);
   const list = useSalesData(
     (signal) =>
       actor.actorId
@@ -42,14 +43,6 @@ export default function SellerAppointmentsPage() {
         onRetry={() => { list.reload(); actor.reload(); }}
       />
       <ActionError message={action.error} onClose={action.clearError} />
-      <ActorSwitcher
-        label="Seller"
-        options={actor.options}
-        value={actor.actorId}
-        onChange={actor.pick}
-        isStandIn={actor.isStandIn}
-      />
-
       <div className="sales-stats-grid">
         <div className="sales-stat-card">
           <div className="sales-stat-label">นัดหมายทั้งหมด</div>
@@ -93,7 +86,7 @@ export default function SellerAppointmentsPage() {
                   <tr key={item.id}>
                     <td><strong style={{ color: '#2563eb' }}>{item.code}</strong></td>
                     <td>
-                      <div style={{ fontWeight: 600 }}>{item.customerName}</div>
+                      <Link className="sales-customer-link" to={`/seller/customers/${encodeURIComponent(item.customerId)}`}>{item.customerName}</Link>
                       <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{item.phone}</div>
                     </td>
                     <td>

@@ -7,4 +7,5 @@ export const env = {
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean),
+  identityApiUrl: process.env.IDENTITY_API_URL || 'http://localhost:3001/api/v1',
 };

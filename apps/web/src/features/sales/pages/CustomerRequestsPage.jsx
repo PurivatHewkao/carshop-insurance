@@ -1,15 +1,14 @@
 // apps/web/src/features/sales/pages/CustomerRequestsPage.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   createAppointment,
   fetchAppointments,
   fetchAppointmentAvailability,
   fetchCars,
-  fetchCustomers,
   setAppointmentStatus,
 } from '../api/salesApi.js';
 import { useAction, useActorChoice, useSalesData } from '../hooks/useSalesData.js';
-import { ActionError, ActorSwitcher, LoadStatus } from '../components/SalesState.jsx';
+import { ActionError, LoadStatus } from '../components/SalesState.jsx';
 import '../sales.css';
 
 const today = () =>
@@ -26,7 +25,7 @@ function slotIsTaken(slot, bookedTimes) {
 }
 
 export default function CustomerRequestsPage() {
-  const actor = useActorChoice('CUSTOMER', fetchCustomers, (a) => a.customerId);
+  const actor = useActorChoice('CUSTOMER', (a) => a.customerId);
   const cars = useSalesData((signal) => fetchCars(signal), []);
   const list = useSalesData(
     (signal) =>
@@ -52,13 +51,9 @@ export default function CustomerRequestsPage() {
   const selectedCarId = form.carId || carOptions[0]?.id || '';
   const bookedTimes = availability.data?.bookedTimes ?? [];
   const hasAvailableTimes = TIME_SLOTS.some((time) => !slotIsTaken(time, bookedTimes));
-
-  useEffect(() => {
-    if (availability.loading) return;
-    if (form.appointmentTime && !slotIsTaken(form.appointmentTime, bookedTimes)) return;
-    const nextTime = TIME_SLOTS.find((time) => !slotIsTaken(time, bookedTimes)) || '';
-    if (nextTime !== form.appointmentTime) setForm((current) => ({ ...current, appointmentTime: nextTime }));
-  }, [availability.loading, bookedTimes, form.appointmentTime]);
+  const appointmentTime = form.appointmentTime && !slotIsTaken(form.appointmentTime, bookedTimes)
+    ? form.appointmentTime
+    : TIME_SLOTS.find((time) => !slotIsTaken(time, bookedTimes)) || '';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -69,7 +64,7 @@ export default function CustomerRequestsPage() {
         carId: selectedCarId,
         appointmentType: form.appointmentType,
         appointmentDate: form.appointmentDate,
-        appointmentTime: form.appointmentTime,
+        appointmentTime,
         note: form.note,
       }),
     );
@@ -103,14 +98,6 @@ export default function CustomerRequestsPage() {
         hasData={list.data !== null}
         onRetry={() => { list.reload(); actor.reload(); cars.reload(); availability.reload(); }}
       />
-      <ActorSwitcher
-        label="ลูกค้า"
-        options={actor.options}
-        value={actor.actorId}
-        onChange={actor.pick}
-        isStandIn={actor.isStandIn}
-      />
-
       <div className="sales-grid-layout">
         {/* ฟอร์มสร้างนัดหมาย */}
         <div className="sales-card">
@@ -159,12 +146,12 @@ export default function CustomerRequestsPage() {
                 <label>เวลานัดหมาย</label>
                 <select
                   className="sales-select"
-                  value={form.appointmentTime}
+                  value={appointmentTime}
                   onChange={(e) => setForm({ ...form, appointmentTime: e.target.value })}
                   required
                   disabled={availability.loading || Boolean(availability.error) || !hasAvailableTimes}
                 >
-                  {!form.appointmentTime && <option value="" disabled>ไม่มีช่วงเวลาว่าง</option>}
+                  {!appointmentTime && <option value="" disabled>ไม่มีช่วงเวลาว่าง</option>}
                   {TIME_SLOTS.map((time) => {
                     const unavailable = slotIsTaken(time, bookedTimes);
                     return <option key={time} value={time} disabled={unavailable}>{time} น. {unavailable ? '· มีผู้จองแล้ว' : ''}</option>;
@@ -185,7 +172,7 @@ export default function CustomerRequestsPage() {
               />
             </div>
 
-            <button type="submit" disabled={action.busy || availability.loading || Boolean(availability.error) || !actor.actorId || !selectedCarId || !form.appointmentTime || slotIsTaken(form.appointmentTime, bookedTimes)} className="sales-btn sales-btn-primary" style={{ width: '100%', padding: '12px' }}>
+            <button type="submit" disabled={action.busy || availability.loading || Boolean(availability.error) || !actor.actorId || !selectedCarId || !appointmentTime} className="sales-btn sales-btn-primary" style={{ width: '100%', padding: '12px' }}>
               + บันทึกการนัดหมาย
             </button>
           </form>

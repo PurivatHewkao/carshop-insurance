@@ -1,5 +1,4 @@
 // apps/web/src/features/sales/routes.jsx
-import PlaceholderPage from './pages/PlaceholderPage.jsx';
 import PreserveLocationRedirect from '../../components/common/PreserveLocationRedirect.jsx';
 import { plannedRoutes } from '../../routes/plannedRoutes.jsx';
 
@@ -11,6 +10,9 @@ import SellerOrdersPage from './pages/SellerOrdersPage.jsx';
 import ManagerApprovalsPage from './pages/ManagerApprovalsPage.jsx';
 import SellerSalesFormPage from './pages/SellerSalesFormPage.jsx';
 import SellerAppointmentsPage from './pages/SellerAppointmentsPage.jsx'; // 1. นำเข้าหน้านัดหมายเฉพาะ Seller
+import ContactPage from './pages/ContactPage.jsx';
+import SellerCustomerDetailPage from './pages/SellerCustomerDetailPage.jsx';
+import ManagerAppointmentsPage from './pages/ManagerAppointmentsPage.jsx';
 
 function mergeWithPlanned(role, customRoutes) {
   const planned = plannedRoutes(role, 'sales') || [];
@@ -31,7 +33,7 @@ function mergeWithPlanned(role, customRoutes) {
 }
 
 export const salesRoutes = [
-  ...plannedRoutes('public', 'sales'),
+  ...plannedRoutes('public', 'sales', { contact: <ContactPage /> }),
   { path: 'sales', element: <SellerSalesFormPage /> },
   {
     path: 'requests',
@@ -48,6 +50,7 @@ export const customerSalesRoutes = mergeWithPlanned('customer', [
 export const sellerSalesRoutes = mergeWithPlanned('seller', [
   { path: 'tasks', element: <SellerTasksPage /> },                     // งานของ Seller (จัดการเคส & สถานะงาน)
   { path: 'appointments', element: <SellerAppointmentsPage /> },       // นัดหมายของ Seller (ตารางคิว & เวลา)
+  { path: 'customers/:customerId', element: <SellerCustomerDetailPage /> },
   { path: 'orders', element: <SellerOrdersPage /> },
   { path: 'orders/new', element: <SellerSalesFormPage /> },
   { path: 'sales', element: <SellerSalesFormPage /> },
@@ -60,4 +63,5 @@ export const adminSalesRoutes = mergeWithPlanned('admin', [
 export const managerSalesRoutes = mergeWithPlanned('manager', [
   { path: 'assignments', element: <ManagerAssignmentsPage /> },
   { path: 'approvals', element: <ManagerApprovalsPage /> },
+  { path: 'appointments', element: <ManagerAppointmentsPage /> },
 ]);

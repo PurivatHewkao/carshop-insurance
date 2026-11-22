@@ -55,28 +55,16 @@ export function useAction() {
 }
 
 /** Customer / seller the page acts as (see api/actor.js). */
-export function useActorChoice(kind, loadOptions, resolveId) {
+export function useActorChoice(kind, resolveId) {
   const state = useSalesData(
-    async (signal) => {
-      const [options, actor] = await Promise.all([
-        loadOptions(signal),
-        resolveActor(signal),
-      ]);
-      return { options, actor };
-    },
+    async (signal) => resolveActor(signal),
     [kind],
   );
-  const [picked, setPicked] = useState('');
-  const options = state.data?.options ?? [];
-  const resolved = state.data ? resolveId(state.data.actor) : '';
-  const actorId = picked || resolved || options[0]?.id || '';
+  const actorId = state.data ? resolveId(state.data) : '';
   return {
     loading: state.loading,
     error: state.error,
     reload: state.reload,
-    options,
     actorId,
-    isStandIn: state.data?.actor.isStandIn ?? true,
-    pick: setPicked,
   };
 }
