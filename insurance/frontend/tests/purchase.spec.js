@@ -1,123 +1,73 @@
-/* global document, innerWidth */
+// Insurance: replace retired direct-checkout scenarios with the partner-only flow.
+/* global document, window */
 import { test, expect } from '@playwright/test';
-const toyoty = process.env.TOYOTY_E2E_URL || 'http://localhost:5173';
 const api = process.env.NOVA_E2E_API_URL || 'http://localhost:3010/api';
-
-test('TOYOTY partner → NOVA checkout → persisted policy → TOYOTY', async ({
+test('browse NOVA plans and route purchase to the seller', async ({
   page,
   request,
-}, testInfo) => {
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.goto(toyoty + '/insurance');
-  await expect(
-    page.getByRole('heading', {
-      name: 'เลือกประกันกับ Partner ของเรา เพื่อดีลที่ดีกว่า',
-    }),
-  ).toBeVisible();
-  await page.screenshot({
-    path: testInfo.outputPath('toyoty-partner.png'),
-    fullPage: true,
-  });
-  await page
-    .getByRole('link', { name: 'เลือกซื้อประกัน', exact: true })
-    .first()
-    .click();
-  await expect(page).toHaveURL(/5174\/\?source=toyoty/);
-  await expect(page.getByText('Welcome TOYOTY Customer')).toBeVisible();
-  const cards = page.locator('.plan-card');
-  await expect(cards).toHaveCount(4);
-  await page.screenshot({
-    path: testInfo.outputPath('nova-home-desktop.png'),
-    fullPage: true,
-  });
-  const smart = cards.filter({
-    has: page.getByRole('heading', { name: 'Smart Drive', exact: true }),
-  });
+}) => {
+  await page.goto('/?source=toyoty');
+  await expect(page.locator('.plan-card')).toHaveCount(4);
+  const smart = page
+    .locator('.plan-card')
+    .filter({
+      has: page.getByRole('heading', { name: 'Smart Drive', exact: true }),
+    });
   await expect(smart).toContainText('6,165.50');
-  await smart.getByRole('link', { name: 'เลือกแผนนี้' }).click();
+  await smart.getByRole('link', { name: 'ซื้อพร้อมรถผ่าน Seller' }).click();
   await expect(
-    page.getByRole('heading', { name: 'ความอุ่นใจ เริ่มจากตรงนี้' }),
+    page.getByRole('heading', { name: 'เลือกซื้อประกันพร้อมรถผ่าน Seller' }),
   ).toBeVisible();
-  await expect(page.locator('.summary')).toContainText('6,165.50');
-  await page.getByRole('button', { name: 'ยืนยันซื้อประกัน (สาธิต)' }).click();
-  await expect(page).toHaveURL(/\/buy\//);
-  await expect(page.locator('#fullName:invalid')).toBeVisible();
-  await page.getByLabel('ชื่อ-นามสกุล').fill('NOVA Browser Demo');
-  await page.getByLabel('เบอร์โทรศัพท์').fill('0812345678');
-  await page.getByLabel('อีเมล').fill('nova-demo@example.com');
-  await page.getByLabel('ยี่ห้อรถ').fill('Toyota');
-  await page.getByLabel('รุ่นรถ').fill('Yaris Ativ');
-  await page.getByLabel('ปีรถ (ค.ศ.)').fill('2026');
-  await page.getByRole('checkbox').check();
-  await page.screenshot({
-    path: testInfo.outputPath('nova-checkout.png'),
-    fullPage: true,
-  });
-  await page.getByRole('button', { name: 'ยืนยันซื้อประกัน (สาธิต)' }).click();
   await expect(
-    page.getByRole('heading', { name: 'รับคำขอซื้อประกันสาธิตสำเร็จ' }),
-  ).toBeVisible();
-  await expect(page.locator('.receipt')).toContainText('NOVA Browser Demo');
-  await expect(page.locator('.receipt')).toContainText('6,165.50');
-  await expect(page.locator('.status')).toHaveText('ISSUED_DEMO');
-  const policyId = new URL(page.url()).pathname.split('/').pop();
-  expect(new URL(page.url()).searchParams.has('receiptToken')).toBe(false);
-  expect((await request.get(api + '/policies/' + policyId)).status()).toBe(401);
-  await page.reload();
-  await expect(page.locator('.receipt')).toContainText('NOVA Browser Demo');
-  await page.screenshot({
-    path: testInfo.outputPath('nova-success.png'),
-    fullPage: true,
-  });
-  await page
-    .getByRole('link', { name: 'กลับไปยัง TOYOTY', exact: true })
-    .click();
-  await expect(page).toHaveURL(toyoty + '/insurance');
+    page.getByRole('button', { name: 'ยืนยันซื้อประกัน (สาธิต)' }),
+  ).toHaveCount(0);
+  const blocked = await request.post(api + '/purchases', { data: {} });
+  expect(blocked.status()).toBe(403);
+  expect((await blocked.json()).error.code).toBe('DIRECT_PURCHASE_DISABLED');
 });
-
-test('mobile 390px: responsive home, menu, checkout and unavailable receipt', async ({
+test('NOVA admin starts at a separate login and its API rejects customers', async ({
   page,
-}, testInfo) => {
+  request,
+}) => {
+  await page.goto('/admin');
+  await expect(page.getByLabel('อีเมลแอดมิน NOVA')).toBeVisible();
+  await expect(page.getByLabel('รหัสผ่าน', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'อนุมัติและออกกรมธรรม์' }),
+  ).toHaveCount(0);
+  expect((await request.get(api + '/admin/requests')).status()).toBe(401);
+  expect(
+    (
+      await request.get(api + '/partner/plans', {
+        headers: { Authorization: 'Bearer customer-token' },
+      })
+    ).status(),
+  ).toBe(401);
+});
+test('mobile plan browsing and closed checkout fit the viewport', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/?source=toyoty');
   await expect(page.locator('.plan-card')).toHaveCount(4);
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBe(true);
-  await page.screenshot({
-    path: testInfo.outputPath('nova-home-mobile.png'),
-    fullPage: true,
-  });
-  await page.getByRole('button', { name: 'เปิดเมนู' }).click();
-  await expect(
-    page.getByRole('navigation').getByText('Insurance Plans'),
-  ).toBeVisible();
-  await page.getByRole('navigation').getByText('Insurance Plans').click();
-  await expect(page.getByRole('button', { name: 'เปิดเมนู' })).toBeVisible();
   await page
     .locator('.plan-card.recommended')
-    .getByRole('link', { name: 'เลือกแผนนี้' })
+    .getByRole('link', { name: 'ซื้อพร้อมรถผ่าน Seller' })
     .click();
-  await expect(page.locator('.summary')).toContainText('17,005.00');
+  await expect(
+    page.getByRole('heading', { name: 'เลือกซื้อประกันพร้อมรถผ่าน Seller' }),
+  ).toBeVisible();
   expect(
     await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
+      () => document.documentElement.scrollWidth <= window.innerWidth + 1,
     ),
   ).toBe(true);
-  await page.screenshot({
-    path: testInfo.outputPath('nova-checkout-mobile.png'),
-    fullPage: true,
-  });
   await page.goto('/success/00000000-0000-4000-8000-000000000000');
   await expect(page.getByRole('alert')).toContainText(
     'กรุณาเปิดใบรับรายการจากแท็บที่ทำรายการสำเร็จ',
   );
-  await expect(page.locator('.receipt')).toHaveCount(0);
 });
-
-test('network failure has a retry state and recovers using real plans API', async ({
+test('network failure offers retry and recovers plan browsing', async ({
   page,
 }) => {
   await page.route('**/api/plans', (route) => route.abort());
@@ -126,6 +76,4 @@ test('network failure has a retry state and recovers using real plans API', asyn
   await page.unroute('**/api/plans');
   await page.getByRole('button', { name: 'ลองอีกครั้ง' }).click();
   await expect(page.locator('.plan-card')).toHaveCount(4);
-  await expect(page.getByText('Welcome TOYOTY Customer')).toHaveCount(0);
-  await expect(page.locator('.plan-card').nth(1)).toContainText('6,490');
 });

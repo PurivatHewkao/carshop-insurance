@@ -4,6 +4,8 @@ import { useOrderForm } from '../hooks/useOrderForm.js';
 import { ActionError, LoadStatus } from '../components/SalesState.jsx';
 import '../sales.css';
 import SearchPicker from '../components/SearchPicker.jsx';
+// Insurance: keep extra NOVA fields in a separate component.
+import NovaInsuranceFields from '../components/NovaInsuranceFields.jsx';
 
 export default function SellerSalesFormPage() {
     const [successMsg, setSuccessMsg] = useState('');
@@ -86,6 +88,8 @@ export default function SellerSalesFormPage() {
                             </select>
                         </div>
 
+                        {/* Insurance: delivery date and NOVA discount, separate from sale discount. */}
+                        <NovaInsuranceFields form={form} setForm={setForm} plans={insurances} {...order.nova} />
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                             <div className="sales-form-group">
                                 <label>ราคารถ (บาท)</label>

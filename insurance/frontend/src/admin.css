@@ -1,0 +1,62 @@
+/* Insurance: admin-specific styles, isolated from the public pages. */
+.nova-admin {
+  padding-block: 48px;
+  min-height: 60vh;
+}
+.nova-admin h1 {
+  font-size: 2rem;
+}
+.nova-admin-login {
+  display: grid;
+  gap: 12px;
+  max-width: 420px;
+  margin-top: 24px;
+}
+.nova-admin-login input {
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+.nova-admin-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-block: 24px;
+}
+.nova-admin-card {
+  border: 1px solid #dbe3ec;
+  border-radius: 16px;
+  padding: 24px;
+  margin-block: 20px;
+  background: white;
+}
+.nova-admin-card dl {
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) minmax(0, 1fr);
+  gap: 10px;
+}
+.nova-admin-card dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.nova-admin-card dt {
+  font-weight: 600;
+}
+.nova-admin-card ul {
+  padding-left: 24px;
+  margin-block: 20px;
+}
+.nova-admin-error {
+  padding: 16px;
+  background: #fef2f2;
+  color: #991b1b;
+}
+@media (max-width: 600px) {
+  .nova-admin-card dl {
+    grid-template-columns: 1fr;
+  }
+  .nova-admin-card {
+    padding: 16px;
+  }
+}

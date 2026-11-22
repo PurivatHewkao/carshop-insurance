@@ -22,6 +22,9 @@ import {
   UserRound,
 } from 'lucide-react';
 import { request, money, toyotyUrl } from './api.js';
+// Insurance: separate NOVA admin and closed direct-purchase notice.
+import AdminPage from './AdminPage.jsx';
+import PartnerPurchaseNotice from './PartnerPurchaseNotice.jsx';
 import {
   Logo,
   DemoNotice,
@@ -86,6 +89,8 @@ function Header({ source }) {
           <Link className="button small" to={home + '#plans'}>
             เลือกประกัน
           </Link>
+          {/* Insurance: NOVA administrators have a separate login. */}
+          <Link to="/admin">ผู้ดูแล NOVA</Link>
         </nav>
       </div>
       <div className="demo-strip">
@@ -230,7 +235,8 @@ function Home({ source }) {
                     }
                     to={'/buy/' + plan.id + suffix(source)}
                   >
-                    เลือกแผนนี้
+                    {/* Insurance: direct checkout is replaced by partner instructions. */}
+                    ซื้อพร้อมรถผ่าน Seller
                   </Link>
                   <div className="coverage-title">ความคุ้มครองตัวอย่าง</div>
                   <ul className="coverage-list">
@@ -320,14 +326,15 @@ function Home({ source }) {
           </div>
           <div className="how-grid">
             {[
-              [ShieldCheck, 'เลือกแผน', 'ค้นหาความคุ้มครองที่เหมาะกับคุณ'],
-              [CarFront, 'กรอกข้อมูล', 'ข้อมูลรถและผู้เอาประกันเท่าที่จำเป็น'],
+              // Insurance: public instructions follow the seller-assisted purchase flow.
+              [ShieldCheck, 'เลือกแผนผ่าน Seller', 'เลือกแพ็กเกจ NOVA เมื่อซื้อรถกับ TOYOTY'],
+              [CarFront, 'ระบุวันส่งมอบ', 'Seller บันทึกข้อมูลรถ ผู้เอาประกัน และวันเริ่มคุ้มครอง'],
               [
                 MousePointer2,
-                'ยืนยันรายการสาธิต',
-                'ตรวจสอบข้อมูล ไม่มีการชำระเงินจริง',
+                'ชำระครบที่ TOYOTY',
+                'ระบบส่งคำขอให้ NOVA รอแอดมินอนุมัติ',
               ],
-              [FileCheck2, 'รับกรมธรรม์จำลอง', 'ดูใบรับรายการออนไลน์ในแท็บนี้'],
+              [FileCheck2, 'ดูกรมธรรม์', 'หลังอนุมัติ ดูที่ประกันของฉันใน TOYOTY คุ้มครอง 1 ปีจากวันส่งมอบ'],
             ].map(([Icon, title, text], i) => (
               <article key={title}>
                 <span className="how-icon">
@@ -723,13 +730,13 @@ export default function App() {
           <Route
             path="/buy/:planId"
             element={
-              <Checkout
-                key={location.pathname + location.search}
-                source={source}
-              />
+              /* Insurance: keep historical checkout code, but close its public route. */
+              <PartnerPurchaseNotice />
             }
           />
           <Route path="/success/:policyId" element={<Success />} />
+          {/* Insurance: independent NOVA admin session. */}
+          <Route path="/admin" element={<AdminPage />} />
           <Route
             path="*"
             element={

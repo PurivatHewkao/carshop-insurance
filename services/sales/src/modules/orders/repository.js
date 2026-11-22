@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { getMysqlPool } from '../../config/mysql.js';
 import { httpError } from '../../utils/httpError.js';
 import { fromSatang, toNumber, toSatang } from '../../utils/money.js';
+// Insurance: isolate NOVA pricing and snapshots from existing order rules.
+import { prepareInsurance, saveInsurance, enrichOrders } from '../insurance/repository.js';
 
 const MYSQL_BAD_FIELD = 1054;
 const MYSQL_DUPLICATE = 1062;
@@ -71,7 +73,8 @@ export async function listOrders({ customerId, sellerId, approvalStatus }) {
         ' ORDER BY o.created_at DESC, o.id LIMIT 500',
       params,
     );
-    return rows.map(toOrder);
+    // Insurance: attach immutable NOVA names without changing historical orders.
+    return enrichOrders(rows.map(toOrder));
   } catch (error) {
     throw hintMigration(error);
   }
@@ -80,12 +83,17 @@ export async function listOrders({ customerId, sellerId, approvalStatus }) {
 async function getOrder(db, id) {
   const [rows] = await db.query(SELECT + ' WHERE o.id = ?', [id]);
   if (!rows[0]) throw httpError(404, 'ORDER_NOT_FOUND', 'Order not found');
-  return toOrder(rows[0]);
+  // Insurance: attach the selected NOVA snapshot to the existing response shape.
+  return (await enrichOrders([toOrder(rows[0])], db))[0];
 }
 
 // Price snapshot: the car price and insurance premium are read from the database
 // inside the transaction, never trusted from the browser.
 export async function createOrder(input) {
+  // Insurance: validate the NOVA quote before opening the existing DB transaction.
+  if (input.novaPlanId && input.insuranceId) throw httpError(400, 'INSURANCE_CONFLICT', 'เลือกประกันได้เพียงแพ็กเกจเดียว');
+  if (input.insuranceId) throw httpError(400, 'INSURANCE_LEGACY_DISABLED', 'รายการขายใหม่ต้องเลือกแพ็กเกจ NOVA');
+  const novaInsurance = await prepareInsurance(input);
   const conn = await getMysqlPool().getConnection();
   const id = randomUUID();
   try {
@@ -104,7 +112,8 @@ export async function createOrder(input) {
     );
     if (!sellers[0]) throw httpError(400, 'SELLER_NOT_FOUND', 'Seller not found or inactive');
 
-    let premium = 0n;
+    // Insurance: use NOVA's discounted premium; no-insurance remains zero.
+    let premium = novaInsurance ? toSatang(String(novaInsurance.snapshot.finalAmount)) : 0n;
     if (input.insuranceId) {
       const [plans] = await conn.query(
         "SELECT premium FROM insurances WHERE id = ? AND status = 'ACTIVE'",
@@ -128,6 +137,8 @@ export async function createOrder(input) {
         fromSatang(subtotal - discount), input.note,
       ],
     );
+    // Insurance: persist the snapshot atomically with the order, before payment exists.
+    await saveInsurance(conn, id, input, novaInsurance);
     await conn.commit();
   } catch (error) {
     await conn.rollback();

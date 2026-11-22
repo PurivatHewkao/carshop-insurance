@@ -35,9 +35,11 @@ export default function InsurancePartnerPage() {
             จาก NOVA INSURE พันธมิตรประกันรถยนต์ของเรา
           </p>
           <a className="s-btn pri" href={href}>
-            เลือกซื้อประกัน
+            {/* Insurance: NOVA only accepts purchases through a carshop seller. */}
+            ดูแพ็กเกจ NOVA
           </a>
-          <small>พาคุณไปยังเว็บไซต์ Partner โดยไม่ส่งข้อมูลบัญชี TOYOTY</small>
+          {/* Insurance: clarify the new purchase channel. */}
+          <small>ดูแพ็กเกจแล้วแจ้ง Seller เพื่อซื้อพร้อมรถ ติดตามผลในเมนูประกันของฉัน</small>
         </div>
         <div className="ti-art">
           <img
@@ -99,7 +101,8 @@ export default function InsurancePartnerPage() {
               {[
                 'ส่วนลดสาธิต 5% สูงสุด 1,000 บาท จากราคาแผน',
                 'เลือกประกันชั้น 3, 3+, 2+ หรือชั้น 1',
-                'ยืนยันรายการและรับเลขกรมธรรม์จำลองออนไลน์',
+                // Insurance: issuance requires NOVA approval after full payment.
+                'ชำระครบ แล้วรอ NOVA อนุมัติออกกรมธรรม์',
               ].map((text) => (
                 <li key={text}>
                   <Check size={18} />
@@ -108,7 +111,8 @@ export default function InsurancePartnerPage() {
               ))}
             </ul>
             <a className="s-btn pri" href={href}>
-              เลือกซื้อประกัน
+              {/* Insurance: browse only; purchase is handled by the seller. */}
+              ดูแพ็กเกจ NOVA
             </a>
             <small>คุณจะออกจาก TOYOTY เพื่อไปยังเว็บไซต์ NOVA INSURE</small>
           </div>

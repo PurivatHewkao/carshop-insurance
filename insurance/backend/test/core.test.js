@@ -9,6 +9,8 @@ import {
   tokenMatches,
 } from '../src/modules/purchases.js';
 import { createApp } from '../src/app.js';
+// Insurance: include the new partner/auth/approval regression tests in npm test.
+import './partner.test.js';
 
 const input = () => ({
   planId: randomUUID(),
@@ -137,7 +139,8 @@ test('HTTP boundary: health, CORS, validation, unauthorized, body limit and rate
           body: '{}',
         })
       ).status,
-      400,
+      // Insurance: direct purchases are disabled regardless of payload validity.
+      403,
     );
   assert.equal(
     (
@@ -147,6 +150,7 @@ test('HTTP boundary: health, CORS, validation, unauthorized, body limit and rate
         body: '{}',
       })
     ).status,
-    429,
+    // Insurance: the closed purchase boundary responds before the legacy limiter.
+    403,
   );
 });

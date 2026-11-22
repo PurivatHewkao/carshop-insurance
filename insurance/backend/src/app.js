@@ -7,6 +7,9 @@ import { ApiError, errorHandler } from './errors.js';
 import { plansRouter } from './modules/plans.js';
 import { purchasesRouter } from './modules/purchases.js';
 import { policiesRouter } from './modules/policies.js';
+// Insurance: partner purchase flow and independent NOVA administration.
+import { partnerRouter } from './modules/partner.js';
+import { adminRouter } from './modules/admin.js';
 export function createApp({
   pool = getPool,
   origin = frontendOrigin(),
@@ -44,6 +47,10 @@ export function createApp({
     });
   });
   app.use('/api/plans', plansRouter(pool));
+  // Insurance: direct purchases are closed; only authenticated carshop can submit.
+  app.post('/api/purchases', (_req, _res, next) => next(new ApiError(403, 'DIRECT_PURCHASE_DISABLED', 'กรุณาซื้อประกันพร้อมรถผ่าน Seller ของ TOYOTY')));
+  app.use('/api/partner', partnerRouter(pool));
+  app.use('/api/admin', adminRouter(pool));
   app.use(
     '/api/purchases',
     rateLimit({

@@ -47,7 +47,8 @@ export const pageList = [
     title: 'ประวัติธุรกรรม',
     feature: 'payment',
   },
-  { role: 'customer', path: 'insurance', title: 'ประกันของฉัน', feature: null },
+  // Insurance: real Sales-owned NOVA page replaces the unassigned placeholder.
+  { role: 'customer', path: 'insurance', title: 'ประกันของฉัน', feature: 'sales', ready: true },
   { role: 'customer', path: 'profile', title: 'โปรไฟล์', feature: 'identity' },
   { role: 'seller', path: 'tasks', title: 'งานของฉัน', feature: 'sales' },
   {

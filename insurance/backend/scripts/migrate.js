@@ -2,15 +2,18 @@ import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { getPool, closePool } from '../src/config.js';
 export async function migrate(pool) {
-  const sql = await readFile(
-    new URL('../database/001_initial.sql', import.meta.url),
-    'utf8',
-  );
-  for (const statement of sql
-    .split(';')
-    .map((part) => part.trim())
-    .filter(Boolean))
-    await pool.query(statement);
+  // Insurance: retain the original migration and apply the additive partner schema.
+  for (const file of ['001_initial.sql', '002_partner.sql']) {
+    const sql = await readFile(
+      new URL('../database/' + file, import.meta.url),
+      'utf8',
+    );
+    for (const statement of sql
+      .split(';')
+      .map((part) => part.trim())
+      .filter(Boolean))
+      await pool.query(statement);
+  }
 }
 if (
   process.argv[1] &&

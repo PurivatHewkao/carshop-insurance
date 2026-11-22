@@ -6,7 +6,10 @@ import { randomUUID } from 'node:crypto';
 import { migrate } from '../scripts/migrate.js';
 import { seed, plans } from '../scripts/seed.js';
 import { createApp } from '../src/app.js';
-import { tokenHash } from '../src/modules/purchases.js';
+// Insurance: retain historical receipt persistence coverage through the internal
+// factory. Public POST /purchases is now closed and checked separately below.
+import { tokenHash, createPurchase } from '../src/modules/purchases.js';
+import { validatePurchase } from '../src/modules/validation.js';
 
 const url = process.env.INSURANCE_TEST_DATABASE_URL;
 test(
@@ -39,12 +42,16 @@ test(
       fetch(base + path, {
         headers: token ? { Authorization: 'Bearer ' + token } : {},
       });
-    const post = (body) =>
-      fetch(base + '/purchases', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+    // Insurance: historical purchases remain readable, but cannot be created via HTTP.
+    const post = async (body) => {
+      try {
+        const data = await createPurchase(pool, validatePurchase(body));
+        return new Response(JSON.stringify({ data }), { status: 201 });
+      } catch (error) {
+        return new Response(JSON.stringify({ error: { code: error.code } }), { status: error.status || 500 });
+      }
+    };
+    assert.equal((await fetch(base + '/purchases', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).status, 403);
     assert.equal((await get('/health')).status, 200);
     const list = await (await get('/plans?source=toyoty')).json();
     assert.equal(list.data.length, 4);

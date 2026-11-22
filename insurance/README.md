@@ -1,5 +1,8 @@
 # NOVA INSURE × TOYOTY
 
+<!-- Insurance: current seller-assisted workflow supersedes historical direct checkout below. -->
+**Flow ปัจจุบัน:** ซื้อพร้อมรถผ่าน Seller ของ TOYOTY เท่านั้น ชำระครบแล้วรอแอดมิน NOVA อนุมัติ ดู [คู่มือ integration และการเปิดใช้งาน](../docs/nova-insurance-integration.md) ส่วน checkout โดยตรงด้านล่างเป็นเอกสารของ flow เก่าที่ปิดแล้ว
+
 เว็บไซต์ประกันรถยนต์ **จำลองเพื่อการศึกษา** ใน monorepo เดิม ข้อมูล ราคา ความคุ้มครอง เลขกรมธรรม์ และส่วนลดทั้งหมดเป็นตัวอย่าง ไม่มีการชำระเงินหรือความคุ้มครองจริง ไม่ใช่คำเสนอขายประกัน
 
 ## โครงสร้าง

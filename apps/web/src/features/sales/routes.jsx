@@ -13,6 +13,8 @@ import SellerAppointmentsPage from './pages/SellerAppointmentsPage.jsx'; // 1. à
 import ContactPage from './pages/ContactPage.jsx';
 import SellerCustomerDetailPage from './pages/SellerCustomerDetailPage.jsx';
 import ManagerAppointmentsPage from './pages/ManagerAppointmentsPage.jsx';
+// Insurance: replace the customer placeholder with the NOVA policy page.
+import CustomerInsurancePage from './pages/CustomerInsurancePage.jsx';
 
 function mergeWithPlanned(role, customRoutes) {
   const planned = plannedRoutes(role, 'sales') || [];
@@ -42,6 +44,8 @@ export const salesRoutes = [
 ];
 
 export const customerSalesRoutes = mergeWithPlanned('customer', [
+  // Insurance: the existing customer role guard also protects this page.
+  { path: 'insurance', element: <CustomerInsurancePage /> },
   { path: 'requests', element: <CustomerRequestsPage /> },
   { path: 'appointments', element: <CustomerRequestsPage /> },
 ]);

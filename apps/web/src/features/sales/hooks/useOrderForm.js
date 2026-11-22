@@ -4,10 +4,11 @@ import {
   createOrder,
   fetchCars,
   fetchCustomers,
-  fetchInsurances,
   fetchSellers,
 } from '../api/salesApi.js';
 import { useAction, useSalesData } from './useSalesData.js';
+// Insurance: load NOVA separately so an outage cannot block a car-only sale.
+import { fetchNovaPlans } from '../api/insuranceApi.js';
 
 const EMPTY = { customerId: '', carId: '', insuranceId: '', sellerId: '', discount: '0', note: '' };
 
@@ -18,21 +19,22 @@ const EMPTY = { customerId: '', carId: '', insuranceId: '', sellerId: '', discou
  */
 export function useOrderForm({ onCreated } = {}) {
   const lookups = useSalesData(async (signal) => {
-    const [customers, cars, insurances, sellers, actor] = await Promise.all([
+    const [customers, cars, sellers, actor] = await Promise.all([
       fetchCustomers(signal),
       fetchCars(signal),
-      fetchInsurances(signal),
       fetchSellers(signal),
       resolveActor(signal),
     ]);
-    return { customers, cars, insurances, sellers, actor };
+    return { customers, cars, sellers, actor };
   }, []);
+  // Insurance: independent loading and retry for optional NOVA packages.
+  const nova = useSalesData(fetchNovaPlans);
   const action = useAction();
   const [form, setForm] = useState(EMPTY);
 
   const customers = lookups.data?.customers ?? [];
   const cars = lookups.data?.cars ?? [];
-  const insurances = lookups.data?.insurances ?? [];
+  const insurances = nova.data ?? [];
   const sellers = lookups.data?.sellers ?? [];
   const actor = lookups.data?.actor;
 
@@ -48,7 +50,8 @@ export function useOrderForm({ onCreated } = {}) {
   const discount = Number(form.discount || 0);
   // Preview only (the server recalculates in integer satang).
   const netTotal = Math.round((carPrice + insurancePrice - discount) * 100) / 100;
-  const canSubmit = Boolean(customerId && carId && sellerId) && discount >= 0 && netTotal >= 0;
+  // Insurance: require a valid selected NOVA plan and delivery date only when insured.
+  const canSubmit = Boolean(customerId && carId && sellerId) && discount >= 0 && netTotal >= 0 && (!form.insuranceId || Boolean(insurance && form.deliveryDate && !nova.error && !nova.loading));
 
   async function submit(event) {
     event.preventDefault();
@@ -58,7 +61,11 @@ export function useOrderForm({ onCreated } = {}) {
         customerId,
         sellerId,
         carId,
-        insuranceId: form.insuranceId || null,
+        // Insurance: NOVA ids never enter the legacy insurance foreign key.
+        insuranceId: null,
+        novaPlanId: form.insuranceId || null,
+        deliveryDate: form.insuranceId ? form.deliveryDate : undefined,
+        expectedPremium: insurancePrice,
         discount: String(form.discount || '0'),
         note: form.note,
       }),
@@ -72,7 +79,8 @@ export function useOrderForm({ onCreated } = {}) {
   }
 
   return {
-    lookups, action, form, setForm, submit, canSubmit,
+    // Insurance: expose NOVA load state to the small supplemental form component.
+    lookups, nova, action, form, setForm, submit, canSubmit,
     customers, cars, insurances, sellers,
     customerId, carId, sellerId, customer,
     carPrice, insurancePrice, netTotal,

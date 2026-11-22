@@ -35,6 +35,10 @@ router.post('/', sellerOnly, requireEmployee, async (req, res) => {
     sellerId: req.salesActor.employeeId,
     carId: requireUuid(body.carId, 'carId'),
     insuranceId: body.insuranceId ? requireUuid(body.insuranceId, 'insuranceId') : null,
+    // Insurance: NOVA uses a separate reference; keep the legacy insurance FK intact.
+    novaPlanId: body.novaPlanId ? requireUuid(body.novaPlanId, 'novaPlanId') : null,
+    deliveryDate: body.deliveryDate,
+    expectedPremium: body.expectedPremium,
     discount: body.discount === undefined || body.discount === '' ? '0' : body.discount,
     note: readOptionalText(body.note, 'note', 2000),
   });
