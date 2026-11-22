@@ -818,3 +818,38 @@
   background: var(--swatch, #ccc); box-shadow: 0 0 0 1px #0003; cursor: pointer;
 }
 .catalog-page:not(.catalog-admin-page) .catalog-color-options button.is-active:not(.s-btn):not(.s-var):not(.s-sw) { box-shadow: 0 0 0 2px var(--ct-ink, #111); }
+
+/* ==========================================================================
+   Full-bleed cover: hero spans the whole screen, navbar floats on the image.
+   Only on pages that contain a cover (list + model page). Delete to undo.
+   ========================================================================== */
+.site:has(.catalog-showcase, .catalog-model-hero) { overflow-x: clip; }
+.site:has(.catalog-showcase, .catalog-model-hero) .s-nav {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 20; border-bottom: 0;
+  background: linear-gradient(180deg, #000000a8 0%, #00000000 100%);
+}
+.site:has(.catalog-showcase, .catalog-model-hero) .s-logo,
+.site:has(.catalog-showcase, .catalog-model-hero) .s-links:not(.mobile-open) a,
+.site:has(.catalog-showcase, .catalog-model-hero) .s-burger,
+.site:has(.catalog-showcase, .catalog-model-hero) .s-user .nm { color: #fff; }
+.site:has(.catalog-showcase, .catalog-model-hero) .s-links:not(.mobile-open) a { opacity: .85; }
+.site:has(.catalog-showcase, .catalog-model-hero) .s-links:not(.mobile-open) a.on,
+.site:has(.catalog-showcase, .catalog-model-hero) .s-links:not(.mobile-open) a:hover { opacity: 1; }
+.site:has(.catalog-showcase, .catalog-model-hero) .s-util .s-btn.out { background: #ffffff1f; color: #fff; border-color: #ffffff59; backdrop-filter: blur(10px); }
+
+.catalog-page:not(.catalog-admin-page):has(.catalog-showcase, .catalog-model-hero) { padding-top: 0; }
+.catalog-page:not(.catalog-admin-page) .catalog-showcase,
+.catalog-page:not(.catalog-admin-page) .catalog-model-hero {
+  width: 100vw; margin-inline: calc(50% - 50vw); border-radius: 0;
+  min-height: max(560px, 100svh); padding: clamp(110px, 16vh, 150px) clamp(20px, 5vw, 72px) clamp(32px, 6vh, 64px);
+}
+.catalog-page:not(.catalog-admin-page) .catalog-detail-page .catalog-breadcrumb,
+.catalog-detail-page.catalog-page:not(.catalog-admin-page) .catalog-breadcrumb {
+  position: absolute; z-index: 21; top: 76px; left: clamp(16px, 3vw, 52px); color: #ffffffcc;
+}
+.catalog-detail-page.catalog-page:not(.catalog-admin-page) .catalog-breadcrumb a,
+.catalog-detail-page.catalog-page:not(.catalog-admin-page) .catalog-breadcrumb strong { color: #fff; }
+@media (max-width: 720px) {
+  .catalog-page:not(.catalog-admin-page) .catalog-showcase,
+  .catalog-page:not(.catalog-admin-page) .catalog-model-hero { border-radius: 0; min-height: max(520px, 88svh); }
+}
