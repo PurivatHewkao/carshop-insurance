@@ -1,6 +1,8 @@
 import {
   appointmentsReport,
   financialReport,
+  ordersReport,
+  activityFeed,
   inventoryReport,
   salesByModel,
   salesBySeller,
@@ -22,3 +24,5 @@ export const getSalesByModel = run((req) => salesByModel(req, req.query));
 export const getInventoryReport = run((req) => inventoryReport(req));
 export const getAppointmentsReport = run((req) => appointmentsReport(req, req.query));
 export const getFinancialReport = run((req) => financialReport(req, req.query));
+export const getOrdersReport = run((req) => ordersReport(req, req.query));
+export const getActivityFeed = run((req) => activityFeed(req, req.query));

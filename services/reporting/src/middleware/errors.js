@@ -15,5 +15,6 @@ export function errorHandler(error, _req, res, _next) {
       : status === 401 ? 'กรุณาเข้าสู่ระบบใหม่'
         : status === 403 ? 'บัญชีนี้ไม่มีสิทธิ์ดูรายงาน'
           : 'Invalid request';
-  res.status(status).json({ error: { code, message } });
+  // publicMessage is set only by our own code for safe, user-facing errors.
+  res.status(status).json({ error: { code, message: error.publicMessage || message } });
 }

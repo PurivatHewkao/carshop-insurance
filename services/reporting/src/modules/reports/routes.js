@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { env } from '../../config/env.js';
 import { createRequireSession, requireRoles } from '../../../../../packages/auth/index.js';
 import { validateQuery } from '../../middleware/validate.js';
-import { reportDateRangeQuerySchema, salesSummaryQuerySchema } from './validation.js';
+import { activityFeedQuerySchema, reportDateRangeQuerySchema, salesSummaryQuerySchema } from './validation.js';
 import {
   getSalesSummary,
   getSalesBySeller,
@@ -10,6 +10,8 @@ import {
   getInventoryReport,
   getAppointmentsReport,
   getFinancialReport,
+  getOrdersReport,
+  getActivityFeed,
 } from './controller.js';
 
 const router = Router();
@@ -27,5 +29,7 @@ router.get('/sales-by-model', validateQuery(reportDateRangeQuerySchema), getSale
 router.get('/inventory', getInventoryReport);
 router.get('/appointments', validateQuery(reportDateRangeQuerySchema), getAppointmentsReport);
 router.get('/finance', validateQuery(reportDateRangeQuerySchema), getFinancialReport);
+router.get('/orders', validateQuery(reportDateRangeQuerySchema), getOrdersReport);
+router.get('/activity', validateQuery(activityFeedQuerySchema), getActivityFeed);
 
 export default router;

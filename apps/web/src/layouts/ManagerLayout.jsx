@@ -1,7 +1,10 @@
 import WorkspaceLayout from './WorkspaceLayout.jsx';
 import { pageMenu } from '../routes/pageList.js';
+import { reportLinks } from '../features/reporting/components/reportLinks.js';
 
-const links = pageMenu('manager');
+// Report pages are secondary pages (not in the Google Docs Page List counts),
+// so they are added here instead of pageList.js.
+const links = [...pageMenu('manager'), ...reportLinks('/manager')];
 
 export default function ManagerLayout() {
   return (

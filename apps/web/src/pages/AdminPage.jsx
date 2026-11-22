@@ -125,7 +125,7 @@ export default function AdminPage() {
             <p>ข้อมูลจริงจาก Reporting API (Sales, Payment, Catalog)</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link to="/reporting" className="s-btn">รายงานทั้งหมด</Link>
+            <Link to="/admin/reports" className="s-btn">รายงานทั้งหมด</Link>
             <button className="s-btn" onClick={() => setRefresh((value) => value + 1)} disabled={loading}>
               {loading ? 'กำลังโหลด…' : 'รีเฟรช'}
             </button>

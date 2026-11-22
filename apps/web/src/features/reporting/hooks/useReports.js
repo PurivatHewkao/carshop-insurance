@@ -8,6 +8,7 @@ export const REPORTS = [
   ['inventory', 'รายงานรถและสต็อก'],
   ['appointments', 'รายงานนัดหมาย'],
   ['finance', 'รายงานการเงิน'],
+  ['orders', 'รายการออเดอร์'],
 ];
 
 export function formatMoney(value) {

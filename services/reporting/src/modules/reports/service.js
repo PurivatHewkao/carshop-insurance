@@ -30,13 +30,21 @@ const cents = (value) => {
   return Number(whole) * 100 + Number((fraction + '00').slice(0, 2));
 };
 const money = (value) => (value / 100).toFixed(2);
+// Report dates are Bangkok calendar days. Date-only strings are used as is;
+// timestamps are converted so 01:00 in Bangkok is not counted as yesterday (UTC).
+const bangkokDay = (value) => {
+  const text = String(value);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? text.slice(0, 10) : date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' });
+};
 const inDateRange = (value, from, to) => {
   if (!value) return !from && !to;
-  const date = String(value).slice(0, 10);
+  const date = bangkokDay(value);
   return (!from || date >= from) && (!to || date <= to);
 };
 const groupKey = (date, groupBy) => {
-  const value = String(date || '').slice(0, 10);
+  const value = date ? bangkokDay(date) : '';
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return 'ไม่ระบุวันที่';
   if (groupBy === 'year') return value.slice(0, 4);
   if (groupBy === 'day') return value;
@@ -230,5 +238,128 @@ export async function financialReport(req, query = {}) {
       invoicesTruncated: invoicesPage.truncated,
       financeRequestsTruncated: requestsPage.truncated,
     },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Order list for "ยอดขายและออเดอร์". Read-only view of Sales GET /orders.
+export async function ordersReport(req, query = {}) {
+  const ordersRaw = await loadOrders(req);
+  const items = ordersRaw
+    .filter((item) => inDateRange(item.createdAt, query.date_from, query.date_to))
+    .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
+    .map((item) => ({
+      id: item.id,
+      code: item.code || item.id,
+      createdAt: item.createdAt,
+      customerName: item.customerName || null,
+      sellerName: item.sellerName || null,
+      carModel: item.carModel || null,
+      totalAmount: money(cents(item.totalAmount)),
+      approvalStatus: item.status || null,
+      orderStatus: item.orderStatus || null,
+    }));
+  return withSourceLimit(items, ordersRaw.length);
+}
+
+// ---------------------------------------------------------------------------
+// "ใครทำอะไรในระบบ" derived from records the source services already expose.
+// Each source is optional: a service that is down or denies this role only
+// removes its events and is reported in `sources`, the rest still render.
+const ACTIVITY_LIMIT_DEFAULT = 200;
+
+const settle = async (promise) => {
+  try {
+    return { ok: true, value: await promise };
+  } catch (error) {
+    return { ok: false, status: error.status || 500 };
+  }
+};
+
+export async function activityFeed(req, query = {}) {
+  const [orders, appointments, payments, invoices, refunds, requests] = await Promise.all([
+    settle(loadOrders(req)),
+    settle(loadAppointments(req)),
+    settle(loadAllPages((params) => getPaymentData(req, 'payments', params)).then((r) => r.items)),
+    settle(loadAllPages((params) => getPaymentData(req, 'invoices', params)).then((r) => r.items)),
+    settle(loadAllPages((params) => getPaymentData(req, 'refunds', params)).then((r) => r.items)),
+    settle(loadAllPages((params) => getPaymentData(req, 'finance-requests', params)).then((r) => r.items)),
+  ]);
+  const rows = (result) => (result.ok && Array.isArray(result.value) ? result.value : []);
+
+  // Resolve people from Sales rows: employees (seller ids) and customers.
+  const names = new Map();
+  const orderById = new Map();
+  for (const order of rows(orders)) {
+    orderById.set(order.id, order);
+    if (order.sellerId && order.sellerName) names.set(order.sellerId, order.sellerName);
+  }
+  for (const item of rows(appointments)) {
+    if (item.sellerId && item.assignedSeller) names.set(item.sellerId, item.assignedSeller);
+  }
+  const person = (id) => (id ? names.get(id) || id : null);
+  const orderLabel = (orderId) => orderById.get(orderId)?.code || orderId || null;
+
+  const events = [];
+  const push = (event) => {
+    if (event.occurredAt) events.push(event);
+  };
+  for (const order of rows(orders)) {
+    push({ occurredAt: order.createdAt, service: 'sales', action: 'ORDER_CREATED', actor: order.sellerName || person(order.sellerId), actorRole: 'seller', entity: order.code, detail: [order.customerName, order.carModel, order.totalAmount != null ? `${money(cents(order.totalAmount))} THB` : null].filter(Boolean).join(' · '), status: order.status });
+  }
+  for (const item of rows(appointments)) {
+    push({ occurredAt: item.createdAt, service: 'sales', action: 'APPOINTMENT_REQUESTED', actor: item.customerName || item.customerId, actorRole: 'customer', entity: item.code, detail: [item.type, item.carModel, item.dueDate, item.assignedSeller ? `ผู้รับผิดชอบ: ${item.assignedSeller}` : null].filter(Boolean).join(' · '), status: item.dbStatus || item.status });
+  }
+  for (const item of rows(payments)) {
+    const order = orderById.get(item.orderId);
+    push({ occurredAt: item.createdAt || item.paymentDate, service: 'payment', action: 'PAYMENT_RECORDED', actor: order?.customerName || null, actorRole: 'customer', entity: orderLabel(item.orderId), detail: [item.paymentMethod, item.amount != null ? `${money(cents(item.amount))} THB` : null].filter(Boolean).join(' · '), status: item.status });
+  }
+  for (const item of rows(invoices)) {
+    push({ occurredAt: item.createdAt || item.issueDate, service: 'payment', action: 'INVOICE_ISSUED', actor: person(item.issuedBy), actorRole: 'manager', entity: item.invoiceNumber || orderLabel(item.orderId), detail: [orderLabel(item.orderId), item.amount != null ? `${money(cents(item.amount))} THB` : null].filter(Boolean).join(' · '), status: item.status });
+  }
+  for (const item of rows(refunds)) {
+    push({ occurredAt: item.createdAt, service: 'payment', action: 'REFUND_REQUESTED', actor: person(item.requestedBy), actorRole: null, entity: orderLabel(item.orderId), detail: [item.reason, item.amount != null ? `${money(cents(item.amount))} THB` : null].filter(Boolean).join(' · '), status: item.status });
+    if (item.reviewedAt) push({ occurredAt: item.reviewedAt, service: 'payment', action: 'REFUND_REVIEWED', actor: person(item.reviewedBy), actorRole: null, entity: orderLabel(item.orderId), detail: item.reviewNote || '', status: item.status });
+  }
+  for (const item of rows(requests)) {
+    push({ occurredAt: item.createdAt, service: 'payment', action: 'FINANCE_REQUEST_CREATED', actor: person(item.createdBy), actorRole: 'seller', entity: orderLabel(item.orderId), detail: item.topic || '', status: item.status });
+    if (item.repliedAt) push({ occurredAt: item.repliedAt, service: 'payment', action: 'FINANCE_REQUEST_REPLIED', actor: person(item.repliedBy), actorRole: 'finance', entity: orderLabel(item.orderId), detail: item.topic || '', status: item.status });
+  }
+
+  // Sales sends Bangkok date-only strings ("2026-11-20"); other sources send
+  // timestamps. Filter on the Bangkok calendar day so a date never shifts.
+  const normalize = (value) => {
+    const text = String(value);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return { day: text, occurredAt: `${text}T00:00:00+07:00`, dateOnly: true, sortKey: `${text}T00:00:00.000Z` };
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    const day = date.toLocaleDateString('sv-SE', { timeZone: 'Asia/Bangkok' });
+    return { day, occurredAt: date.toISOString(), dateOnly: false, sortKey: `${day}T${date.toLocaleTimeString('sv-SE', { timeZone: 'Asia/Bangkok' })}.000Z` };
+  };
+  const limit = Math.min(Math.max(Number(query.limit) || ACTIVITY_LIMIT_DEFAULT, 1), 500);
+  const filtered = events
+    .map((event) => {
+      const time = normalize(event.occurredAt);
+      return time && { ...event, ...time };
+    })
+    .filter((event) => event
+      && (!query.service || event.service === query.service)
+      && inDateRange(event.day, query.date_from, query.date_to))
+    .sort((a, b) => b.sortKey.localeCompare(a.sortKey))
+    .map(({ sortKey: _sortKey, ...event }) => event);
+
+  return {
+    items: filtered.slice(0, limit).map((event, index) => ({ id: `${event.action}-${event.entity}-${event.occurredAt}-${index}`, ...event })),
+    total: filtered.length,
+    truncated: filtered.length > limit,
+    sources: {
+      orders: orders.ok ? 'ok' : `error ${orders.status}`,
+      appointments: appointments.ok ? 'ok' : `error ${appointments.status}`,
+      payments: payments.ok ? 'ok' : `error ${payments.status}`,
+      invoices: invoices.ok ? 'ok' : `error ${invoices.status}`,
+      refunds: refunds.ok ? 'ok' : `error ${refunds.status}`,
+      financeRequests: requests.ok ? 'ok' : `error ${requests.status}`,
+    },
+    sourceLimitReached: rows(orders).length >= SALES_SOURCE_LIMIT || rows(appointments).length >= SALES_SOURCE_LIMIT,
   };
 }

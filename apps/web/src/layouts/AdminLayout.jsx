@@ -1,8 +1,10 @@
 import WorkspaceLayout from './WorkspaceLayout.jsx';
 import { pageMenu } from '../routes/pageList.js';
+import { reportLinks } from '../features/reporting/components/reportLinks.js';
 const links = [
   ...pageMenu('admin'),
   ['/admin/finance', 'จัดการการเงิน'],
+  ...reportLinks('/admin'),
   ['/system-status', 'สถานะระบบ'],
 ];
 export default function AdminLayout() {
