@@ -44,6 +44,12 @@ paths:
                       type: object
                       properties:
                         id: { $ref: '#/components/schemas/Uuid' }
+                        modelId: { $ref: '#/components/schemas/Uuid' }
+                        brand: { type: string }
+                        modelName: { type: string }
+                        modelLabel: { type: string }
+                        color: { type: string }
+                        manufactureYear: { type: integer }
                         label: { type: string }
                         vin: { type: [string, 'null'] }
                         price: { type: number }

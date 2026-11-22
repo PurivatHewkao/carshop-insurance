@@ -13,7 +13,7 @@ const allowSignedIn = requireRoles('customer', 'seller', 'manager', 'admin');
 router.get('/cars', allowSignedIn, async (req, res) => {
   const onlyAvailable = req.query.status !== 'ALL';
   const [rows] = await getMysqlPool().query(
-    `SELECT c.id, c.price, c.color, c.manufacture_year, c.status, c.vin,
+    `SELECT c.id, c.car_model_id, c.price, c.color, c.manufacture_year, c.status, c.vin,
             m.brand, m.model_name
        FROM cars c JOIN car_models m ON m.id = c.car_model_id
       WHERE c.status <> 'INACTIVE' ${
@@ -29,6 +29,12 @@ router.get('/cars', allowSignedIn, async (req, res) => {
     data: rows.map((r) => ({
       id: r.id,
       label: `${r.brand} ${r.model_name} (${r.color}, ${r.manufacture_year})`,
+      modelId: r.car_model_id,
+      brand: r.brand,
+      modelName: r.model_name,
+      modelLabel: `${r.brand} ${r.model_name}`,
+      color: r.color,
+      manufactureYear: r.manufacture_year,
       vin: r.vin,
       price: Number(r.price),
       status: r.status,
