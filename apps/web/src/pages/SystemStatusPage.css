@@ -1,0 +1,296 @@
+/* หน้า System Status: ใช้ token จาก styles/toyoty.css จึงรองรับทั้ง light/dark */
+.ss-page {
+  min-width: 0;
+}
+.ss-muted {
+  color: var(--mute);
+  font-size: 12px;
+}
+.ss-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 20px;
+}
+.ss-recheck {
+  margin-left: auto;
+}
+
+/* การ์ดสุขภาพ service (กดเพื่อกรอง) */
+.ss-health {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+.ss-svc {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 14px 16px;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--bg);
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.ss-svc:hover {
+  border-color: var(--line2);
+}
+.ss-svc.on {
+  border-color: var(--red);
+  box-shadow: 0 0 0 1px var(--red);
+}
+.ss-svc-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ss-svc-name {
+  font: 600 15px var(--fd);
+  text-transform: capitalize;
+}
+.ss-url {
+  font: 11px ui-monospace, SFMono-Regular, Consolas, monospace;
+  color: var(--mute);
+  overflow-wrap: anywhere;
+}
+
+/* ตัวกรอง */
+.ss-h2 {
+  margin-top: 32px;
+  font: 600 20px var(--fd);
+  color: var(--ink);
+}
+.ss-filters {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--bg2);
+}
+.ss-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.ss-label {
+  width: 64px;
+  flex: none;
+  font: 600 12px var(--fd);
+  color: var(--mute);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.ss-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line2);
+  border-radius: var(--r-btn);
+  background: var(--card);
+  color: var(--ink2);
+  font: 500 13px var(--fd);
+  cursor: pointer;
+}
+.ss-chip:hover {
+  border-color: var(--ink2);
+}
+.ss-chip.on {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+}
+.ss-count {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 99px;
+  background: var(--bg2);
+  color: var(--ink2);
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+}
+.ss-chip.on .ss-count {
+  background: color-mix(in srgb, var(--bg) 22%, transparent);
+  color: var(--bg);
+}
+.ss-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rc);
+}
+.ss-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 260px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line2);
+  border-radius: var(--r-btn);
+  background: var(--card);
+  color: var(--mute);
+}
+.ss-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 13px var(--fb);
+}
+.ss-clear {
+  border: 0;
+  background: none;
+  color: var(--red-ink);
+  font: 500 13px var(--fd);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ตาราง API */
+.ss-group {
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--card);
+}
+.ss-group-h {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg2);
+}
+.ss-group-h h3 {
+  font: 600 16px var(--fd);
+  text-transform: capitalize;
+  color: var(--ink);
+}
+.ss-group-url {
+  margin-left: auto;
+}
+.ss-tw {
+  overflow-x: auto;
+}
+.ss-tbl {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.ss-tbl th {
+  padding: 8px 16px;
+  text-align: left;
+  font: 600 11px var(--fd);
+  color: var(--mute);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--line);
+}
+.ss-tbl td {
+  padding: 10px 16px;
+  vertical-align: top;
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
+}
+.ss-tbl tr:last-child td {
+  border-bottom: 0;
+}
+.ss-tbl tbody tr:hover {
+  background: var(--bg2);
+}
+.ss-path {
+  font: 12.5px ui-monospace, SFMono-Regular, Consolas, monospace;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.ss-note {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--mute);
+}
+.ss-method {
+  display: inline-block;
+  min-width: 58px;
+  padding: 2px 0;
+  border-radius: 6px;
+  font: 700 11px ui-monospace, SFMono-Regular, Consolas, monospace;
+  text-align: center;
+}
+.m-get { background: var(--info-bg); color: var(--info); }
+.m-post { background: var(--good-bg); color: var(--good); }
+.m-patch,
+.m-put { background: var(--warn-bg); color: var(--warn); }
+.m-delete { background: var(--bad-bg); color: var(--bad); }
+
+.ss-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.ss-role {
+  padding: 1px 8px;
+  border-radius: 99px;
+  font: 500 11.5px/1.6 var(--fd);
+  color: var(--rc);
+  background: color-mix(in srgb, var(--rc) 12%, transparent);
+  white-space: nowrap;
+}
+.ss-role.hit {
+  color: var(--bg);
+  background: var(--rc);
+}
+
+/* สีประจำ role (ใช้ทั้ง chip และ badge) */
+.r-guest { --rc: #6b7280; }
+.r-customer { --rc: #0f7557; }
+.r-seller { --rc: #1d5bbf; }
+.r-manager { --rc: #8b3fd1; }
+.r-finance { --rc: #b45309; }
+.r-stock { --rc: #0e7490; }
+.r-admin { --rc: #c81e2d; }
+.r-all { --rc: var(--ink2); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .ss-role { background: color-mix(in srgb, var(--rc) 24%, transparent); filter: brightness(1.35); }
+  :root:not([data-theme='light']) .ss-role.hit { filter: none; }
+}
+:root[data-theme='dark'] .ss-role { background: color-mix(in srgb, var(--rc) 24%, transparent); filter: brightness(1.35); }
+:root[data-theme='dark'] .ss-role.hit { filter: none; }
+
+.ss-empty {
+  margin-top: 18px;
+  padding: 24px;
+  text-align: center;
+  border: 1px dashed var(--line2);
+  border-radius: var(--r);
+  color: var(--mute);
+}
+.ss-foot {
+  margin-top: 18px;
+}
+@media (max-width: 560px) {
+  .ss-label {
+    width: 100%;
+  }
+  .ss-recheck {
+    margin-left: 0;
+  }
+}
