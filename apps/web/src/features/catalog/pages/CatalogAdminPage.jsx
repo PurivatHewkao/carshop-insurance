@@ -6,7 +6,7 @@ import {
   formatBaht,
   stockStatus,
 } from '../data/catalogData.js';
-import { apiErrorMessage, createCarRecord, removeCarRecord, saveCarPhotos, updateCarRecord, useCars } from '../api/catalogApi.js';
+import { apiErrorMessage, createCarRecord, removeCarRecord, saveCarPhotos, saveCover, updateCarRecord, useCars, useCovers } from '../api/catalogApi.js';
 import './catalog.css';
 
 const MAX_PHOTOS_PER_CAR = 6;
@@ -68,6 +68,7 @@ function getCarPhotos(car) {
 
 export default function CatalogAdminPage() {
   const { cars, loading, error: loadError, reload } = useCars({ gallery: true });
+  const { covers, reload: reloadCovers } = useCovers();
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [selectedPhotos, setSelectedPhotos] = useState([]);
@@ -215,6 +216,36 @@ export default function CatalogAdminPage() {
     }
   }
 
+  async function uploadCoverImage(slot, event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setBusy(true);
+    try {
+      const { dataUrl } = await compressImageFile(file);
+      await saveCover(slot, { imageUrl: dataUrl });
+      reloadCovers();
+      setNotice('เปลี่ยนรูปปกแล้ว');
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : apiErrorMessage(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function changeCover(slot, patch) {
+    setBusy(true);
+    try {
+      await saveCover(slot, patch);
+      reloadCovers();
+      setNotice('บันทึกปกแล้ว');
+    } catch (error) {
+      setNotice(apiErrorMessage(error));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function removeCar(car) {
     if (!window.confirm(`ลบ ${car.brand} ${car.name} ออกจากฐานข้อมูลหรือไม่? (รถที่มีออเดอร์หรือนัดหมายอ้างอิงอยู่จะลบไม่ได้)`)) return;
     setBusy(true);
@@ -237,9 +268,37 @@ export default function CatalogAdminPage() {
         <div className="catalog-admin-nav"><Link className="is-active" to="/admin/cars">จัดการรถ</Link><Link to="/admin/stock">สต็อกสินค้า</Link><Link to="/admin/promotions">โปรโมชัน</Link><Link to="/catalog">ดูหน้าร้าน ↗</Link></div>
       </header>
 
-      <div className="catalog-admin-notice"><span>i</span><p>รายการรถ ราคา สต็อก และรูปภาพบันทึกในฐานข้อมูลผ่าน catalog API รูปที่เลือกจากเครื่องจะถูกลดขนาดก่อนบันทึก (สูงสุด 6 รูปต่อรุ่น) การลบรุ่นรถทำไม่ได้ถ้ามีออเดอร์หรือนัดหมายอ้างอิงอยู่</p></div>
       {loadError && <div className="catalog-form-feedback" role="alert">{loadError}<button type="button" onClick={reload} aria-label="ลองโหลดใหม่">↻</button></div>}
       {notice && <div className="catalog-form-feedback" role="status">{notice}<button type="button" onClick={() => setNotice('')} aria-label="ปิดข้อความ">×</button></div>}
+
+      <section className="catalog-admin-panel catalog-cover-panel">
+        <div className="catalog-admin-panel-head"><div><p className="catalog-eyebrow">COVER</p><h2>ปกหน้าเว็บ</h2></div></div>
+        <div className="catalog-cover-grid">
+          {[['home', 'ปกหน้าแรก (Home)'], ['catalog', 'ปกหน้ารายการรถ (/catalog)']].map(([slot, label]) => {
+            const cover = covers[slot];
+            const coverCar = cars.find((car) => car.id === cover.carId);
+            const preview = cover.imageUrl || coverCar?.imageUrl || '';
+            return (
+              <div className="catalog-cover-card" key={slot}>
+                <strong>{label}</strong>
+                <div className="catalog-cover-preview">{preview ? <img src={preview} alt="" /> : <span>อัตโนมัติ</span>}</div>
+                <label>รถที่แสดงข้อความบนปก
+                  <select value={cover.carId || ''} disabled={busy} onChange={(event) => changeCover(slot, { carId: event.target.value || null })}>
+                    <option value="">อัตโนมัติ (ระบบเลือกให้)</option>
+                    {cars.map((car) => <option key={car.id} value={car.id}>{car.brand} {car.name}</option>)}
+                  </select>
+                </label>
+                <div className="catalog-cover-actions">
+                  <label className="catalog-admin-photo-add">เลือกรูปปกจากเครื่อง
+                    <input type="file" accept="image/*" disabled={busy} onChange={(event) => uploadCoverImage(slot, event)} />
+                  </label>
+                  {cover.imageUrl && <button type="button" disabled={busy} onClick={() => changeCover(slot, { imageUrl: null })}>ใช้รูปของรถแทน</button>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       <div className="catalog-admin-layout">
         <section className="catalog-admin-panel">

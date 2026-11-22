@@ -6,7 +6,7 @@ import {
   formatBaht,
   stockStatus,
 } from '../data/catalogData.js';
-import { useCars, usePromotions } from '../api/catalogApi.js';
+import { useCars, useCovers, usePromotions } from '../api/catalogApi.js';
 import './catalog.css';
 
 export default function CarsPage() {
@@ -16,9 +16,13 @@ export default function CarsPage() {
   const [budget, setBudget] = useState('');
   const [sort, setSort] = useState('recommended');
   const { promotions: allPromotions } = usePromotions();
+  const { covers } = useCovers();
   const promotions = useMemo(() => allPromotions.filter((item) => item.active).slice(0, 3), [allPromotions]);
   const categories = [...new Set(cars.map((car) => car.type))];
-  const showcaseCar = useMemo(() => cars.find((car) => car.featured) || cars[0], [cars]);
+  const showcaseCar = useMemo(() => {
+    const car = cars.find((item) => item.id === covers.catalog.carId) || cars.find((item) => item.featured) || cars[0];
+    return car && covers.catalog.imageUrl ? { ...car, imageUrl: covers.catalog.imageUrl } : car;
+  }, [cars, covers.catalog]);
 
   const filteredCars = cars
     .filter((car) => {
