@@ -1,6 +1,8 @@
-# Business modules — คนที่ 5 (อั้ม)
+# Reporting business modules — คนที่ 5 (อั้ม)
 
-ยังไม่ได้พัฒนา business API; health/routes.js เป็น route เดียวที่ทำงานจริง
-เพิ่มโฟลเดอร์ module ตามขอบเขตใน README ของ service เช่น routes.js → controller.js → service.js → repository.js และ validation.js เมื่อมีการใช้งานจริง
-ติดตั้ง validation library เมื่อเริ่มใช้ และเพิ่ม OpenAPI contract ใน docs/api-contracts.md ก่อนเชื่อมกับทีม
-เพิ่ม auth/role checks เมื่อ Identity contract พร้อม ไม่มี middleware ที่แสร้งว่าตรวจสิทธิ์แล้ว
+## Implemented modules
+
+- `reports/`: read-only report endpoints with Identity session validation and Manager/Admin authorization; aggregation is performed from Sales, Payment and Catalog APIs.
+- `activity-logs/`: MongoDB persistence and a read-only Manager/Admin query endpoint. Event ingestion remains closed pending the team-approved service-to-service authentication and actor-identity contract.
+
+เพิ่ม routes/controller/service/repository/validation ตามความจำเป็น และห้าม query database ของ service อื่นโดยตรง

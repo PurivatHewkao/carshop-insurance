@@ -15,6 +15,25 @@ export default [
     rules: { 'no-unused-vars': ['error', { argsIgnorePattern: '^_' }] },
   },
   {
+    // Mongosh scripts: run with `mongosh`, not Node, as classic scripts.
+    files: ['db schema/**/*.js'],
+    languageOptions: {
+      sourceType: 'script',
+      globals: {
+        db: 'readonly',
+        print: 'readonly',
+        printjson: 'readonly',
+        use: 'readonly',
+        ObjectId: 'readonly',
+        ISODate: 'readonly',
+        UUID: 'readonly',
+        NumberDecimal: 'readonly',
+        NumberLong: 'readonly',
+        NumberInt: 'readonly',
+      },
+    },
+  },
+  {
     files: ['apps/web/src/**/*.{js,jsx}'],
     languageOptions: {
       globals: globals.browser,

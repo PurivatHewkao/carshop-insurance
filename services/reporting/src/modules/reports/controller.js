@@ -1,19 +1,28 @@
+import {
+  appointmentsReport,
+  financialReport,
+  ordersReport,
+  activityFeed,
+  inventoryReport,
+  salesByModel,
+  salesBySeller,
+  salesSummary,
+} from './service.js';
 
-// services/reporting/src/modules/reports/controller.js
+const run = (work) => async (req, res, next) => {
+  try {
+    const data = await work(req);
+    res.set('Cache-Control', 'no-store').json({ data });
+  } catch (error) {
+    next(error);
+  }
+};
 
-function notImplemented(reportName) {
-  return (_req, res) => {
-    res.status(501).json({
-      error: {
-        code: 'NOT_IMPLEMENTED',
-        message: `${reportName} is waiting for the source API contracts.`,
-      },
-    });
-  };
-}
-
-export const getSalesSummary = notImplemented('Sales summary');
-export const getSalesBySeller = notImplemented('Sales by seller');
-export const getSalesByModel = notImplemented('Sales by model');
-export const getInventoryReport = notImplemented('Inventory report');
-export const getAppointmentsReport = notImplemented('Appointments report');
+export const getSalesSummary = run((req) => salesSummary(req, req.query));
+export const getSalesBySeller = run((req) => salesBySeller(req, req.query));
+export const getSalesByModel = run((req) => salesByModel(req, req.query));
+export const getInventoryReport = run((req) => inventoryReport(req));
+export const getAppointmentsReport = run((req) => appointmentsReport(req, req.query));
+export const getFinancialReport = run((req) => financialReport(req, req.query));
+export const getOrdersReport = run((req) => ordersReport(req, req.query));
+export const getActivityFeed = run((req) => activityFeed(req, req.query));
