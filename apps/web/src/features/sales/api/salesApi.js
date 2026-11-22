@@ -19,14 +19,14 @@ export const fetchCars = (signal) =>
   salesClient.get('lookups/cars', { signal }).then(unwrap);
 export const fetchCustomers = (signal) =>
   salesClient.get('lookups/customers', { signal }).then(unwrap);
+export const fetchCustomer = (customerId, signal) =>
+  salesClient.get(`lookups/customers/${encodeURIComponent(customerId)}`, { signal }).then(unwrap);
 export const fetchSellers = (signal) =>
   salesClient.get('lookups/sellers', { signal }).then(unwrap);
 export const fetchInsurances = (signal) =>
   salesClient.get('lookups/insurances', { signal }).then(unwrap);
-export const fetchActor = (userId, signal) =>
-  salesClient.get('lookups/actor', { params: { userId }, signal }).then(unwrap);
-export const fetchEmployees = (role, signal) =>
-  salesClient.get('lookups/employees', { params: { role }, signal }).then(unwrap);
+export const fetchActor = (signal) =>
+  salesClient.get('lookups/actor', { signal }).then(unwrap);
 
 // ---- Appointments (customer requests, seller tasks, assignments) --------------
 export const fetchAppointments = (params, signal) =>

@@ -130,11 +130,31 @@ export async function createAppointment(input) {
   }
 }
 
-export async function changeStatus(id, next) {
+export async function changeStatus(id, next, actor = {}) {
   const pool = getMysqlPool();
   const [rows] = await pool.query('SELECT id, customer_id, seller_id, status, appointment_date, appointment_time FROM appointments WHERE id = ?', [id]);
   const current = rows[0];
   if (!current) throw httpError(404, 'APPOINTMENT_NOT_FOUND', 'Appointment not found');
+  const allowedNext = {
+    PENDING: ['CONFIRMED', 'CANCELLED'],
+    CONFIRMED: ['COMPLETED', 'CANCELLED'],
+    COMPLETED: [],
+    CANCELLED: [],
+  };
+  if (current.status === next) return getAppointment(pool, id);
+  if (!allowedNext[current.status]?.includes(next))
+    throw httpError(409, 'INVALID_TRANSITION', 'ไม่สามารถเปลี่ยนสถานะจากสถานะปัจจุบันได้');
+  if (actor.role === 'customer' && current.customer_id !== actor.customerId)
+    throw httpError(403, 'FORBIDDEN', 'บัญชีนี้ไม่มีสิทธิ์แก้ไขคำขอนี้');
+  if (actor.role === 'seller' && current.seller_id !== actor.employeeId)
+    throw httpError(403, 'FORBIDDEN', 'งานนี้ไม่ได้มอบหมายให้บัญชีนี้');
+  if (actor.role === 'customer' && (next !== 'CANCELLED' || current.status !== 'PENDING'))
+    throw httpError(409, 'INVALID_TRANSITION', 'ลูกค้ายกเลิกได้เฉพาะคำขอที่ยังรอดำเนินการ');
+  if (actor.role === 'seller' && !(
+    (next === 'CONFIRMED' && current.status === 'PENDING') ||
+    (next === 'COMPLETED' && current.status === 'CONFIRMED') ||
+    (next === 'CANCELLED' && ['PENDING', 'CONFIRMED'].includes(current.status))
+  )) throw httpError(409, 'INVALID_TRANSITION', 'ไม่สามารถเปลี่ยนสถานะจากสถานะปัจจุบันได้');
   if (next === 'CONFIRMED' && !current.seller_id)
     throw httpError(409, 'NO_SELLER', 'Assign a seller before accepting the job');
   const conn = await pool.getConnection();
@@ -156,12 +176,9 @@ export async function changeStatus(id, next) {
       if (conflicts[0])
         throw httpError(409, 'APPOINTMENT_SLOT_UNAVAILABLE', 'ช่วงเวลานี้มีผู้จองแล้ว กรุณาเลือกเวลาอื่น');
     }
-    if (next === 'PENDING' && current.seller_id) {
-      await conn.query("UPDATE assignments SET status = 'CANCELLED' WHERE customer_id = ? AND seller_id = ? AND status = 'ACTIVE'", [current.customer_id, current.seller_id]);
-    }
     await conn.query(
-      `UPDATE appointments SET status = ?, seller_id = CASE WHEN ? = 'PENDING' THEN NULL ELSE seller_id END WHERE id = ?`,
-      [next, next, id],
+      'UPDATE appointments SET status = ? WHERE id = ?',
+      [next, id],
     );
   } finally {
     if (lockAcquired) await conn.query('SELECT RELEASE_LOCK(?)', [slotLock]);

@@ -1,11 +1,11 @@
 # sales frontend — คนที่ 3 (เฟียร์)
 
-รับผิดชอบ งานขายและคำสั่งซื้อ เชื่อม services/sales แล้ว (appointments, assignments, orders, approvals) ยังไม่มี auth จริง
+รับผิดชอบงานขายและคำสั่งซื้อ เชื่อม services/sales แล้ว (appointments, assignments, orders, approvals) ใช้ Identity session จริงผ่าน HttpOnly cookie
 
 ## ไฟล์เจ้าของ
 
 - routes.jsx: เพิ่ม route ของ feature ที่ export ให้ src/routes/index.jsx; path ปัจจุบัน /sales
-- api/salesApi.js: ฟังก์ชันเรียก endpoint ทั้งหมดของ sales; api/actor.js: หาลูกค้า/พนักงานที่ใช้งานอยู่ (โหมดทดสอบจนกว่า Identity จะพร้อม)
+- api/salesApi.js: ฟังก์ชันเรียก endpoint ทั้งหมดของ sales; api/actor.js: อ่าน actor ที่ผูกกับ session ที่ยืนยันแล้ว
 - hooks/useSalesData.js, hooks/useOrderForm.js และ components/SalesState.jsx: loading/error และ logic ที่หลายหน้าใช้ร่วมกัน
 - api/client.js: Axios client ของ sales เท่านั้น base URL รวม /api/v1 และเรียก relative endpoint เช่น health
 - pages/PlaceholderPage.jsx: แทนหรือเพิ่ม pages เมื่อทำ feature จริง

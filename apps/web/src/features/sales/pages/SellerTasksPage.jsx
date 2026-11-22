@@ -1,14 +1,15 @@
 // apps/web/src/features/sales/pages/SellerTasksPage.jsx
 import React, { useState } from 'react';
-import { fetchAppointments, fetchSellers, setAppointmentStatus } from '../api/salesApi.js';
+import { Link } from 'react-router-dom';
+import { fetchAppointments, setAppointmentStatus } from '../api/salesApi.js';
 import { useAction, useActorChoice, useSalesData } from '../hooks/useSalesData.js';
-import { ActionError, ActorSwitcher, LoadStatus } from '../components/SalesState.jsx';
+import { ActionError, LoadStatus } from '../components/SalesState.jsx';
 import '../sales.css';
 
 const STAGES = [['PENDING', 'รอดำเนินการ'], ['CONFIRMED', 'ยืนยันแล้ว'], ['COMPLETED', 'เสร็จสิ้น'], ['CANCELLED', 'ยกเลิก']];
 
 export default function SellerTasksPage() {
-  const actor = useActorChoice('SELLER', fetchSellers, (a) => a.employeeId);
+  const actor = useActorChoice('SELLER', (a) => a.employeeId);
   const list = useSalesData(
     (signal) =>
       actor.actorId
@@ -63,14 +64,6 @@ export default function SellerTasksPage() {
         hasData={list.data !== null}
         onRetry={() => { list.reload(); actor.reload(); }}
       />
-      <ActorSwitcher
-        label="Seller"
-        options={actor.options}
-        value={actor.actorId}
-        onChange={actor.pick}
-        isStandIn={actor.isStandIn}
-      />
-
       <div className="sales-stats-grid">
         <div className="sales-stat-card">
           <div className="sales-stat-label">งานทั้งหมดในระบบ</div>
@@ -164,7 +157,7 @@ export default function SellerTasksPage() {
                   <tr key={task.id}>
                     <td><strong style={{ color: '#0f172a' }}>{task.code}</strong></td>
                     <td>
-                      <div style={{ fontWeight: 600 }}>{task.customerName}</div>
+                      <Link className="sales-customer-link" to={`/seller/customers/${encodeURIComponent(task.customerId)}`}>{task.customerName}</Link>
                       <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{task.phone}</div>
                     </td>
                     <td>
