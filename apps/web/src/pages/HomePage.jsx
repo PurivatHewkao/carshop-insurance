@@ -62,7 +62,7 @@ function HomePromotionCard({ promotion, index }) {
 }
 
 export default function HomePage() {
-  const [hero, specs, carsBlock, , features, cta] = blocks;
+  const [hero, specs, carsBlock, , features] = blocks;
   const { cars: catalogCars, loading: carsLoading } = useCars();
   const { promotions: allPromotions, loading: promotionsLoading, error: promotionsError } = usePromotions();
   const activePromotions = useMemo(() => allPromotions.filter((promotion) => promotion.active), [allPromotions]);
@@ -123,10 +123,10 @@ export default function HomePage() {
         </section>
         <section className="s-cta" id="insurance">
           <div>
-            <h2>{cta.title}</h2>
-            <p>{cta.body}</p>
+            <h2>เลือกประกันกับ Partner ของเรา เพื่อดีลที่ดีกว่า</h2>
+            <p>เลือกแผนประกันจำลองกับ NOVA INSURE พร้อมส่วนลดสาธิตสำหรับลูกค้า TOYOTY</p>
           </div>
-          <Action variant="light" to="/requests?type=จอง">{cta.btn}</Action>
+          <Action variant="light" to="/insurance">เลือกประกันรถยนต์</Action>
         </section>
       </div>
     </>

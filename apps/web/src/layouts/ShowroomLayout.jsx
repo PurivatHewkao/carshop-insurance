@@ -91,7 +91,7 @@ export default function ShowroomLayout({ customer = false }) {
         <Link to="/requests?type=สนใจ">
           <span aria-hidden="true">▤</span>ใบเสนอราคา
         </Link>
-        <Link to="/#insurance">
+        <Link to="/insurance">
           <span aria-hidden="true">◇</span>ประกันรถ
         </Link>
       </aside>
@@ -109,7 +109,7 @@ export default function ShowroomLayout({ customer = false }) {
           <div>
             <h4>บริการ</h4>
             <Link to="/requests?type=นัดดูรถ">นัดทดลองขับ</Link>
-            <Link to="/#insurance">ประกันรถยนต์</Link>
+            <Link to="/insurance">ประกันรถยนต์</Link>
             <Link to="/requests">สถานะคำขอ</Link>
           </div>
           <div>

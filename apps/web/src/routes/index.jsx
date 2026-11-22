@@ -10,6 +10,7 @@ import { plannedRoutes } from './plannedRoutes.jsx';
 import ManagerPage from '../pages/ManagerPage.jsx';
 import PreserveLocationRedirect from '../components/common/PreserveLocationRedirect.jsx';
 import HomePage from '../pages/HomePage.jsx';
+import InsurancePartnerPage from '../pages/InsurancePartnerPage.jsx';
 import NotFoundPage from '../pages/NotFoundPage.jsx';
 import SystemStatusPage from '../pages/SystemStatusPage.jsx';
 import AdminPage from '../pages/AdminPage.jsx';
@@ -124,6 +125,7 @@ export const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: <HomePage /> },
+      { path: 'insurance', element: <InsurancePartnerPage /> },
       ...identityRoutes,
       {
         path: 'account',

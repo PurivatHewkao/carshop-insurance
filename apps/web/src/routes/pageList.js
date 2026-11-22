@@ -16,6 +16,7 @@ export const pageList = [
     ready: true,
   },
   { role: 'public', path: 'promotions', title: 'โปรโมชัน', feature: 'catalog' },
+  { role: 'public', path: 'insurance', title: 'ประกันรถยนต์', feature: 'insurance', ready: true },
   { role: 'public', path: 'contact', title: 'ติดต่อเรา', feature: 'sales' },
   {
     role: 'public',
