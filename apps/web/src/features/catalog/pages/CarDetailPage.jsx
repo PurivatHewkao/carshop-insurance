@@ -31,13 +31,12 @@ export default function CarDetailPage() {
   }
 
   const status = stockStatus(car.stock);
+  const outOfStock = Number(car.stock) <= 0;
   const colorOptions = getCarColorOptions(car);
   const activeColor = colorOptions.find((option) => option.name === selectedColor)
     || colorOptions.find((option) => option.value === car.color)
     || colorOptions[0];
-  const colorPhotos = Array.isArray(activeColor?.images) && activeColor.images.length
-    ? [...activeColor.images, car.imageUrl, ...(car.gallery || [])]
-    : [car.imageUrl, ...(car.gallery || [])];
+  const colorPhotos = [car.imageUrl, ...(car.gallery || [])];
   const photos = colorPhotos.filter((url, index, all) => Boolean(url) && all.indexOf(url) === index).slice(0, 6);
   const activePhotoIndex = Math.min(photoIndex, Math.max(photos.length - 1, 0));
   const selectedImageCar = { ...car, imageUrl: photos[activePhotoIndex] || '' };
@@ -98,10 +97,16 @@ export default function CarDetailPage() {
         <aside className="catalog-order-card" aria-label="สรุปรุ่นรถและการสั่งจอง">
           <p className="catalog-eyebrow">ORDER</p>
           <div className="catalog-detail-title-line"><h2>{car.brand} {car.name}</h2><span className={`catalog-status-chip ${status.tone}`}><i />{status.label}</span></div>
-          <div className="catalog-detail-price"><div><small>ราคาเริ่มต้น (ข้อมูลตัวอย่าง)</small><strong>{formatBaht(car.price)}</strong></div><span>{car.stock > 0 ? `มี ${car.stock} คันในสต็อกตัวอย่าง` : 'สามารถส่งคำขอสอบถามรถได้'}</span></div>
-          <div className="catalog-color-options"><span>เลือกสีตัวถัง</span><div>{colorOptions.map((color) => <button key={color.name} type="button" title={color.name} aria-label={`เลือกสี${color.name}`} aria-pressed={activeColor?.name === color.name} className={activeColor?.name === color.name ? 'is-active' : ''} style={{ '--swatch': color.value }} onClick={() => { setSelectedColor(color.name); setPhotoIndex(0); }} />)}</div><strong>{activeColor?.name || 'สีมาตรฐาน'}</strong></div>
-{activeColor?.images?.length > 0 && <p className="catalog-color-note">ภาพรถเปลี่ยนตามสีที่เลือกเมื่อมีรูปภาพสีดังกล่าว</p>}
-          <div className="catalog-detail-actions"><Action to={`${requestUrl}&type=จอง`}>ส่งคำขอจองรถ</Action><Action to={`${requestUrl}&type=ทดลองขับ`} variant="out">นัดทดลองขับ</Action></div>
+          <div className="catalog-detail-price"><div><small>ราคาเริ่มต้น (ข้อมูลตัวอย่าง)</small><strong>{formatBaht(car.price)}</strong></div><span>{car.stock > 0 ? `มี ${car.stock} คันในสต็อกตัวอย่าง` : 'รุ่นนี้หมดสต็อกชั่วคราว'}</span></div>
+          <div className="catalog-color-options"><span>เลือกสีตัวถัง</span><div>{colorOptions.map((color) => <button key={color.name} type="button" title={color.name} aria-label={`เลือกสี${color.name}`} aria-pressed={activeColor?.name === color.name} className={activeColor?.name === color.name ? 'is-active' : ''} style={{ '--swatch': color.value || color.hex || color.color }} onClick={() => setSelectedColor(color.name)} />)}</div><strong>{activeColor?.name || 'สีมาตรฐาน'}</strong></div>
+          {outOfStock ? (
+            <div className="catalog-detail-actions">
+              <button type="button" className="s-btn catalog-soldout-btn" disabled>หมดสต็อก ไม่สามารถสั่งจองได้</button>
+              <Link className="catalog-soldout-link" to="/catalog">ดูรุ่นอื่นที่พร้อมจำหน่าย</Link>
+            </div>
+          ) : (
+            <div className="catalog-detail-actions"><Action to={`${requestUrl}&type=จอง`}>ส่งคำขอจองรถ</Action><Action to={`${requestUrl}&type=ทดลองขับ`} variant="out">นัดทดลองขับ</Action></div>
+          )}
           <div className="catalog-trust-notes"><span>✓ ข้อมูลรถและออปชันตามรุ่น</span><span>✓ สอบถามเงื่อนไขกับที่ปรึกษาการขาย</span><span>✓ ราคาและสต็อกเป็นข้อมูลจำลอง</span></div>
         </aside>
       </div>
