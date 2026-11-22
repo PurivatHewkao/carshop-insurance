@@ -122,15 +122,15 @@ Manual demo: TOYOTY → เมนูประกันรถยนต์ → NOV
 
 ## Deploy จาก repository เดียว
 
-ไม่สร้าง GitHub repo ใหม่ ไม่เปลี่ยน deployment TOYOTY เดิม และไม่ publish production อัตโนมัติ
+ไม่สร้าง GitHub repo ใหม่ คงรูปแบบ deployment TOYOTY เดิม และ deploy production ตามคำขอของเจ้าของโปรเจกต์ ดู URL และสถานะจริงที่ [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ### Railway: backend + MySQL
 
 1. เพิ่ม MySQL service **แยกจาก TOYOTY** ใน Railway แล้วเพิ่ม service จาก repo เดิม Root Directory `insurance/backend` ใช้ Node 24
 2. กำหนด DATABASE_URL เป็น reference ของ MySQL service ใหม่นี้ หรืออ้างอิงตัวแปร MYSQLHOST/PORT/USER/PASSWORD/DATABASE จาก service ใหม่ ห้ามชี้ database TOYOTY
 3. กำหนด `NODE_ENV=production`, `INSURANCE_FRONTEND_URL`, `TOYOTY_PUBLIC_URL`, `TRUST_PROXY=1` (single trusted proxy); ใช้ PORT ที่ Railway inject
-4. เลือก config file `/insurance/backend/railway.json` ใน service settings หาก Railway ไม่ค้นเจอจาก root directory
-5. install `npm ci`, pre-deploy `npm run migrate && npm run seed`, start `npm start`, healthcheck `/api/health` config อยู่ใน railway.json (DB ยังไม่พร้อม healthcheck จะ fail)
+4. ตั้ง Root Directory `/insurance/backend`, builder Railpack, start `npm start`, pre-deploy `npm run migrate && npm run seed`, healthcheck `/api/health`, timeout 120 วินาที ใน service settings โดยตรง
+5. `railway.json` เก็บตัวอย่าง config รุ่นเดิมไว้ แต่ Railway ปัจจุบัน deprecate Config as Code แล้ว การ deploy ครั้งนี้ตั้งค่าผ่าน service settings ไม่พึ่งการอ่านไฟล์ดังกล่าว ดู [Railway Infrastructure as Code](https://docs.railway.com/infrastructure-as-code#migrating-from-config-as-code) สำหรับการย้ายไป `.railway/railway.ts` ภายหลัง
 6. เปิด public domain backend และตรวจ `/api/health` กับ `/api/plans` ก่อน deploy frontend ใช้ 1 replica สำหรับ in-memory rate limiter
 
 ### Vercel: NOVA frontend
