@@ -6,7 +6,7 @@ import {
   formatBaht,
   stockStatus,
 } from '../data/catalogData.js';
-import { useCars, useCovers, usePromotions } from '../api/catalogApi.js';
+import { useCars, usePromotions } from '../api/catalogApi.js';
 import './catalog.css';
 
 export default function CarsPage() {
@@ -16,13 +16,9 @@ export default function CarsPage() {
   const [budget, setBudget] = useState('');
   const [sort, setSort] = useState('recommended');
   const { promotions: allPromotions } = usePromotions();
-  const { covers } = useCovers();
   const promotions = useMemo(() => allPromotions.filter((item) => item.active).slice(0, 3), [allPromotions]);
   const categories = [...new Set(cars.map((car) => car.type))];
-  const showcaseCar = useMemo(() => {
-    const car = cars.find((item) => item.id === covers.catalog.carId) || cars.find((item) => item.featured) || cars[0];
-    return car && covers.catalog.imageUrl ? { ...car, imageUrl: covers.catalog.imageUrl } : car;
-  }, [cars, covers.catalog]);
+  const showcaseCar = useMemo(() => cars.find((car) => car.featured && Number(car.stock) > 0) || cars.find((car) => Number(car.stock) > 0) || cars[0], [cars]);
 
   const filteredCars = cars
     .filter((car) => {
@@ -53,7 +49,11 @@ export default function CarsPage() {
           {showcaseCar && (
             <div className="catalog-showcase-actions">
               <Link className="catalog-cta solid" to={`/catalog/${encodeURIComponent(showcaseCar.id)}`}>ดูรายละเอียด</Link>
-              <Link className="catalog-cta ghost" to={`/requests?brand=${encodeURIComponent(showcaseCar.brand)}&car=${encodeURIComponent(showcaseCar.name)}&type=${encodeURIComponent('ทดลองขับ')}`}>นัดทดลองขับ</Link>
+              {Number(showcaseCar.stock) > 0 ? (
+                <Link className="catalog-cta ghost" to={`/requests?brand=${encodeURIComponent(showcaseCar.brand)}&car=${encodeURIComponent(showcaseCar.name)}&type=${encodeURIComponent('ทดลองขับ')}`}>นัดทดลองขับ</Link>
+              ) : (
+                <span className="catalog-cta ghost is-disabled" aria-disabled="true">หมดสต็อก</span>
+              )}
             </div>
           )}
           <div className="catalog-showcase-stats">
@@ -72,7 +72,7 @@ export default function CarsPage() {
           </div>
           <div className="catalog-promo-mini-grid">
             {promotions.map((promo) => (
-              <Link key={promo.id} to={`/promotions/${encodeURIComponent(promo.id)}`} className="catalog-promo-mini">
+              <Link key={promo.id} to="/promotions" className="catalog-promo-mini">
                 <span className="catalog-promo-mini-badge">{promo.badge}</span>
                 <strong>{promo.title}</strong>
                 <span>{promo.value}</span>
@@ -149,7 +149,11 @@ export default function CarsPage() {
                   <span className={`catalog-tile-status ${status.tone}`}><i />{status.label}</span>
                   <div className="catalog-tile-actions">
                     <Link className="catalog-cta solid" to={detailUrl}>ดูรายละเอียด</Link>
-                    <Link className="catalog-cta ghost" to={requestUrl}>นัดทดลองขับ</Link>
+                    {Number(car.stock) > 0 ? (
+                      <Link className="catalog-cta ghost" to={requestUrl}>นัดทดลองขับ</Link>
+                    ) : (
+                      <span className="catalog-cta ghost is-disabled" aria-disabled="true">หมดสต็อก</span>
+                    )}
                   </div>
                 </article>
               );
