@@ -102,6 +102,23 @@ export async function removeCarRecord(id) {
   await catalogClient.delete('cars/' + encodeURIComponent(id));
 }
 
+// ---- Covers (which car is on the home / catalog cover) ---------------------
+
+/** { home: { carId, imageUrl }, catalog: { carId, imageUrl } } — null means automatic / the car's own photo. */
+export async function fetchCovers(signal) {
+  const { data } = await catalogClient.get('covers', { signal });
+  return data.data;
+}
+
+/** patch: { carId?: string | null, imageUrl?: string | null } — a field that is left out stays as it was. */
+export async function saveCover(slot, patch) {
+  const { data } = await catalogClient.put(
+    'covers/' + encodeURIComponent(slot),
+    patch,
+  );
+  return data.data;
+}
+
 // ---- Promotions -----------------------------------------------------------
 
 const NO_END_DATE_YEAR = 2099;
@@ -238,6 +255,17 @@ export function useCars({ gallery = false } = {}) {
     NO_ITEMS,
   );
   return { cars: data, loading, error, reload };
+}
+
+const NO_COVERS = {
+  home: { carId: null, imageUrl: null },
+  catalog: { carId: null, imageUrl: null },
+};
+
+/** Cover car picked by the admin for each slot. Falls back to automatic if it cannot load. */
+export function useCovers() {
+  const { data, loading, reload } = useLoader(fetchCovers, NO_COVERS);
+  return { covers: data, loading, reload };
 }
 
 const NO_CAR = null;
