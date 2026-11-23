@@ -1,6 +1,11 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { query, withTransaction } from '../../db/transaction.js';
-import { findOrder, lockOrder } from '../../clients/orders.js';
+import {
+  carIsReady,
+  findCarProduction,
+  findOrder,
+  lockOrder,
+} from '../../clients/orders.js';
 import {
   assertOrderAccess,
   orderScope,
@@ -81,6 +86,23 @@ export async function createInvoice(actor, orderId, rawBody) {
           ')',
       );
     }
+    // Made-to-order car: the invoice for the remaining amount is issued when the car
+    // has arrived, due a week later (by the delivery appointment) unless dueDate is given.
+    const production = await findCarProduction(connection, order.car_id);
+    if (!carIsReady(production)) {
+      throw httpError(
+        409,
+        'CAR_NOT_READY',
+        'The invoice of a made-to-order car is issued when the car has arrived (production: ' +
+          production.status +
+          ')',
+      );
+    }
+    const due =
+      dueDate ??
+      (production
+        ? new Date(Date.parse(today) + 7 * 86_400_000).toISOString().slice(0, 10)
+        : null);
     const [existing] = await connection.query(
       "SELECT invoice_number FROM invoices WHERE order_id = ? AND status <> 'CANCELLED' LIMIT 1",
       [orderId],
@@ -107,7 +129,7 @@ export async function createInvoice(actor, orderId, rawBody) {
             issuedBy,
             newInvoiceNumber(today),
             today,
-            dueDate,
+            due,
             order.total_amount,
             status,
           ],

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CarPhoto from '../components/CarPhoto.jsx';
+import ProductionQueuePanel from '../components/ProductionQueuePanel.jsx';
 import {
   apiErrorMessage,
   fetchCarPage,
@@ -145,6 +146,7 @@ export default function StockPage() {
           </nav>
         )}
       </section>
+      <ProductionQueuePanel />
       <p className="catalog-demo-note">แนวทางพัฒนาต่อ: เพิ่มการตรวจสิทธิ์ผู้ปรับยอด เก็บประวัติการเคลื่อนไหวสต็อก และกรอกเลขตัวถัง (VIN) จริงแทนค่าชั่วคราวที่ระบบสร้างให้</p>
     </div>
   );

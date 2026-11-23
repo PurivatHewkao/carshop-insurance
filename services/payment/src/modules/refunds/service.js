@@ -3,8 +3,11 @@ import { query, withTransaction } from '../../db/transaction.js';
 import { claimKey, hashRequest, saveResponse } from '../../db/idempotency.js';
 import {
   cancelOrderAfterFullRefund,
+  FREE_CANCEL_DELAY_DAYS,
+  findCarProduction,
   findOrder,
   lockOrder,
+  PRODUCTION_STARTED,
 } from '../../clients/orders.js';
 import { httpError } from '../../utils/httpError.js';
 import { formatMoney, parseAmount, toSatang } from '../../utils/money.js';
@@ -87,6 +90,26 @@ export async function requestRefund(actor, paymentId, rawBody, idempotencyKey) {
     if (!found.length) throw paymentNotFound();
     const order = await lockOrder(connection, found[0].order_id);
     assertOrderAccess(actor, order, paymentNotFound);
+    // Made-to-order: once production has started the customer can only get the money
+    // back when the car is more than FREE_CANCEL_DELAY_DAYS late. Staff may still refund.
+    if (actor.role === 'customer') {
+      const production = await findCarProduction(connection, order.car_id);
+      if (
+        production &&
+        PRODUCTION_STARTED.includes(production.status) &&
+        production.delayDays <= FREE_CANCEL_DELAY_DAYS
+      ) {
+        throw httpError(
+          409,
+          'PRODUCTION_STARTED',
+          'The car is already in production; a refund is possible only when it is more than ' +
+            FREE_CANCEL_DELAY_DAYS +
+            ' days late (now ' +
+            production.delayDays +
+            ')',
+        );
+      }
+    }
     const payment = await lockPayment(connection, paymentId);
     if (payment.status !== 'SUCCESS') {
       throw httpError(
@@ -198,8 +221,16 @@ export async function approveRefund(actor, refundId, rawBody) {
       );
     }
     // Refunds cover the whole order -> order cancelled, car available, invoices cancelled.
+    // A made-to-order car not yet delivered is also cancelled once every baht paid
+    // (usually just the deposit) has gone back: the customer walked away from the build.
     const balance = await orderBalance(connection, order);
-    if (balance.refunded >= balance.total) {
+    const production = await findCarProduction(connection, order.car_id);
+    const madeToOrderWalkAway =
+      production &&
+      production.status !== 'DELIVERED' &&
+      balance.netPaid <= 0 &&
+      balance.pending === 0;
+    if (balance.refunded >= balance.total || madeToOrderWalkAway) {
       await cancelOrderAfterFullRefund(connection, order);
       await connection.query(
         "UPDATE invoices SET status = 'CANCELLED' WHERE order_id = ? AND status <> 'CANCELLED'",

@@ -6,7 +6,11 @@
 // is stable without another table.
 import PDFDocument from 'pdfkit';
 import { query } from '../../db/transaction.js';
-import { findInvoiceContext, findOrder } from '../../clients/orders.js';
+import {
+  carDescription,
+  findInvoiceContext,
+  findOrder,
+} from '../../clients/orders.js';
 import { orderScope } from '../../middleware/auth.js';
 import { httpError } from '../../utils/httpError.js';
 import {
@@ -178,9 +182,7 @@ export async function renderReceiptPdf(actor, paymentId) {
   doc.text('รายการ', left + 10, y + 6);
   doc.text('จำนวนเงิน (บาท)', 430, y + 6, { width: right - 440, align: 'right' });
   y += 32;
-  const carName = context
-    ? `${context.brand} ${context.model_name} ปี ${context.manufacture_year} สี ${context.color}`
-    : 'รถยนต์ตามออเดอร์';
+  const carName = carDescription(context);
   doc
     .font('th-bold')
     .fontSize(11)
