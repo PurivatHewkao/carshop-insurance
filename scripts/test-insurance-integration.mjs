@@ -324,8 +324,9 @@ test(
       [order.id],
     );
     assert.equal(paid.status, 'PAID');
-    await syncInsurance(carDb);
-    await syncInsurance(carDb);
+    // Insurance: exercise the actual serverless route, not the local server.js worker.
+    assert.equal((await call(salesBase, '/internal/insurance/sync', 'customer', 'POST')).status, 401);
+    assert.equal((await call(salesBase, '/internal/insurance/sync', process.env.NOVA_PARTNER_KEY, 'POST')).status, 200);
     let customer = await call(salesBase, '/insurance/me', 'customer');
     assert.equal(customer.body.data[0].status, 'PENDING_APPROVAL');
     assert.equal(

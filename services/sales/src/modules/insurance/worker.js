@@ -38,7 +38,10 @@ export async function syncInsuranceRow(db, row, request = novaRequest) {
     ],
   );
 }
-export async function syncInsurance(db = getMysqlPool()) {
+// Insurance: limit the batch when invoked by a serverless HTTP request.
+export async function syncInsurance(db = getMysqlPool(), { limit = 10 } = {}) {
+  if (!Number.isInteger(limit) || limit < 1 || limit > 10)
+    throw new Error('Invalid insurance batch limit');
   // A MySQL advisory lock also prevents duplicate workers across replicas.
   const connection = await db.getConnection();
   let locked = false;
@@ -51,7 +54,7 @@ export async function syncInsurance(db = getMysqlPool()) {
     const [rows] =
       await connection.query(`SELECT n.* FROM order_nova_insurance n JOIN orders o ON o.id = n.order_id
       WHERE o.status IN ('PAID', 'COMPLETED') AND n.status IN ('AWAITING_PAYMENT', 'PENDING_APPROVAL')
-      AND n.next_attempt_at <= UTC_TIMESTAMP() ORDER BY n.next_attempt_at LIMIT 10`);
+      AND n.next_attempt_at <= UTC_TIMESTAMP() ORDER BY n.next_attempt_at LIMIT ${limit}`);
     for (const row of rows) {
       try {
         await syncInsuranceRow(connection, row);

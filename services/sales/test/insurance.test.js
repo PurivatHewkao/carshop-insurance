@@ -1,6 +1,7 @@
 // Insurance: deterministic recovery tests at the carshop/NOVA boundary.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { requireInsuranceSyncKey } from '../src/modules/insurance/syncRoutes.js';
 import {
   syncInsuranceRow,
   syncInsurance,
@@ -17,6 +18,15 @@ import {
   partnerEndpoint,
 } from '../../../packages/insurance/index.js';
 const orderId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+test('insurance sync requires its backend key, not a customer session', () => {
+  assert.throws(
+    () =>
+      requireInsuranceSyncKey({ get: () => 'Bearer customer-token' }, {}, () =>
+        assert.fail(),
+      ),
+    { status: 401 },
+  );
+});
 const row = {
   order_id: orderId,
   status: 'AWAITING_PAYMENT',

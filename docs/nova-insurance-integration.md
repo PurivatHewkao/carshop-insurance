@@ -114,6 +114,12 @@ NOVA มี unique order_id หาก response หายหลัง commit cars
 ข้อมูลลูกค้า รถ และราคาเก็บ snapshot ตอนขาย จึงไม่เปลี่ยนตามข้อมูลปัจจุบันระหว่าง retry
 Quote ไม่มีวันหมดอายุ เพราะต้องรับราคาของ order ที่ตกลงไว้แล้วแม้จ่ายเงินภายหลัง ควรรักษา key เดิมไว้จนรายการค้างถูกส่งครบก่อนหมุน key
 
+สำหรับ production ที่ Sales อยู่บน Vercel ให้ตั้ง `CARSHOP_SALES_API_URL` บน NOVA Railway
+เป็น `https://carshop-insurance-sales.vercel.app/api/v1` พร้อม `NOVA_PARTNER_KEY` ค่าเดียวกับ Sales
+ตัวรัน NOVA เรียก `POST /api/v1/internal/insurance/sync` ทุก 5 วินาที โดยตรวจ key และส่งครั้งละไม่เกิน 2 รายการ
+จึงไม่ต้องพึ่ง `services/sales/src/server.js` ซึ่ง Vercel ไม่เรียกใช้งาน และไม่ต้องเปิดหน้าลูกค้าค้างไว้
+API นี้ไม่ใช้บัญชีลูกค้าและไม่อนุมัติการชำระเงิน ตรวจ `PAID`/`COMPLETED` จากฐานข้อมูลก่อนส่งเสมอ
+
 เมื่อรออนุมัติ Sales อ่านผลทุกประมาณ 10–15 วินาที หน้าลูกค้า refresh ข้อมูลทุก 15 วินาที
 จึงอาจใช้เวลาประมาณ 30 วินาทีให้ผลอนุมัติปรากฏ ไม่มี webhook หรือการเปลี่ยน Payment logic
 
