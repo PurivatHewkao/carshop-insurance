@@ -1,0 +1,57 @@
+name: Deploy All Services
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-all-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 60
+
+    strategy:
+      max-parallel: 1
+      fail-fast: true
+      matrix:
+        project:
+          - carshop-insurance
+          - carshop-insurance-catalog
+          - carshop-insurance-sales
+          - carshop-insurance-payment
+          - carshop-insurance-reporting
+          - carshop-insurance-web
+          - carshop-insurance-demo
+          - nova-insure-web
+
+    steps:
+      - name: Download repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Install Vercel CLI
+        env:
+          VERCEL_CLI_VERSION: ${{ vars.VERCEL_CLI_VERSION }}
+        run: |
+          test -n "$VERCEL_CLI_VERSION"
+          npm install --global "vercel@$VERCEL_CLI_VERSION"
+
+      - name: Deploy to production
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: team_OFsX8FoHFBErdQCCN5YujsKc
+          DEPLOY_PROJECT: ${{ matrix.project }}
+        run: |
+          vercel deploy \
+            --prod \
+            --yes \
+            --scope purivat-s-projects \
+            --project "$DEPLOY_PROJECT"
