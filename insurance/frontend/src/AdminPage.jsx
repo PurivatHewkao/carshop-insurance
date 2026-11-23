@@ -3,12 +3,8 @@ import { useEffect, useState } from 'react';
 import { request, money } from './api.js';
 import './admin.css';
 const storageKey = 'nova:admin-session';
-// Insurance: requested autofill is available only on the local development site.
-const localTestAccount =
-  import.meta.env.DEV &&
-  ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)
-    ? { email: 'adminNova@nova.com', password: '12345678' }
-    : null;
+// Insurance: show the requested demo-account autofill on production as well as locally.
+const demoAdminAccount = { email: 'adminNova@nova.com', password: '12345678' };
 function initialToken() {
   try {
     return sessionStorage.getItem(storageKey) || '';
@@ -147,14 +143,14 @@ export default function AdminPage() {
             {busy ? 'กำลังเข้าสู่ระบบ…' : 'เข้าสู่ระบบ'}
           </button>
           {/* Insurance: fill the demo credentials without submitting the form. */}
-          {localTestAccount && (
+          {demoAdminAccount && (
             <button
               type="button"
               className="button secondary"
               disabled={busy}
               onClick={() => {
-                setEmail(localTestAccount.email);
-                setPassword(localTestAccount.password);
+                setEmail(demoAdminAccount.email);
+                setPassword(demoAdminAccount.password);
                 setError('');
               }}
             >
