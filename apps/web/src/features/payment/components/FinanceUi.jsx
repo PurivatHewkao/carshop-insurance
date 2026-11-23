@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { downloadInvoicePdf, paymentError } from '../api/paymentApi.js';
+import {
+  downloadInvoicePdf,
+  downloadReceiptPdf,
+  paymentError,
+} from '../api/paymentApi.js';
 import {
   carLabel,
   invoiceStatus,
@@ -134,6 +138,36 @@ export function Dialog({ title, onClose, children }) {
       </div>
       {children}
     </dialog>
+  );
+}
+
+/** ปุ่มดาวน์โหลดใบเสร็จรับเงิน — แสดงเฉพาะยอดที่รับเงินแล้ว (SUCCESS / REFUNDED) */
+export function ReceiptButton({ payment }) {
+  const [state, setState] = useState({ busy: false, error: '' });
+  if (payment.status !== 'SUCCESS' && payment.status !== 'REFUNDED')
+    return null;
+  async function save() {
+    setState({ busy: true, error: '' });
+    try {
+      await downloadReceiptPdf(payment);
+      setState({ busy: false, error: '' });
+    } catch (error) {
+      setState({ busy: false, error: paymentError(error) });
+    }
+  }
+  return (
+    <>
+      <button
+        type="button"
+        className="s-act"
+        onClick={save}
+        disabled={state.busy}
+        title={state.error || 'ดาวน์โหลดใบเสร็จรับเงิน (PDF)'}
+      >
+        {state.busy ? 'กำลังสร้าง…' : 'ใบเสร็จ'}
+      </button>
+      {state.error && <span className="small pay-calc-err">{state.error}</span>}
+    </>
   );
 }
 

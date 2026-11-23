@@ -7,6 +7,7 @@ import {
   requireEmployee,
 } from '../../middleware/auth.js';
 import { httpError } from '../../utils/httpError.js';
+import { formatMoney, splitVat, toSatang } from '../../utils/money.js';
 import {
   readDate,
   readEnum,
@@ -23,6 +24,7 @@ const dateOnly = (value) =>
   value instanceof Date ? value.toISOString().slice(0, 10) : value;
 
 export function invoiceToApi(row) {
+  const vat = splitVat(toSatang(row.amount));
   return {
     id: row.id,
     orderId: row.order_id,
@@ -31,6 +33,9 @@ export function invoiceToApi(row) {
     issueDate: dateOnly(row.issue_date),
     dueDate: dateOnly(row.due_date),
     amount: row.amount,
+    // amount is VAT-inclusive (7%): amountBeforeVat + vatAmount === amount
+    amountBeforeVat: formatMoney(vat.base),
+    vatAmount: formatMoney(vat.vat),
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

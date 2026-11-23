@@ -239,7 +239,7 @@ describe('payments', () => {
     assert.equal(res.json.error.code, 'ORDER_NOT_PAYABLE');
   });
 
-  test('full flow: transfer pending -> confirm -> card rest -> order PAID', async () => {
+  test('full flow: transfer pending -> confirm -> finance rest -> order PAID', async () => {
     const { orderId } = await makeOrder('1000000.00');
     const transfer = {
       amount: '400000.00',
@@ -292,13 +292,19 @@ describe('payments', () => {
     assert.equal(again.status, 409);
     assert.equal(await orderStatus(orderId), 'CONFIRMED');
 
-    const card = await api('POST', `/orders/${orderId}/payments`, {
+    const finance = await api('POST', `/orders/${orderId}/payments`, {
       key: 'pay-flow-0003',
-      body: { amount: '600000.00', paymentMethod: 'CREDIT_CARD' },
+      body: {
+        amount: '600000.00',
+        paymentMethod: 'FINANCE',
+        financeCompany: 'Toyoty Leasing',
+        transactionReference: 'HP-0001',
+      },
     });
-    assert.equal(card.status, 201);
-    assert.equal(card.json.data.status, 'SUCCESS');
-    assert.match(card.json.data.transactionReference, /^SIM-CC-/);
+    assert.equal(finance.status, 201);
+    assert.equal(finance.json.data.status, 'SUCCESS');
+    assert.equal(finance.json.data.paymentType, 'FINANCE_DISBURSEMENT');
+    assert.equal(finance.json.data.financeCompany, 'Toyoty Leasing');
     assert.equal(await orderStatus(orderId), 'PAID');
 
     const history = await api('GET', `/orders/${orderId}/payments`);
@@ -381,6 +387,257 @@ describe('payments', () => {
   });
 });
 
+describe('payment plan (deposit, down payment, finance, card limit)', () => {
+  test('credit card is capped per order (default 100,000)', async () => {
+    const { orderId } = await makeOrder('1000000.00');
+    let res = await api('POST', `/orders/${orderId}/payments`, {
+      key: 'card-limit-0001',
+      as: 'customer',
+      body: { amount: '100000.01', paymentMethod: 'CREDIT_CARD' },
+    });
+    assert.equal(res.status, 422);
+    assert.equal(res.json.error.code, 'CARD_LIMIT_EXCEEDED');
+
+    res = await api('POST', `/orders/${orderId}/payments`, {
+      key: 'card-limit-0002',
+      as: 'customer',
+      body: {
+        amount: '50000.00',
+        paymentMethod: 'CREDIT_CARD',
+        paymentType: 'BOOKING_DEPOSIT',
+      },
+    });
+    assert.equal(res.status, 201);
+    assert.equal(res.json.data.paymentType, 'BOOKING_DEPOSIT');
+
+    // 50,000 already on card: another 50,000.01 goes over the limit.
+    res = await api('POST', `/orders/${orderId}/payments`, {
+      key: 'card-limit-0003',
+      as: 'customer',
+      body: { amount: '50000.01', paymentMethod: 'CREDIT_CARD' },
+    });
+    assert.equal(res.status, 422);
+    assert.equal(res.json.error.code, 'CARD_LIMIT_EXCEEDED');
+  });
+
+  test('hire purchase: deposit -> down payment -> finance disbursement -> cash rest', async () => {
+    const { orderId } = await makeOrder('1000000.00');
+    const pay = (key, body, as = 'admin') =>
+      api('POST', `/orders/${orderId}/payments`, { key, body, as });
+
+    // Customer cannot record a finance payment; Finance must give company + contract no.
+    let res = await pay(
+      'hp-deny-0001',
+      {
+        amount: '1000.00',
+        paymentMethod: 'FINANCE',
+        financeCompany: 'X',
+        transactionReference: 'HP-X',
+      },
+      'customer',
+    );
+    assert.equal(res.status, 403);
+    res = await pay('hp-bad-00001', {
+      amount: '1000.00',
+      paymentMethod: 'FINANCE',
+      transactionReference: 'HP-X',
+    });
+    assert.equal(res.status, 400);
+    assert.equal(res.json.error.details[0].field, 'financeCompany');
+    res = await pay('hp-bad-00002', {
+      amount: '1000.00',
+      paymentMethod: 'BANK_TRANSFER',
+      paymentType: 'FINANCE_DISBURSEMENT',
+      transactionReference: 'TRF-X',
+    });
+    assert.equal(res.status, 400);
+    assert.equal(res.json.error.details[0].field, 'paymentType');
+
+    res = await pay(
+      'hp-step-0001',
+      {
+        amount: '20000.00',
+        paymentMethod: 'CREDIT_CARD',
+        paymentType: 'BOOKING_DEPOSIT',
+      },
+      'customer',
+    );
+    assert.equal(res.status, 201);
+    res = await pay('hp-step-0002', {
+      amount: '5000.00',
+      paymentMethod: 'CASH',
+      paymentType: 'BOOKING_DEPOSIT',
+    });
+    assert.equal(res.status, 409);
+    assert.equal(res.json.error.code, 'BOOKING_DEPOSIT_EXISTS');
+
+    res = await pay(
+      'hp-step-0003',
+      {
+        amount: '180000.00',
+        paymentMethod: 'BANK_TRANSFER',
+        paymentType: 'DOWN_PAYMENT',
+        transactionReference: 'TRF-DOWN-0001',
+      },
+      'customer',
+    );
+    assert.equal(res.status, 201);
+    assert.equal(res.json.data.status, 'PENDING');
+    const confirm = await api('PATCH', `/payments/${res.json.data.id}`, {
+      body: { status: 'SUCCESS' },
+    });
+    assert.equal(confirm.status, 200);
+
+    res = await pay('hp-step-0004', {
+      amount: '700000.00',
+      paymentMethod: 'FINANCE',
+      financeCompany: 'Toyoty Leasing',
+      transactionReference: 'HP-2026-0001',
+    });
+    assert.equal(res.status, 201);
+    assert.equal(res.json.data.paymentType, 'FINANCE_DISBURSEMENT');
+    res = await pay('hp-step-0005', {
+      amount: '100000.00',
+      paymentMethod: 'FINANCE',
+      financeCompany: 'Toyoty Leasing',
+      transactionReference: 'HP-2026-0002',
+    });
+    assert.equal(res.status, 409);
+    assert.equal(res.json.error.code, 'FINANCE_ALREADY_DISBURSED');
+    assert.equal(await orderStatus(orderId), 'CONFIRMED');
+
+    res = await pay('hp-step-0006', {
+      amount: '100000.00',
+      paymentMethod: 'CASH',
+    });
+    assert.equal(res.status, 201);
+    assert.equal(res.json.data.paymentType, 'BALANCE');
+    assert.equal(await orderStatus(orderId), 'PAID');
+
+    const history = await api('GET', `/orders/${orderId}/payments`);
+    assert.deepEqual(
+      history.json.data.map((p) => p.paymentType),
+      ['BOOKING_DEPOSIT', 'DOWN_PAYMENT', 'FINANCE_DISBURSEMENT', 'BALANCE'],
+    );
+    const downOnly = await api('GET', '/payments?paymentType=DOWN_PAYMENT');
+    assert.ok(downOnly.json.data.some((p) => p.orderId === orderId));
+    assert.ok(downOnly.json.data.every((p) => p.paymentType === 'DOWN_PAYMENT'));
+  });
+
+  test('deposit before approval: only BOOKING_DEPOSIT (max 50,000) on a PENDING order', async () => {
+    const { orderId } = await makeOrder('800000.00', 'PENDING');
+    const pay = (key, body, as = 'customer') =>
+      api('POST', `/orders/${orderId}/payments`, { key, body, as });
+
+    let res = await pay('pend-0001', {
+      amount: '10000.00',
+      paymentMethod: 'CREDIT_CARD',
+    });
+    assert.equal(res.status, 409);
+    assert.equal(res.json.error.code, 'ORDER_NOT_PAYABLE');
+    res = await pay('pend-0002', {
+      amount: '50000.01',
+      paymentMethod: 'CREDIT_CARD',
+      paymentType: 'BOOKING_DEPOSIT',
+    });
+    assert.equal(res.status, 422);
+    assert.equal(res.json.error.code, 'DEPOSIT_TOO_HIGH');
+
+    // Bank transfer deposit: Finance can confirm it while the order still waits.
+    res = await pay('pend-0003', {
+      amount: '20000.00',
+      paymentMethod: 'BANK_TRANSFER',
+      paymentType: 'BOOKING_DEPOSIT',
+      transactionReference: 'TRF-DEP-0001',
+    });
+    assert.equal(res.status, 201);
+    const confirm = await api('PATCH', `/payments/${res.json.data.id}`, {
+      body: { status: 'SUCCESS' },
+    });
+    assert.equal(confirm.status, 200);
+    assert.equal(await orderStatus(orderId), 'PENDING');
+
+    // Manager rejects the deal (Sales sets CANCELLED): the deposit is refunded.
+    await admin.query("UPDATE orders SET status = 'CANCELLED' WHERE id = ?", [
+      orderId,
+    ]);
+    const refund = await api(
+      'POST',
+      `/payments/${confirm.json.data.id}/refunds`,
+      {
+        key: 'pend-refund-01',
+        as: 'customer',
+        body: { amount: '20000.00', reason: 'ไม่อนุมัติการขาย' },
+      },
+    );
+    assert.equal(refund.status, 201);
+    const approved = await api(
+      'POST',
+      `/refunds/${refund.json.data.id}/approve`,
+      { body: { refundReference: 'RF-DEP-0001' } },
+    );
+    assert.equal(approved.status, 200);
+    assert.equal(approved.json.data.status, 'REFUNDED');
+  });
+
+  test('booking deposit must be the first payment', async () => {
+    const { orderId } = await makeOrder('500000.00');
+    let res = await api('POST', `/orders/${orderId}/payments`, {
+      key: 'dep-first-0001',
+      body: { amount: '10000.00', paymentMethod: 'CASH' },
+    });
+    assert.equal(res.status, 201);
+    res = await api('POST', `/orders/${orderId}/payments`, {
+      key: 'dep-first-0002',
+      body: {
+        amount: '10000.00',
+        paymentMethod: 'CASH',
+        paymentType: 'BOOKING_DEPOSIT',
+      },
+    });
+    assert.equal(res.status, 409);
+    assert.equal(res.json.error.code, 'BOOKING_DEPOSIT_NOT_FIRST');
+  });
+});
+
+describe('financing quote (public)', () => {
+  test('flat-rate installment without login', async () => {
+    const res = await api(
+      'GET',
+      '/financing/quote?price=1099000&downPercent=25&months=60',
+      { as: null },
+    );
+    assert.equal(res.status, 200);
+    const q = res.json.data;
+    assert.equal(q.downPayment, '274750.00');
+    assert.equal(q.financedAmount, '824250.00');
+    assert.equal(q.annualRate, 2.49);
+    // 824,250 x 2.49% x 5 years = 102,619.13 ; (824,250 + 102,619.13) / 60 -> 15,448 (rounded up)
+    assert.equal(q.totalInterest, '102619.13');
+    assert.equal(q.monthlyInstallment, '15448.00');
+    assert.equal(q.totalPayable, '1201630.00');
+    assert.equal(q.terms.length, 7);
+
+    const zero = await api(
+      'GET',
+      '/financing/quote?price=1200&downPercent=0&months=12&annualRate=0',
+      { as: null },
+    );
+    assert.equal(zero.json.data.monthlyInstallment, '100.00');
+
+    for (const bad of [
+      'price=1099000&downPercent=25&months=61',
+      'price=1099000&downPercent=95&months=60',
+      'price=abc&downPercent=25&months=60',
+      'price=1099000&downPercent=25&months=60&annualRate=30',
+    ]) {
+      const r = await api('GET', '/financing/quote?' + bad, { as: null });
+      assert.equal(r.status, 400, bad);
+      assert.equal(r.json.error.code, 'VALIDATION_ERROR');
+    }
+  });
+});
+
 describe('invoices', () => {
   test('issue, block duplicates, cancel, PAID when order paid', async () => {
     const { orderId } = await makeOrder('2000.00');
@@ -392,6 +649,9 @@ describe('invoices', () => {
     assert.equal(created.status, 201);
     assert.equal(created.json.data.status, 'ISSUED');
     assert.equal(created.json.data.amount, '2000.00');
+    // Prices include 7% VAT: 2000 = 1869.16 + 130.84
+    assert.equal(created.json.data.amountBeforeVat, '1869.16');
+    assert.equal(created.json.data.vatAmount, '130.84');
     assert.equal(created.json.data.dueDate, '2099-12-31');
     assert.equal(created.json.data.issuedBy, actors.manager.profileId);
     assert.match(created.json.data.invoiceNumber, /^INV-\d{8}-[0-9A-F]{6}$/);
@@ -810,6 +1070,48 @@ describe('customer views and invoice PDF', () => {
       body: Buffer.from(await res.arrayBuffer()),
     };
   }
+
+  test('GET /payments/{id}/receipt: receipt PDF only for received money', async () => {
+    const { orderId } = await makeOrder('30000.00');
+    const card = await api('POST', `/orders/${orderId}/payments`, {
+      key: 'receipt-pay-001',
+      as: 'customer',
+      body: {
+        amount: '10000.00',
+        paymentMethod: 'CREDIT_CARD',
+        paymentType: 'BOOKING_DEPOSIT',
+      },
+    });
+    const url = `/payments/${card.json.data.id}/receipt`;
+    const pdf = await getPdf(url, 'customer');
+    assert.equal(pdf.status, 200);
+    assert.equal(pdf.headers.get('content-type'), 'application/pdf');
+    assert.match(
+      pdf.headers.get('content-disposition'),
+      /RC-\d{8}-[0-9A-F]{6}[.]pdf/,
+    );
+    assert.equal(pdf.body.subarray(0, 5).toString(), '%PDF-');
+    for (const as of ['admin', 'finance', 'seller'])
+      assert.equal((await getPdf(url, as)).status, 200, as);
+    assert.equal((await getPdf(url, 'customer2')).status, 404);
+    assert.equal((await getPdf(url, 'seller2')).status, 404);
+    assert.equal((await getPdf(url, null)).status, 401);
+
+    const transfer = await api('POST', `/orders/${orderId}/payments`, {
+      key: 'receipt-pay-002',
+      as: 'customer',
+      body: {
+        amount: '5000.00',
+        paymentMethod: 'BANK_TRANSFER',
+        transactionReference: 'TRF-RC-0001',
+      },
+    });
+    const pending = await getPdf(
+      `/payments/${transfer.json.data.id}/receipt`,
+      'customer',
+    );
+    assert.equal(pending.status, 409);
+  });
 
   test('/me/invoices and /me/refunds: own rows only, customers only', async () => {
     const { orderId } = await makeOrder('1500.00');

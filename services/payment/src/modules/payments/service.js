@@ -3,7 +3,8 @@ import { query, withTransaction } from '../../db/transaction.js';
 import { claimKey, hashRequest, saveResponse } from '../../db/idempotency.js';
 import { findOrder, lockOrder, markOrderPaid } from '../../clients/orders.js';
 import { httpError } from '../../utils/httpError.js';
-import { formatMoney, parseAmount } from '../../utils/money.js';
+import { formatMoney, parseAmount, toSatang } from '../../utils/money.js';
+import { env } from '../../config/env.js';
 import {
   readDate,
   readEnum,
@@ -17,7 +18,21 @@ import {
   orderScope,
 } from '../../middleware/auth.js';
 
-export const PAYMENT_METHODS = ['CASH', 'BANK_TRANSFER', 'CREDIT_CARD'];
+export const PAYMENT_METHODS = [
+  'CASH',
+  'BANK_TRANSFER',
+  'CREDIT_CARD',
+  'FINANCE',
+];
+// What the money is for. A cash buyer: BOOKING_DEPOSIT -> BALANCE.
+// A hire-purchase buyer: BOOKING_DEPOSIT -> DOWN_PAYMENT -> FINANCE_DISBURSEMENT
+// (the finance company transfers the loan amount to the showroom).
+export const PAYMENT_TYPES = [
+  'BOOKING_DEPOSIT',
+  'DOWN_PAYMENT',
+  'BALANCE',
+  'FINANCE_DISBURSEMENT',
+];
 export const PAYMENT_STATUSES = ['PENDING', 'SUCCESS', 'FAILED', 'REFUNDED'];
 const SCOPE = 'payments.create';
 
@@ -27,6 +42,8 @@ export function paymentToApi(row) {
     orderId: row.order_id,
     amount: row.amount,
     paymentMethod: row.payment_method,
+    paymentType: row.payment_type,
+    financeCompany: row.finance_company,
     paymentDate: row.payment_date,
     status: row.status,
     transactionReference: row.transaction_reference,
@@ -36,7 +53,75 @@ export function paymentToApi(row) {
 }
 
 const COLUMNS =
-  'id, order_id, amount, payment_method, payment_date, status, transaction_reference, created_at, updated_at';
+  'id, order_id, amount, payment_method, payment_type, payment_date, status, transaction_reference, finance_company, created_at, updated_at';
+const CARD_LIMIT = toSatang(env.creditCardMaxPerOrder);
+const DEPOSIT_LIMIT = toSatang(env.bookingDepositMax);
+
+/** Order-level rules for the kind of payment (runs with the order row locked). */
+async function assertPaymentPlan(
+  connection,
+  orderId,
+  { paymentMethod, paymentType, amount },
+) {
+  const [[stats]] = await connection.query(
+    `SELECT
+       COUNT(*) AS live_count,
+       COALESCE(SUM(payment_type = 'BOOKING_DEPOSIT'), 0) AS deposits,
+       COALESCE(SUM(payment_type = 'FINANCE_DISBURSEMENT'), 0) AS disbursements,
+       COALESCE(SUM(CASE WHEN payment_method = 'CREDIT_CARD' THEN amount ELSE 0 END), 0) AS card_total
+     FROM payments WHERE order_id = ? AND status IN ('PENDING', 'SUCCESS')`,
+    [orderId],
+  );
+  if (paymentType === 'BOOKING_DEPOSIT') {
+    if (amount > DEPOSIT_LIMIT) {
+      throw httpError(
+        422,
+        'DEPOSIT_TOO_HIGH',
+        'A booking deposit is at most ' + formatMoney(DEPOSIT_LIMIT),
+        [{ field: 'amount', issue: 'deposit_limit' }],
+      );
+    }
+    if (Number(stats.deposits) > 0) {
+      throw httpError(
+        409,
+        'BOOKING_DEPOSIT_EXISTS',
+        'This order already has a booking deposit',
+      );
+    }
+    if (Number(stats.live_count) > 0) {
+      throw httpError(
+        409,
+        'BOOKING_DEPOSIT_NOT_FIRST',
+        'The booking deposit must be the first payment of the order',
+      );
+    }
+  }
+  if (
+    paymentType === 'FINANCE_DISBURSEMENT' &&
+    Number(stats.disbursements) > 0
+  ) {
+    throw httpError(
+      409,
+      'FINANCE_ALREADY_DISBURSED',
+      'The finance company has already paid this order',
+    );
+  }
+  if (paymentMethod === 'CREDIT_CARD') {
+    const used = toSatang(stats.card_total);
+    if (used + amount > CARD_LIMIT) {
+      throw httpError(
+        422,
+        'CARD_LIMIT_EXCEEDED',
+        'Credit card payments are limited to ' +
+          formatMoney(CARD_LIMIT) +
+          ' per order (remaining ' +
+          formatMoney(Math.max(0, CARD_LIMIT - used)) +
+          '); pay the rest by bank transfer or finance',
+        [{ field: 'amount', issue: 'card_limit' }],
+      );
+    }
+  }
+}
 
 export async function lockPayment(connection, paymentId) {
   const [rows] = await connection.query(
@@ -72,6 +157,10 @@ async function settleIfFullyPaid(connection, order) {
  * BANK_TRANSFER stays PENDING until Finance confirms (PATCH /payments/{id}).
  * CASH is recorded by Finance at the showroom, so it is SUCCESS immediately;
  * a customer cannot record CASH.
+ * FINANCE is the loan amount a finance company transferred to the showroom:
+ * Finance records it (SUCCESS) with the contract number and company name.
+ * CREDIT_CARD is capped per order (CREDIT_CARD_MAX_PER_ORDER, default 100,000).
+ * paymentType says what the money is for (default BALANCE; FINANCE -> FINANCE_DISBURSEMENT).
  */
 export async function createPayment(actor, orderId, rawBody, idempotencyKey) {
   const body = requireBody(rawBody);
@@ -81,29 +170,56 @@ export async function createPayment(actor, orderId, rawBody, idempotencyKey) {
     'paymentMethod',
     PAYMENT_METHODS,
   );
-  if (paymentMethod === 'CASH' && !FINANCE.includes(actor.role)) {
+  const paymentType =
+    readEnum(body.paymentType, 'paymentType', PAYMENT_TYPES, {
+      required: false,
+    }) || (paymentMethod === 'FINANCE' ? 'FINANCE_DISBURSEMENT' : 'BALANCE');
+  if (
+    (paymentMethod === 'CASH' || paymentMethod === 'FINANCE') &&
+    !FINANCE.includes(actor.role)
+  ) {
     throw httpError(
       403,
       'PAYMENT_METHOD_NOT_ALLOWED',
-      'Only Finance can record CASH payments',
+      'Only Finance can record ' + paymentMethod + ' payments',
     );
   }
-  let reference = readText(body, 'transactionReference', { max: 150 });
-  if (paymentMethod === 'BANK_TRANSFER' && !reference) {
+  if (
+    (paymentMethod === 'FINANCE') !==
+    (paymentType === 'FINANCE_DISBURSEMENT')
+  ) {
     throw httpError(
       400,
       'VALIDATION_ERROR',
-      'transactionReference is required for BANK_TRANSFER',
+      'paymentType FINANCE_DISBURSEMENT goes only with paymentMethod FINANCE',
+      [{ field: 'paymentType', issue: 'method_mismatch' }],
+    );
+  }
+  let reference = readText(body, 'transactionReference', { max: 150 });
+  if (
+    (paymentMethod === 'BANK_TRANSFER' || paymentMethod === 'FINANCE') &&
+    !reference
+  ) {
+    throw httpError(
+      400,
+      'VALIDATION_ERROR',
+      'transactionReference is required for ' + paymentMethod,
       [{ field: 'transactionReference', issue: 'required' }],
     );
   }
+  const financeCompany =
+    paymentMethod === 'FINANCE'
+      ? readText(body, 'financeCompany', { max: 150, required: true }).trim()
+      : null;
   // userId in the hash: the same key from another user is a mismatch (422), not a replay.
   const requestHash = hashRequest({
     userId: actor.userId,
     orderId,
     amount,
     paymentMethod,
+    paymentType,
     reference,
+    financeCompany,
   });
 
   return withTransaction(async (connection) => {
@@ -117,13 +233,21 @@ export async function createPayment(actor, orderId, rawBody, idempotencyKey) {
 
     const order = await lockOrder(connection, orderId);
     assertOrderAccess(actor, order, orderNotFound);
-    if (order.status !== 'CONFIRMED') {
+    // Real showrooms take the booking deposit before the manager approves the deal;
+    // everything else waits for CONFIRMED. A rejected order gets its deposit refunded.
+    const awaitingApproval = order.status === 'PENDING';
+    if (
+      order.status !== 'CONFIRMED' &&
+      !(awaitingApproval && paymentType === 'BOOKING_DEPOSIT')
+    ) {
       throw httpError(
         409,
         'ORDER_NOT_PAYABLE',
-        'Payments are accepted only for CONFIRMED orders (current: ' +
-          order.status +
-          ')',
+        awaitingApproval
+          ? 'This order is waiting for approval: only the booking deposit can be paid now'
+          : 'Payments are accepted only for CONFIRMED orders (current: ' +
+              order.status +
+              ')',
       );
     }
     const balance = await orderBalance(connection, order);
@@ -136,9 +260,14 @@ export async function createPayment(actor, orderId, rawBody, idempotencyKey) {
         [{ field: 'amount', issue: 'exceeds_outstanding' }],
       );
     }
+    await assertPaymentPlan(connection, order.id, {
+      paymentMethod,
+      paymentType,
+      amount,
+    });
 
-    const simulatedSuccess =
-      paymentMethod === 'CREDIT_CARD' || paymentMethod === 'CASH';
+    // Only BANK_TRANSFER waits for Finance to check the slip.
+    const simulatedSuccess = paymentMethod !== 'BANK_TRANSFER';
     if (simulatedSuccess && !reference) {
       reference =
         (paymentMethod === 'CASH' ? 'CASH-' : 'SIM-CC-') +
@@ -147,16 +276,19 @@ export async function createPayment(actor, orderId, rawBody, idempotencyKey) {
     const id = randomUUID();
     try {
       await connection.query(
-        `INSERT INTO payments (id, order_id, amount, payment_method, payment_date, status, transaction_reference)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO payments (id, order_id, amount, payment_method, payment_type, payment_date, status,
+                               transaction_reference, finance_company)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           order.id,
           formatMoney(amount),
           paymentMethod,
+          paymentType,
           simulatedSuccess ? new Date() : null,
           simulatedSuccess ? 'SUCCESS' : 'PENDING',
           reference,
+          financeCompany,
         ],
       );
     } catch (error) {
@@ -206,7 +338,13 @@ export async function reviewPayment(paymentId, rawBody) {
           ')',
       );
     }
-    if (status === 'SUCCESS' && !['CONFIRMED', 'PAID'].includes(order.status)) {
+    const depositBeforeApproval =
+      order.status === 'PENDING' && payment.payment_type === 'BOOKING_DEPOSIT';
+    if (
+      status === 'SUCCESS' &&
+      !['CONFIRMED', 'PAID'].includes(order.status) &&
+      !depositBeforeApproval
+    ) {
       throw httpError(
         409,
         'ORDER_NOT_PAYABLE',
@@ -276,6 +414,12 @@ export async function listPayments(actor, queryString, paging) {
       required: false,
     },
   );
+  const type = readEnum(
+    queryString.paymentType,
+    'paymentType',
+    PAYMENT_TYPES,
+    { required: false },
+  );
   const dateFrom = readDate(queryString.dateFrom, 'dateFrom');
   const dateTo = readDate(queryString.dateTo, 'dateTo');
   const add = (sql, value) => {
@@ -284,6 +428,7 @@ export async function listPayments(actor, queryString, paging) {
   };
   if (status) add('status = ?', status);
   if (method) add('payment_method = ?', method);
+  if (type) add('payment_type = ?', type);
   if (dateFrom) add('created_at >= ?', dateFrom + ' 00:00:00');
   if (dateTo) add('created_at < ? + INTERVAL 1 DAY', dateTo + ' 00:00:00');
   const whereSql = where.length ? ' WHERE ' + where.join(' AND ') : '';

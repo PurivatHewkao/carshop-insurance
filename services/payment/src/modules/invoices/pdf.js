@@ -4,15 +4,20 @@
 import { fileURLToPath } from 'node:url';
 import PDFDocument from 'pdfkit';
 import { query } from '../../db/transaction.js';
-import { findInvoiceContext } from '../../clients/orders.js';
+import { findInvoiceContext, findOrderLines } from '../../clients/orders.js';
 import { orderScope } from '../../middleware/auth.js';
 import { httpError } from '../../utils/httpError.js';
-import { formatMoney, toSatang } from '../../utils/money.js';
+import {
+  formatMoney,
+  splitVat,
+  toSatang,
+  VAT_RATE_PERCENT,
+} from '../../utils/money.js';
 
 const font = (name) =>
   fileURLToPath(new URL('../../../assets/fonts/' + name, import.meta.url));
-const REGULAR = font('Sarabun-Regular.ttf');
-const BOLD = font('Sarabun-Bold.ttf');
+export const REGULAR = font('Sarabun-Regular.ttf');
+export const BOLD = font('Sarabun-Bold.ttf');
 
 const MONTHS = [
   'ม.ค.',
@@ -28,10 +33,17 @@ const MONTHS = [
   'พ.ย.',
   'ธ.ค.',
 ];
-const METHOD = {
+export const METHOD = {
   CASH: 'เงินสด',
   BANK_TRANSFER: 'โอนเงิน',
   CREDIT_CARD: 'บัตรเครดิต',
+  FINANCE: 'ไฟแนนซ์',
+};
+export const PAYMENT_TYPE = {
+  BOOKING_DEPOSIT: 'เงินจอง',
+  DOWN_PAYMENT: 'เงินดาวน์',
+  BALANCE: 'ชำระยอด',
+  FINANCE_DISBURSEMENT: 'ยอดจัดไฟแนนซ์',
 };
 const PAYMENT_STATUS = {
   PENDING: 'รอตรวจสอบ',
@@ -86,7 +98,8 @@ async function loadInvoice(actor, invoiceId) {
     invoice.issued_by,
   );
   const [payments] = await query(
-    `SELECT payment_method, payment_date, created_at, status, transaction_reference, amount
+    `SELECT payment_method, payment_type, finance_company, payment_date, created_at, status,
+            transaction_reference, amount
      FROM payments WHERE order_id = ? AND status <> 'FAILED'
      ORDER BY COALESCE(payment_date, created_at), id`,
     [invoice.order_id],
@@ -95,16 +108,22 @@ async function loadInvoice(actor, invoiceId) {
     "SELECT COALESCE(SUM(amount), 0) AS refunded FROM refunds WHERE order_id = ? AND status = 'REFUNDED'",
     [invoice.order_id],
   );
-  return { invoice, context, payments, refunded: toSatang(refunded) };
+  const lines = await findOrderLines({ query }, invoice.order_id);
+  return { invoice, context, payments, lines, refunded: toSatang(refunded) };
 }
 
 /** Builds the PDF in memory and returns { fileName, buffer }. */
 export async function renderInvoicePdf(actor, invoiceId) {
-  const { invoice, context, payments, refunded } = await loadInvoice(
+  const { invoice, context, payments, lines, refunded } = await loadInvoice(
     actor,
     invoiceId,
   );
   const total = toSatang(invoice.amount);
+  const vat = splitVat(total);
+  const premium = toSatang(lines?.insurance_premium);
+  const discount = toSatang(lines?.discount);
+  // Car line = order subtotal minus insurance; old/odd data falls back to the invoice total.
+  const carPrice = lines ? toSatang(lines.subtotal) - premium : total;
   const paid = payments
     .filter((p) => p.status === 'SUCCESS' || p.status === 'REFUNDED')
     .reduce((sum, p) => sum + toSatang(p.amount), 0);
@@ -224,7 +243,7 @@ export async function renderInvoicePdf(actor, invoiceId) {
       width: 320,
     });
   doc.text('1', 380, y, { width: 50, align: 'center' });
-  doc.text(baht(total), 430, y, { width: right - 440, align: 'right' });
+  doc.text(baht(carPrice), 430, y, { width: right - 440, align: 'right' });
   if (context) {
     doc
       .fontSize(9)
@@ -240,13 +259,27 @@ export async function renderInvoicePdf(actor, invoiceId) {
         { width: 320 },
       );
   }
-  y += 44;
+  y += 40;
+  const extraLines = [];
+  if (premium > 0) extraLines.push(['ประกันภัยรถยนต์', '1', baht(premium)]);
+  if (discount > 0) extraLines.push(['ส่วนลด', '', '-' + baht(discount)]);
+  for (const [label, qty, value] of extraLines) {
+    doc.font('th').fontSize(11).fillColor(ink).text(label, left + 10, y, {
+      width: 320,
+    });
+    doc.text(qty, 380, y, { width: 50, align: 'center' });
+    doc.text(value, 430, y, { width: right - 440, align: 'right' });
+    y += 22;
+  }
+  y += 4;
   line(y);
 
-  // Totals
+  // Totals (prices are VAT-inclusive; show the VAT inside the total)
   y += 10;
   const totals = [
-    ['ยอดตามใบแจ้งหนี้', baht(total)],
+    ['มูลค่าก่อน VAT', baht(vat.base)],
+    ['VAT ' + VAT_RATE_PERCENT + '%', baht(vat.vat)],
+    ['ยอดรวม (รวม VAT)', baht(total)],
     ['ชำระแล้ว', baht(paid)],
     ['คืนเงินแล้ว', baht(refunded)],
   ];
@@ -287,12 +320,21 @@ export async function renderInvoicePdf(actor, invoiceId) {
   for (const p of payments) {
     doc.font('th').fontSize(10).fillColor(ink);
     doc.text(thaiDate(p.payment_date || p.created_at), left, y, { width: 90 });
-    doc.text(METHOD[p.payment_method] || p.payment_method, 145, y, {
+    doc.text(PAYMENT_TYPE[p.payment_type] || p.payment_type || '-', 145, y, {
       width: 70,
     });
-    doc.fillColor(muted).text(p.transaction_reference || '-', 215, y, {
-      width: 150,
-    });
+    const how = [
+      METHOD[p.payment_method] || p.payment_method,
+      p.finance_company,
+      p.transaction_reference,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+    doc
+      .fontSize(9)
+      .fillColor(muted)
+      .text(how, 215, y + 1, { width: 148, height: 12, ellipsis: true });
+    doc.fontSize(10);
     doc
       .fillColor(ink)
       .text(PAYMENT_STATUS[p.status] || p.status, 365, y, { width: 70 });
@@ -317,7 +359,9 @@ export async function renderInvoicePdf(actor, invoiceId) {
     .text(
       'ออกโดย ' +
         (context?.issuer_name || '-') +
-        '  ·  เอกสารนี้สร้างจากระบบ CarShop (งานวิชา CSI400) ไม่ใช่ใบกำกับภาษี',
+        '  ·  ราคารวมภาษีมูลค่าเพิ่ม ' +
+        VAT_RATE_PERCENT +
+        '% แล้ว  ·  เอกสารนี้สร้างจากระบบ CarShop (งานวิชา CSI400) ไม่ใช่ใบกำกับภาษีเต็มรูป',
       left,
       y + 8,
       { width },

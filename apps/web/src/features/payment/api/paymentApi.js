@@ -61,9 +61,8 @@ export const createInvoice = (orderId, dueDate) =>
 export const cancelInvoice = (invoiceId) =>
   send('post', `invoices/${invoiceId}/cancel`);
 
-/** ดาวน์โหลดใบแจ้งหนี้ PDF ที่ backend สร้าง (GET /invoices/{id}/pdf) */
-export async function downloadInvoicePdf(invoice) {
-  const { data } = await paymentClient.get(`invoices/${invoice.id}/pdf`, {
+async function downloadPdf(path, fileName) {
+  const { data } = await paymentClient.get(path, {
     responseType: 'blob',
     timeout: 20000,
     headers: { Accept: 'application/pdf' },
@@ -71,11 +70,31 @@ export async function downloadInvoicePdf(invoice) {
   const url = URL.createObjectURL(data);
   const link = document.createElement('a');
   link.href = url;
-  link.download = invoice.invoiceNumber + '.pdf';
+  link.download = fileName;
   document.body.append(link);
   link.click();
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+/** ดาวน์โหลดใบแจ้งหนี้ PDF ที่ backend สร้าง (GET /invoices/{id}/pdf) */
+export const downloadInvoicePdf = (invoice) =>
+  downloadPdf(`invoices/${invoice.id}/pdf`, invoice.invoiceNumber + '.pdf');
+
+/** ใบเสร็จรับเงินของยอดที่รับเงินแล้ว (GET /payments/{id}/receipt) */
+export const downloadReceiptPdf = (payment) =>
+  downloadPdf(
+    `payments/${payment.id}/receipt`,
+    'ใบเสร็จ-' + payment.id.slice(0, 6).toUpperCase() + '.pdf',
+  );
+
+/** ประมาณค่างวดผ่อน (GET /financing/quote) — เปิดได้โดยไม่ต้อง login */
+export async function getFinancingQuote(params, signal) {
+  const { data } = await paymentClient.get('financing/quote', {
+    params,
+    signal,
+  });
+  return data.data;
 }
 
 export const createFinanceRequest = (body) =>
@@ -92,13 +111,21 @@ const messages = {
   IDENTITY_UNAVAILABLE: 'ตรวจสอบการเข้าสู่ระบบไม่ได้ (Identity service ไม่ตอบ)',
   ORDER_NOT_FOUND: 'ไม่พบออเดอร์ หรือไม่ใช่ออเดอร์ของคุณ',
   ORDER_NOT_PAYABLE:
-    'ออเดอร์นี้ยังชำระไม่ได้ (ต้องได้รับอนุมัติก่อน หรือชำระครบแล้ว)',
+    'ออเดอร์นี้ยังชำระไม่ได้ (ระหว่างรออนุมัติจ่ายได้เฉพาะเงินจอง หรือชำระครบแล้ว)',
+  DEPOSIT_TOO_HIGH: 'เงินจองต้องไม่เกิน 50,000 บาท',
+  RECEIPT_NOT_AVAILABLE: 'ออกใบเสร็จได้เฉพาะยอดที่รับเงินแล้ว',
   ORDER_NOT_INVOICEABLE: 'ออกบิลได้เฉพาะออเดอร์ที่อนุมัติแล้ว',
   AMOUNT_EXCEEDS_BALANCE: 'ยอดเกินกว่ายอดคงค้าง',
   AMOUNT_EXCEEDS_REFUNDABLE: 'ยอดคืนเกินกว่ายอดที่คืนได้',
   DUPLICATE_REFERENCE: 'เลขอ้างอิงนี้ถูกใช้แล้ว',
   PAYMENT_METHOD_NOT_ALLOWED:
-    'ลูกค้าชำระเงินสดผ่านเว็บไม่ได้ กรุณาชำระที่โชว์รูม',
+    'ลูกค้าชำระเงินสดหรือบันทึกยอดไฟแนนซ์ผ่านเว็บไม่ได้ กรุณาติดต่อโชว์รูม',
+  CARD_LIMIT_EXCEEDED:
+    'บัตรเครดิตใช้ได้รวมไม่เกิน 100,000 บาทต่อออเดอร์ ส่วนที่เหลือกรุณาโอนเงินหรือใช้ไฟแนนซ์',
+  BOOKING_DEPOSIT_EXISTS: 'ออเดอร์นี้วางเงินจองไปแล้ว',
+  BOOKING_DEPOSIT_NOT_FIRST:
+    'เงินจองต้องเป็นยอดแรกของออเดอร์ (ออเดอร์นี้มีการชำระแล้ว)',
+  FINANCE_ALREADY_DISBURSED: 'ไฟแนนซ์โอนยอดจัดของออเดอร์นี้แล้ว',
   PAYMENT_ALREADY_REVIEWED: 'รายการนี้ถูกตรวจสอบไปแล้ว',
   PAYMENT_NOT_REFUNDABLE: 'คืนเงินได้เฉพาะรายการที่ชำระสำเร็จ',
   REFUND_ALREADY_REQUESTED: 'รายการนี้มีคำขอคืนเงินรอดำเนินการอยู่แล้ว',

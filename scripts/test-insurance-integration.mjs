@@ -102,6 +102,7 @@ test(
     for (const file of [
       '001_refunds_and_idempotency.sql',
       '002_finance_requests.sql',
+      '003_payment_type_finance.sql',
     ])
       await applySql(
         carDb,
@@ -313,9 +314,10 @@ test(
     const payment = await call(
       paymentBase,
       `/orders/${order.id}/payments`,
-      'customer',
+      // A whole car is not paid by card (card limit 100,000/order): Finance records cash.
+      'finance',
       'POST',
-      { amount: String(order.totalAmount), paymentMethod: 'CREDIT_CARD' },
+      { amount: String(order.totalAmount), paymentMethod: 'CASH' },
       { 'Idempotency-Key': randomUUID() },
     );
     assert.equal(payment.status, 201, JSON.stringify(payment.body));

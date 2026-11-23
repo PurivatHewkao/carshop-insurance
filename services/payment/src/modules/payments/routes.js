@@ -9,6 +9,7 @@ import {
   listPayments,
   reviewPayment,
 } from './service.js';
+import { renderReceiptPdf } from './receipt.js';
 
 // Mounted at /api/v1 after requireSession + loadActor (src/app.js).
 // Customers and sellers only reach their own orders (checked in service.js).
@@ -47,6 +48,18 @@ router.get('/payments/:id', async (req, res) => {
   res
     .set('Cache-Control', 'no-store')
     .json({ data: await getPayment(req.actor, id) });
+});
+
+router.get('/payments/:id/receipt', async (req, res) => {
+  const id = requireUuid(req.params.id);
+  const { fileName, buffer } = await renderReceiptPdf(req.actor, id);
+  res
+    .set({
+      'Cache-Control': 'no-store',
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'inline; filename="' + fileName + '"',
+    })
+    .send(buffer);
 });
 
 router.patch('/payments/:id', requireRoles(...FINANCE), async (req, res) => {

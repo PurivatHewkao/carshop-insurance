@@ -37,7 +37,21 @@ export const paymentMethods = {
   BANK_TRANSFER: 'โอนเงิน',
   CREDIT_CARD: 'บัตรเครดิต (จำลอง)',
   CASH: 'เงินสด',
+  FINANCE: 'ไฟแนนซ์',
 };
+
+// เงินแต่ละก้อนจ่ายเพื่ออะไร (ซื้อสด: จอง → ชำระยอด / ผ่อน: จอง → ดาวน์ → ไฟแนนซ์โอนยอดจัด)
+export const paymentTypes = {
+  BOOKING_DEPOSIT: 'เงินจอง',
+  DOWN_PAYMENT: 'เงินดาวน์',
+  BALANCE: 'ชำระยอด',
+  FINANCE_DISBURSEMENT: 'ยอดจัดไฟแนนซ์',
+};
+
+// บัตรเครดิตใช้ได้รวมไม่เกินเท่านี้ต่อออเดอร์ (ตรงกับ CREDIT_CARD_MAX_PER_ORDER ของ Payment service)
+export const CARD_LIMIT_SATANG = 100000 * 100;
+// เงินจองสูงสุด (ตรงกับ BOOKING_DEPOSIT_MAX) — จ่ายได้ตั้งแต่ออเดอร์ยังรอผู้จัดการอนุมัติ
+export const DEPOSIT_LIMIT_SATANG = 50000 * 100;
 
 // enum ของ API → ข้อความไทย + โทนสีของ .s-pill
 export const statusLabels = {
