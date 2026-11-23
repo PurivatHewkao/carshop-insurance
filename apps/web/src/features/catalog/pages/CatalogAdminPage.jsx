@@ -11,9 +11,13 @@ import './catalog.css';
 
 const MAX_PHOTOS_PER_CAR = 6;
 
+// รายชื่อยี่ห้อที่อนุญาตให้เพิ่มรถได้; Admin เพิ่มชื่อรุ่นใหม่ภายใต้ยี่ห้อเหล่านี้ได้
+const ALLOWED_BRANDS = ['Toyota', 'Honda', 'Nissan', 'Mazda', 'Mitsubishi', 'Isuzu', 'Suzuki', 'Subaru', 'BMW', 'Mercedes-Benz', 'Audi', 'Porsche', 'Ferrari', 'Lamborghini', 'McLaren', 'BYD', 'Tesla', 'MG', 'GWM', 'Hyundai', 'Kia', 'Volvo', 'Lexus'];
+
 const emptyForm = {
   brand: '', name: '', type: 'sedan', price: '', year: '2025', stock: '1',
   fuel: 'เบนซิน', engine: '', horsepower: '', seats: '5', imageUrl: '', variant: 'รุ่นมาตรฐาน',
+  description: '', transmission: '', drive: '', location: '', warranty: '', featuresText: '', tag: 'เพิ่มใหม่',
 };
 
 function readFileAsDataUrl(file) {
@@ -72,6 +76,7 @@ export default function CatalogAdminPage() {
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [selectedPhotos, setSelectedPhotos] = useState([]);
+  const [existingPhotos, setExistingPhotos] = useState([]);
   const [query, setQuery] = useState('');
   const [notice, setNotice] = useState('');
   const [uploadingCarId, setUploadingCarId] = useState('');
@@ -83,18 +88,23 @@ export default function CatalogAdminPage() {
   function startEdit(car) {
     setEditingId(car.id);
     setSelectedPhotos([]);
+    setExistingPhotos(getCarPhotos(car));
     setForm({
       brand: car.brand, name: car.name, type: car.type, price: String(car.price), year: String(car.year || 2025),
       stock: String(car.stock), fuel: car.fuel || 'เบนซิน', engine: car.engine || '', horsepower: String(car.horsepower || ''),
       seats: String(car.seats || 5), imageUrl: '', variant: car.variant || 'รุ่นมาตรฐาน',
+      description: car.description || '', transmission: car.transmission || '', drive: car.drive || '',
+      location: car.location || '', warranty: car.warranty || '', featuresText: (car.features || []).join('\n'), tag: car.tag || '',
     });
-    setNotice(`กำลังแก้ไข ${car.brand} ${car.name} — แก้สต็อกที่หน้าสต็อกสินค้า และเพิ่มรูปที่ปุ่ม "+ รูป" ของรถคันนั้น`);
+    setNotice(`กำลังแก้ไข ${car.brand} ${car.name} รวมถึงรูปภาพและรายละเอียดที่แสดงหน้า Customer`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function cancelEdit() {
     setEditingId('');
     setForm(emptyForm);
+    setExistingPhotos([]);
+    setSelectedPhotos([]);
     setNotice('');
   }
 
@@ -104,7 +114,7 @@ export default function CatalogAdminPage() {
     input.value = '';
     if (!files.length) return;
 
-    const slots = MAX_PHOTOS_PER_CAR - selectedPhotos.length;
+    const slots = MAX_PHOTOS_PER_CAR - selectedPhotos.length - (editingId ? existingPhotos.length : 0);
     if (slots <= 0) {
       setNotice(`เลือกรูปได้ไม่เกิน ${MAX_PHOTOS_PER_CAR} รูปต่อรถหนึ่งคัน`);
       return;
@@ -141,11 +151,18 @@ export default function CatalogAdminPage() {
         await updateCarRecord(editingId, {
           brand, name, type: form.type, price, year: Number(form.year) || 2025, fuel: form.fuel,
           variant: form.variant.trim() || 'รุ่นมาตรฐาน', engine: form.engine.trim(), horsepower: Number(form.horsepower) || 0, seats: Number(form.seats) || 5,
+          description: form.description.trim(), tag: form.tag.trim(), featured: Boolean(cars.find((car) => car.id === editingId)?.featured), transmission: form.transmission.trim(), drive: form.drive.trim(),
+          location: form.location.trim(), warranty: form.warranty.trim(),
+          features: form.featuresText.split('\n').map((item) => item.trim()).filter(Boolean),
         });
+        const addedPhotos = selectedPhotos.map((photo) => photo.dataUrl);
+        await saveCarPhotos(editingId, [...existingPhotos, ...addedPhotos].slice(0, MAX_PHOTOS_PER_CAR));
         reload();
         setEditingId('');
         setForm(emptyForm);
-        setNotice(`บันทึกการแก้ไข ${brand} ${name} แล้ว`);
+        setExistingPhotos([]);
+        setSelectedPhotos([]);
+        setNotice(`บันทึกข้อมูลและรูปภาพ ${brand} ${name} แล้ว หน้า Customer จะใช้ข้อมูลชุดเดียวกัน`);
       } catch (error) {
         setNotice(apiErrorMessage(error));
       } finally {
@@ -172,13 +189,16 @@ export default function CatalogAdminPage() {
         engine: form.engine.trim(),
         horsepower: Number(form.horsepower) || 0,
         seats: Number(form.seats) || 5,
-        description: `${brand} ${name} เพิ่มจากหน้าจัดการรถ สามารถกลับมาใส่รายละเอียดเพิ่มเติมในภายหลังได้`,
-        features: ['เพิ่มข้อมูลสเปกและอุปกรณ์เด่นเพิ่มเติมได้'],
+        description: form.description.trim(),
+        tag: form.tag.trim() || 'เพิ่มใหม่',
+        transmission: form.transmission.trim(), drive: form.drive.trim(), location: form.location.trim(), warranty: form.warranty.trim(),
+        features: form.featuresText.split('\n').map((item) => item.trim()).filter(Boolean),
         photos: allPhotos,
       });
       reload();
       setForm(emptyForm);
       setSelectedPhotos([]);
+      setExistingPhotos([]);
       setNotice(`เพิ่ม ${brand} ${name} แล้ว พร้อมรูปภาพ ${allPhotos.length} รูป — บันทึกในฐานข้อมูล`);
     } catch (error) {
       setNotice(apiErrorMessage(error));
@@ -304,8 +324,8 @@ export default function CatalogAdminPage() {
         <section className="catalog-admin-panel">
           <div className="catalog-admin-panel-head"><div><p className="catalog-eyebrow">NEW VEHICLE</p><h2>{editingId ? 'แก้ไขข้อมูลรถยนต์' : 'เพิ่มรถยนต์รุ่นใหม่'}</h2></div><span className="catalog-number-tag">{editingId ? '✎ แก้ไข' : '+ เพิ่มรุ่น'}</span></div>
           <form className="catalog-admin-form" onSubmit={handleSubmit}>
-            <label>ยี่ห้อ<input name="brand" value={form.brand} onChange={updateField} placeholder="เช่น McLaren" required /></label>
-            <label>ชื่อรุ่น<input name="name" value={form.name} onChange={updateField} placeholder="เช่น Artura" required /></label>
+            <label>ยี่ห้อ<select name="brand" value={form.brand} onChange={updateField} required><option value="">เลือกยี่ห้อรถ</option>{ALLOWED_BRANDS.map((brand) => <option key={brand} value={brand}>{brand}</option>)}</select></label>
+            <label>ชื่อรุ่น<input name="name" value={form.name} onChange={updateField} placeholder="เช่น Civic, Model 3, Artura" required /></label>
             <label>ประเภทรถ<select name="type" value={form.type} onChange={updateField}>{Object.entries(CATEGORY_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
             <label>ราคา (บาท)<input name="price" type="number" min="1" value={form.price} onChange={updateField} placeholder="เช่น 18000000" required /></label>
             <label>ปีรุ่น<input name="year" type="number" min="1990" max="2035" value={form.year} onChange={updateField} /></label>
@@ -315,6 +335,23 @@ export default function CatalogAdminPage() {
             <label className="catalog-form-wide">เครื่องยนต์ / มอเตอร์<input name="engine" value={form.engine} onChange={updateField} placeholder="เช่น 3.0L V6 Twin-Turbo" /></label>
             <label>กำลัง (แรงม้า)<input name="horsepower" type="number" min="0" value={form.horsepower} onChange={updateField} placeholder="เช่น 600" /></label>
             <label>จำนวนที่นั่ง<input name="seats" type="number" min="1" max="12" value={form.seats} onChange={updateField} /></label>
+            <label>ระบบเกียร์<input name="transmission" value={form.transmission} onChange={updateField} placeholder="เช่น อัตโนมัติ 8 สปีด" /></label>
+            <label>ระบบขับเคลื่อน<input name="drive" value={form.drive} onChange={updateField} placeholder="เช่น ขับเคลื่อนล้อหน้า" /></label>
+            <label>สถานที่รถ<input name="location" value={form.location} onChange={updateField} placeholder="เช่น โชว์รูมกรุงเทพฯ" /></label>
+            <label>การรับประกัน<input name="warranty" value={form.warranty} onChange={updateField} placeholder="เช่น รับประกันตามเงื่อนไขผู้ผลิต" /></label>
+            <label>ป้ายกำกับรถ<input name="tag" value={form.tag} onChange={updateField} placeholder="เช่น ยอดนิยม / พร้อมส่ง" /></label>
+            <label className="catalog-form-wide">รายละเอียดรถ (แสดงหน้า Customer)<textarea name="description" value={form.description} onChange={updateField} rows="3" placeholder="รายละเอียดและจุดเด่นของรถรุ่นนี้" /></label>
+            <label className="catalog-form-wide">จุดเด่น / อุปกรณ์ (ขึ้นบรรทัดใหม่แยกแต่ละข้อ)<textarea name="featuresText" value={form.featuresText} onChange={updateField} rows="4" placeholder={'ระบบความปลอดภัย\nกล้องมองหลัง\nระบบช่วยขับขี่'} /></label>
+
+            {editingId && <div className="catalog-photo-upload-box catalog-form-wide">
+              <div className="catalog-photo-upload-heading"><strong>จัดการรูปรถ (รูปแรกเป็นภาพหลัก)</strong><span>{existingPhotos.length + selectedPhotos.length}/{MAX_PHOTOS_PER_CAR} รูป</span></div>
+              <div className="catalog-upload-preview-grid">
+                {existingPhotos.map((photo, index) => <div className="catalog-upload-preview" key={`old-${index}-${photo}`}><img src={photo} alt={`รูปรถ ${index + 1}`} /><span>{index === 0 ? 'ภาพหลัก' : `ภาพ ${index + 1}`}</span><button type="button" onClick={() => setExistingPhotos((items) => items.filter((_, i) => i !== index))} aria-label={`ลบรูปที่ ${index + 1}`}>×</button><small>{index === 0 ? 'ภาพหลัก' : `ภาพ ${index + 1}`}</small></div>)}
+                {selectedPhotos.map((photo, index) => <div className="catalog-upload-preview" key={`new-${photo.name}-${index}`}><img src={photo.dataUrl} alt={photo.name} /><span title={photo.name}>{photo.name}</span><button type="button" onClick={() => setSelectedPhotos((items) => items.filter((_, i) => i !== index))} aria-label={`ลบรูป ${photo.name}`}>×</button><small>รูปใหม่</small></div>)}
+              </div>
+              <label className="catalog-upload-button"><input type="file" accept="image/*" multiple onChange={handlePhotoFiles} /><span>＋ เพิ่มรูป / เปลี่ยนรูป (ลบรูปเดิมก่อนเพื่อแทนที่)</span></label>
+              <p className="catalog-form-help">สามารถลบรูปเดิม เลือกรูปใหม่ และจัดลำดับภาพหลักได้โดยลบภาพที่ไม่ต้องการแล้วเพิ่มภาพใหม่ รูปแรกจะเป็นภาพหลัก</p>
+            </div>}
 
             {!editingId && <div className="catalog-photo-upload-box catalog-form-wide">
               <div className="catalog-photo-upload-heading"><strong>รูปภาพรถจากเครื่อง</strong><span>{selectedPhotos.length}/{MAX_PHOTOS_PER_CAR} รูป</span></div>

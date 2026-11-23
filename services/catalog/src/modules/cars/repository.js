@@ -311,17 +311,27 @@ export async function updateModel(ref, input) {
       throw httpError(409, 'CAR_EXISTS', 'This brand and model already exist');
     }
     await connection.query(
-      `UPDATE car_models SET brand = ?, model_name = ?, body_type = ?, variant = ?, engine = ?,
-         horsepower = ?, fuel = ?, seats = ? WHERE id = ?`,
+      `UPDATE car_models SET brand = ?, model_name = ?, body_type = ?, description = ?, tag = ?, featured = ?,
+         variant = ?, engine = ?, horsepower = ?, transmission = ?, drive = ?, fuel = ?, seats = ?,
+         location = ?, warranty = ?, features = ?, color_options = COALESCE(?, color_options) WHERE id = ?`,
       [
         input.brand,
         input.name,
         input.type,
+        input.description,
+        input.tag,
+        input.featured ? 1 : 0,
         input.variant,
         input.engine,
         input.horsepower,
+        input.transmission,
+        input.drive,
         input.fuel,
         input.seats,
+        input.location,
+        input.warranty,
+        JSON.stringify(input.features || []),
+        input.colorOptions === null ? null : JSON.stringify(input.colorOptions),
         id,
       ],
     );
