@@ -2,6 +2,24 @@ name: Deploy All Services
 
 on:
   workflow_dispatch:
+    inputs:
+      service:
+        description: 'Select one project, or all to deploy all 8 projects'
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - carshop-insurance
+          - carshop-insurance-catalog
+          - carshop-insurance-sales
+          - carshop-insurance-payment
+          - carshop-insurance-reporting
+          - carshop-insurance-web
+          - carshop-insurance-demo
+          - nova-insure-web
+
+run-name: Deploy ${{ inputs.service }} to production
 
 permissions:
   contents: read
@@ -21,15 +39,7 @@ jobs:
       max-parallel: 1
       fail-fast: true
       matrix:
-        project:
-          - carshop-insurance
-          - carshop-insurance-catalog
-          - carshop-insurance-sales
-          - carshop-insurance-payment
-          - carshop-insurance-reporting
-          - carshop-insurance-web
-          - carshop-insurance-demo
-          - nova-insure-web
+        project: ${{ fromJSON(inputs.service == 'all' && '["carshop-insurance","carshop-insurance-catalog","carshop-insurance-sales","carshop-insurance-payment","carshop-insurance-reporting","carshop-insurance-web","carshop-insurance-demo","nova-insure-web"]' || format('["{0}"]', inputs.service)) }}
 
     steps:
       - name: Download repository
