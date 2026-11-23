@@ -245,6 +245,7 @@ export default function ManagerInvoicesPage() {
                     {money(inv.amount)}
                   </b>
                   <span>
+                    {inv.vatAmount && `รวม VAT 7% ${money(inv.vatAmount)} · `}
                     {order?.orderNumber} {order?.customerName} · ครบกำหนด{' '}
                     {thDate(inv.dueDate)}
                   </span>

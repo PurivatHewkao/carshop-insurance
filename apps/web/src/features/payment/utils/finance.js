@@ -28,6 +28,16 @@ export const netPaid = (order) =>
 export const canPay = (order) =>
   order.orderStatus === 'CONFIRMED' && outstanding(order) > 0;
 
+/** วางเงินจองได้ไหม: ออเดอร์รอผู้จัดการอนุมัติ และยังไม่มียอดชำระ/รอตรวจเลย */
+export const canBook = (order) =>
+  order.orderStatus === 'PENDING' &&
+  toSatang(order.paidAmount) === 0 &&
+  toSatang(order.pendingAmount) === 0;
+
+/** ออเดอร์ถูกยกเลิก (เช่น ผู้จัดการไม่อนุมัติ) แต่โชว์รูมยังถือเงินลูกค้าอยู่ → ต้องคืน */
+export const needsRefund = (order) =>
+  order.orderStatus === 'CANCELLED' && netPaid(order) > 0;
+
 /** ออกบิลได้ไหม: อนุมัติแล้ว/ชำระแล้ว และยังไม่มีบิลที่ใช้งานอยู่ */
 export const canInvoice = (data, order) =>
   ['CONFIRMED', 'PAID'].includes(order.orderStatus) &&

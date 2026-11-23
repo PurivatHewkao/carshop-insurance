@@ -109,3 +109,21 @@ export async function findInvoiceContext(connection, orderId, issuedBy) {
   );
   return rows[0] || null;
 }
+
+/**
+ * Price lines of an order for the invoice PDF: subtotal (car + insurance), discount,
+ * insurance premium. insurance_premium is added by Sales migration 03; databases
+ * without it (e.g. the payment test DB) get 0.
+ */
+export async function findOrderLines(connection, orderId) {
+  const sql = (premium) =>
+    `SELECT subtotal, discount, ${premium} AS insurance_premium FROM orders WHERE id = ?`;
+  try {
+    const [rows] = await connection.query(sql('insurance_premium'), [orderId]);
+    return rows[0] || null;
+  } catch (error) {
+    if (error.code !== 'ER_BAD_FIELD_ERROR') throw error;
+    const [rows] = await connection.query(sql('0'), [orderId]);
+    return rows[0] || null;
+  }
+}

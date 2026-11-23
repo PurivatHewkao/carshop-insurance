@@ -8,6 +8,7 @@ import refundRoutes from './modules/refunds/routes.js';
 import invoiceRoutes from './modules/invoices/routes.js';
 import ledgerRoutes from './modules/ledger/routes.js';
 import financeRequestRoutes from './modules/finance-requests/routes.js';
+import financingRoutes from './modules/financing/routes.js';
 import { loadActor, requireSession } from './middleware/auth.js';
 import { errorHandler, notFound } from './middleware/errors.js';
 const app = express();
@@ -25,6 +26,7 @@ app.use(
 );
 app.use(express.json({ limit: '100kb' }));
 app.use('/api/v1/health', healthRoutes); // public
+app.use('/api/v1/financing', financingRoutes); // public: installment estimate
 // Everything below needs a logged-in user (checked by Identity).
 app.use('/api/v1', requireSession, loadActor);
 app.use('/api/v1', ledgerRoutes);
