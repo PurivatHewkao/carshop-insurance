@@ -1,7 +1,13 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { query, withTransaction } from '../../db/transaction.js';
 import { claimKey, hashRequest, saveResponse } from '../../db/idempotency.js';
-import { findOrder, lockOrder, markOrderPaid } from '../../clients/orders.js';
+import {
+  carIsReady,
+  findCarProduction,
+  findOrder,
+  lockOrder,
+  markOrderPaid,
+} from '../../clients/orders.js';
 import { httpError } from '../../utils/httpError.js';
 import { formatMoney, parseAmount, toSatang } from '../../utils/money.js';
 import { env } from '../../config/env.js';
@@ -249,6 +255,19 @@ export async function createPayment(actor, orderId, rawBody, idempotencyKey) {
               order.status +
               ')',
       );
+    }
+    // A made-to-order car is paid off (cash balance or finance loan) once it has arrived.
+    if (paymentType === 'BALANCE' || paymentType === 'FINANCE_DISBURSEMENT') {
+      const production = await findCarProduction(connection, order.car_id);
+      if (!carIsReady(production)) {
+        throw httpError(
+          409,
+          'CAR_NOT_READY',
+          'The final payment of a made-to-order car is due when the car has arrived (production: ' +
+            production.status +
+            ')',
+        );
+      }
     }
     const balance = await orderBalance(connection, order);
     if (amount > balance.outstanding) {
