@@ -14,6 +14,10 @@ const MAX_PHOTOS_PER_CAR = 6;
 // The car's own value (e.g. "ไฮบริด / เบนซิน") is added to the list when editing so saving does not change it.
 const FUELS = ['เบนซิน', 'ดีเซล', 'ไฮบริด', 'Plug-in Hybrid', 'ไฟฟ้า 100%'];
 
+// รายชื่อยี่ห้อที่อนุญาตให้เพิ่มรถได้ (ต้องตรงกับ ALLOWED_BRANDS ใน services/catalog/src/modules/cars/routes.js)
+// TOYOTY อยู่บนสุดเพราะเป็นรถที่ขายจริงตอนนี้; ยี่ห้อเดิมเก็บไว้ให้แก้รุ่นที่ถูกซ่อนได้
+const ALLOWED_BRANDS = ['TOYOTY', 'Toyota', 'Honda', 'Nissan', 'Mazda', 'Mitsubishi', 'Isuzu', 'Suzuki', 'Subaru', 'BMW', 'Mercedes-Benz', 'Audi', 'Porsche', 'Ferrari', 'Lamborghini', 'McLaren', 'BYD', 'Tesla', 'MG', 'GWM', 'Hyundai', 'Kia', 'Volvo', 'Lexus'];
+
 const emptyForm = {
   brand: '', name: '', type: 'sedan', price: '', year: '2025', stock: '1',
   fuel: 'เบนซิน', engine: '', horsepower: '', seats: '5', imageUrl: '', variant: 'รุ่นมาตรฐาน',
@@ -351,8 +355,8 @@ export default function CatalogAdminPage() {
         <section className="catalog-admin-panel">
           <div className="catalog-admin-panel-head"><div><p className="catalog-eyebrow">NEW VEHICLE</p><h2>{editingId ? 'แก้ไขข้อมูลรถยนต์' : 'เพิ่มรถยนต์รุ่นใหม่'}</h2></div><span className="catalog-number-tag">{editingId ? '✎ แก้ไข' : '+ เพิ่มรุ่น'}</span></div>
           <form className="catalog-admin-form" onSubmit={handleSubmit}>
-            <label>ยี่ห้อ<input name="brand" value={form.brand} onChange={updateField} placeholder="เช่น McLaren" required /></label>
-            <label>ชื่อรุ่น<input name="name" value={form.name} onChange={updateField} placeholder="เช่น Artura" required /></label>
+            <label>ยี่ห้อ<select name="brand" value={form.brand} onChange={updateField} required><option value="">เลือกยี่ห้อรถ</option>{form.brand && !ALLOWED_BRANDS.includes(form.brand) && <option value={form.brand}>{form.brand}</option>}{ALLOWED_BRANDS.map((brand) => <option key={brand} value={brand}>{brand}</option>)}</select></label>
+            <label>ชื่อรุ่น<input name="name" value={form.name} onChange={updateField} placeholder="เช่น Khon, Civic, Artura" required /></label>
             <label>ประเภทรถ<select name="type" value={form.type} onChange={updateField}>{!CAR_TYPES.includes(form.type) && <option value={form.type}>{CATEGORY_LABELS[form.type] || form.type} (ประเภทเดิม)</option>}{CAR_TYPES.map((key) => <option key={key} value={key}>{CATEGORY_LABELS[key]}</option>)}</select></label>
             <label>ราคา (บาท)<input name="price" type="number" min="1" value={form.price} onChange={updateField} placeholder="เช่น 18000000" required /></label>
             <label>ปีรุ่น<input name="year" type="number" min="1990" max="2035" value={form.year} onChange={updateField} /></label>

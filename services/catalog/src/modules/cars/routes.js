@@ -46,6 +46,34 @@ const AVAILABILITY = ['all', 'available', 'low', 'out'];
 const MAX_PHOTOS = 6;
 const MAX_PHOTO_LENGTH = 700_000; // a compressed upload as a data: URL
 const PHOTO_PATTERN = /^(https?:\/\/|data:image\/)/i;
+// Brands a car may have. TOYOTY = the made-to-order models; the rest are the old brands,
+// kept so hidden models can still be edited.
+const ALLOWED_BRANDS = new Set([
+  'TOYOTY',
+  'Toyota',
+  'Honda',
+  'Nissan',
+  'Mazda',
+  'Mitsubishi',
+  'Isuzu',
+  'Suzuki',
+  'Subaru',
+  'BMW',
+  'Mercedes-Benz',
+  'Audi',
+  'Porsche',
+  'Ferrari',
+  'Lamborghini',
+  'McLaren',
+  'BYD',
+  'Tesla',
+  'MG',
+  'GWM',
+  'Hyundai',
+  'Kia',
+  'Volvo',
+  'Lexus',
+]);
 const UNIT_STATES = ['all', 'open', 'cancelled', 'delayed'];
 // Who may create / release a made-to-order car with a login session (Sales forwards the
 // user's session, or calls with X-Internal-Secret). Sales checks who owns the order.
@@ -168,8 +196,12 @@ function parseCar(body) {
   ) {
     throw invalid('features must be a list of at most 30 short texts');
   }
+  const brand = text(body, 'brand', { max: 100, required: true });
+  if (!ALLOWED_BRANDS.has(brand)) {
+    throw invalid('brand is not in the approved brand list');
+  }
   return {
-    brand: text(body, 'brand', { max: 100, required: true }),
+    brand,
     name: text(body, 'name', { max: 150, required: true }),
     type: text(body, 'type', { max: 50, fallback: 'sedan' }),
     tag: text(body, 'tag', { max: 50, fallback: 'เพิ่มใหม่' }),
