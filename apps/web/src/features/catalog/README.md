@@ -28,3 +28,13 @@ Layout, common components, routes กลาง, styles, entry point, src/lib/htt
 4. เชื่อมหน้ารายการรถและหน้าจัดการสำหรับ Admin
 
 พร้อม integrate เมื่อ routes ไม่มีชนกัน, contract ตรง backend, มี loading/empty/error และ validation/auth จริงตามขอบเขตที่ตกลง, build/lint ผ่าน และไม่มีข้อมูลสำเร็จปลอม
+
+## หน้า TOYOTY (สั่งผลิต)
+
+- `/catalog` (CarsPage): การ์ด 4 รุ่น แสดง "เริ่มต้น" = ราคา Eco ไม่มีตัวกรองยี่ห้อ
+- `/catalog/:slug` (CarDetailPage → components/CarConfigurator.jsx): เลือกรุ่นย่อย → สี → ล้อ, ราคาจาก `POST /cars/quote`, ตารางเทียบ 3 รุ่นย่อย,
+  ช่วงวันรับรถ, ตัวคำนวณผ่อนของ Payment, ปุ่ม "ส่งคำขอซื้อ" ส่ง configuration ไปหน้า `/requests` ของ Sales; ตัวเลือกอยู่ใน URL (`?trim=&color=&wheel=`) แชร์ลิงก์ได้
+  รุ่นเดิมที่ถูกซ่อนยังเปิดหน้าเดิมได้ พร้อมป้าย "เลิกจำหน่าย"
+- `/admin/stock/toyoty` (ToyotyStockPage): สต็อกรถใหม่แยก model × รุ่นย่อย, คิวผลิต 8 สัปดาห์ (ตั้งกำลังผลิตต่อสัปดาห์ได้), รายการรถสั่งผลิตรายคัน
+  พร้อมปุ่มเลื่อนขั้นผลิต / เลื่อนสัปดาห์ผลิต / ยกเลิก
+- data/catalogData.js: ข้อมูลสำรอง 4 รุ่น + ป้ายชื่อ trim / ขั้นผลิต และ `formatDateRange` (วันที่แบบไทย)

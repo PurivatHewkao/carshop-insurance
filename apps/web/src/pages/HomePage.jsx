@@ -68,8 +68,8 @@ export default function HomePage() {
   const activePromotions = useMemo(() => allPromotions.filter((promotion) => promotion.active), [allPromotions]);
   const { covers } = useCovers();
   const heroBase = catalogCars.find((car) => car.id === covers.home.carId)
-    || catalogCars.find((car) => car.id === 'ferrari-296-gtb')
-    || catalogCars.find((car) => car.type === 'supercar')
+    || catalogCars.find((car) => car.id === 'khon')
+    || catalogCars.find((car) => car.featured && car.configurable)
     || catalogCars[0];
   const heroCar = heroBase && covers.home.imageUrl ? { ...heroBase, imageUrl: covers.home.imageUrl } : heroBase;
 
@@ -78,12 +78,14 @@ export default function HomePage() {
       <section className="s-hero home-photo-hero">
         <div className="s-hero-bg" />
         <div className="home-hero-copy">
-          <p className="s-eyebrow on-dark">{heroCar ? 'ซูเปอร์คาร์ · รุ่นเด่น' : carsLoading ? '\u00A0' : hero.eyebrow}</p>
+          <p className="s-eyebrow on-dark">{heroCar ? `${heroCar.tag || 'TOYOTY'} · รุ่นเด่น` : carsLoading ? '\u00A0' : hero.eyebrow}</p>
           <h1>{heroCar ? `${heroCar.brand} ${heroCar.name}` : carsLoading ? '\u00A0' : hero.title}</h1>
-          <p className="s-hero-sub">{heroCar ? 'สัมผัสสมรรถนะระดับซูเปอร์คาร์ พร้อมประกันภัยชั้น 1 และทีมงานดูแลตลอดการเป็นเจ้าของ' : hero.sub}</p>
+          <p className="s-hero-sub">{heroCar ? 'เลือกรุ่นย่อย Eco, Balanced หรือ High Performance แต่งสีและล้อได้เอง เห็นราคาและวันรับรถทันที' : hero.sub}</p>
           <p className="s-hero-price">เริ่มต้น {heroCar ? formatBaht(heroCar.price) : hero.price}</p>
           <div className="s-actions">
-            <Action to="/requests?type=จอง">{hero.btn1}</Action>
+            {heroCar?.configurable
+              ? <Action to={`/catalog/${encodeURIComponent(heroCar.id)}`}>แต่งรถคันนี้</Action>
+              : <Action to="/requests?type=จอง">{hero.btn1}</Action>}
             <Action variant="glass" to="/requests?type=นัดดูรถ">{hero.btn2}</Action>
           </div>
         </div>

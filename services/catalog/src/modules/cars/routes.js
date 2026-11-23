@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { httpError } from '../../utils/httpError.js';
+import { httpError, requireUuid } from '../../utils/httpError.js';
 import {
   CATALOG_EDITORS,
   CATALOG_STAFF,
+  internalOr,
   staffOnly,
 } from '../../middleware/auth.js';
 import {
@@ -16,12 +17,42 @@ import {
   setStock,
   updateModel,
 } from './repository.js';
+import {
+  advanceProduction,
+  createTrim,
+  createUnit,
+  getConfigurator,
+  getEta,
+  getInventory,
+  getUnit,
+  listQueue,
+  listTrims,
+  listUnits,
+  quote,
+  releaseUnit,
+  setCapacity,
+} from '../configurator/repository.js';
+import {
+  parseCapacity,
+  parseProduction,
+  parseProductionStatus,
+  parseSelection,
+  parseTrim,
+  parseTrimCode,
+} from '../configurator/validation.js';
 
 const router = Router();
 const AVAILABILITY = ['all', 'available', 'low', 'out'];
 const MAX_PHOTOS = 6;
 const MAX_PHOTO_LENGTH = 700_000; // a compressed upload as a data: URL
 const PHOTO_PATTERN = /^(https?:\/\/|data:image\/)/i;
+const UNIT_STATES = ['all', 'open', 'cancelled', 'delayed'];
+// Who may create / release a made-to-order car with a login session (Sales forwards the
+// user's session, or calls with X-Internal-Secret). Sales checks who owns the order.
+const UNIT_CALLERS = ['customer', 'seller', 'manager', 'admin'];
+const UNIT_RELEASERS = ['seller', 'manager', 'admin', 'stock'];
+// Who may move a car through production (sellers: DELIVERED only, checked in the repository).
+const PRODUCTION_EDITORS = [...CATALOG_EDITORS, 'manager', 'seller'];
 
 function invalid(message) {
   return httpError(400, 'INVALID_CAR', message);
@@ -183,8 +214,10 @@ function parseCar(body) {
   };
 }
 
-// GET /cars?q=&type=&availability=all|available|low|out&page=1&pageSize=20&include=gallery
+// GET /cars?q=&type=&availability=all|available|low|out&page=1&pageSize=20&include=gallery,hidden
+// Hidden models (old brands) are left out unless include has "hidden".
 router.get('/', async (req, res) => {
+  const include = String(req.query.include ?? '').split(',');
   const availability = req.query.availability ?? 'all';
   if (!AVAILABILITY.includes(availability)) {
     throw httpError(400, 'INVALID_QUERY', 'availability is not supported');
@@ -207,7 +240,8 @@ router.get('/', async (req, res) => {
     availability,
     page,
     pageSize,
-    gallery: req.query.include === 'gallery',
+    gallery: include.includes('gallery'),
+    includeHidden: include.includes('hidden'),
   });
   res.set('Cache-Control', 'no-store').json({
     data: items,
@@ -235,9 +269,132 @@ router.post('/', ...staffOnly(...CATALOG_EDITORS), async (req, res) => {
   res.status(201).json({ data: await createModel(parseCar(req.body)) });
 });
 
+// ---- TOYOTY configurator / made-to-order (declared before /:id) -------------
+
+// POST /cars/quote { modelSlug, trim, colorId, wheelId? } — price lines + total + pick-up window
+router.post('/quote', async (req, res) => {
+  res
+    .set('Cache-Control', 'no-store')
+    .json({ data: await quote(parseSelection(req.body)) });
+});
+
+// GET /cars/eta?model=khon&trim=BALANCED — pick-up window if ordered today
+router.get('/eta', async (req, res) => {
+  const model = readRef(req.query.model);
+  const trim = readRef(req.query.trim);
+  res
+    .set('Cache-Control', 'no-store')
+    .json({ data: await getEta(model, trim) });
+});
+
+// GET /cars/inventory — stock page: model × trim counts + production queue
+router.get('/inventory', ...staffOnly(...CATALOG_STAFF), async (req, res) => {
+  const weeks = readInt(req.query.weeks, 8, {
+    min: 1,
+    max: 26,
+    label: 'weeks',
+  });
+  res
+    .set('Cache-Control', 'no-store')
+    .json({ data: await getInventory({ weeks }) });
+});
+
+// GET /cars/units?model=&trim=&productionStatus=&state=all|open|cancelled|delayed&q=&page=&pageSize=
+router.get('/units', ...staffOnly(...CATALOG_STAFF), async (req, res) => {
+  const state = req.query.state ?? 'all';
+  if (!UNIT_STATES.includes(state))
+    throw httpError(400, 'INVALID_QUERY', 'state is not supported');
+  const page = readInt(req.query.page, 1, {
+    min: 1,
+    max: 100000,
+    label: 'page',
+  });
+  const pageSize = readInt(req.query.pageSize, 20, {
+    min: 1,
+    max: 100,
+    label: 'pageSize',
+  });
+  const text = (value) =>
+    typeof value === 'string' && value.trim() ? value.trim().slice(0, 60) : '';
+  const { items, total } = await listUnits({
+    model: text(req.query.model),
+    trim: parseTrimCode(text(req.query.trim)),
+    productionStatus: parseProductionStatus(text(req.query.productionStatus)),
+    state,
+    q: text(req.query.q),
+    page,
+    pageSize,
+  });
+  res.set('Cache-Control', 'no-store').json({
+    data: items,
+    meta: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    },
+  });
+});
+
+// POST /cars/units { modelSlug, trim, colorId, wheelId? } — Sales creates the car for an order.
+// The price is worked out here; the car is RESERVED and waits in production step QUOTED.
+router.post('/units', internalOr(...UNIT_CALLERS), async (req, res) => {
+  res.status(201).json({ data: await createUnit(parseSelection(req.body)) });
+});
+
+router.get(
+  '/units/:id',
+  ...staffOnly(...CATALOG_STAFF, 'seller'),
+  async (req, res) => {
+    res
+      .set('Cache-Control', 'no-store')
+      .json({ data: await getUnit(requireUuid(req.params.id, 'car id')) });
+  },
+);
+
+// POST /cars/units/:id/release — order failed / cancelled / not approved → car becomes INACTIVE
+router.post(
+  '/units/:id/release',
+  internalOr(...UNIT_RELEASERS),
+  async (req, res) => {
+    res.json({ data: await releaseUnit(requireUuid(req.params.id, 'car id')) });
+  },
+);
+
+// GET /cars/production-slots?model=khon&weeks=8
+router.get(
+  '/production-slots',
+  ...staffOnly(...CATALOG_STAFF),
+  async (req, res) => {
+    const weeks = readInt(req.query.weeks, 8, {
+      min: 1,
+      max: 26,
+      label: 'weeks',
+    });
+    res
+      .set('Cache-Control', 'no-store')
+      .json({ data: await listQueue(readRef(req.query.model), weeks) });
+  },
+);
+
+// PUT /cars/production-slots/:modelId { capacity, weekStart? } — one week, or the default of the model
+router.put(
+  '/production-slots/:id',
+  ...staffOnly(...CATALOG_EDITORS),
+  async (req, res) => {
+    res.json({
+      data: await setCapacity(readRef(req.params.id), parseCapacity(req.body)),
+    });
+  },
+);
+
 // PATCH /cars/:id  — edit details (brand, name, type, price, year, variant, engine, horsepower, fuel, seats)
+// + what customers see when sent: tag, featured, description, transmission, drive, location, warranty, features
 router.patch('/:id', ...staffOnly(...CATALOG_EDITORS), async (req, res) => {
-  const model = await updateModel(readRef(req.params.id), parseCar(req.body));
+  const input = parseCar(req.body);
+  // Which optional details were sent, so the ones left out keep their values.
+  input.sent = new Set(Object.keys(req.body));
+  const model = await updateModel(readRef(req.params.id), input);
   if (!model) throw httpError(404, 'CAR_NOT_FOUND', 'Car model not found');
   res.set('Cache-Control', 'no-store').json({ data: model });
 });
@@ -247,6 +404,49 @@ router.get('/:id', async (req, res) => {
   if (!model) throw httpError(404, 'CAR_NOT_FOUND', 'Car model not found');
   res.set('Cache-Control', 'no-store').json({ data: model });
 });
+
+// GET /cars/:id/configurator — model + 3 trims with the colours / wheels each may have
+router.get('/:id/configurator', async (req, res) => {
+  res
+    .set('Cache-Control', 'no-store')
+    .json({ data: await getConfigurator(readRef(req.params.id)) });
+});
+
+// GET /cars/:id/trims — every trim incl. ones off sale (admin); POST adds one
+router.get('/:id/trims', ...staffOnly(...CATALOG_STAFF), async (req, res) => {
+  res
+    .set('Cache-Control', 'no-store')
+    .json({ data: await listTrims(readRef(req.params.id)) });
+});
+
+router.post(
+  '/:id/trims',
+  ...staffOnly(...CATALOG_EDITORS),
+  async (req, res) => {
+    res.status(201).json({
+      data: await createTrim(
+        readRef(req.params.id),
+        parseTrim(req.body, { create: true }),
+      ),
+    });
+  },
+);
+
+// PATCH /cars/:id/production { status: next step | buildWeek: Monday, vin?, date? }
+// :id is the made-to-order car (cars.id), not the model.
+router.patch(
+  '/:id/production',
+  ...staffOnly(...PRODUCTION_EDITORS),
+  async (req, res) => {
+    res.json({
+      data: await advanceProduction(
+        requireUuid(req.params.id, 'car id'),
+        parseProduction(req.body),
+        req.user.role,
+      ),
+    });
+  },
+);
 
 // PATCH /cars/:id/stock  { "stock": 5 }  — set the number of AVAILABLE cars
 router.patch(

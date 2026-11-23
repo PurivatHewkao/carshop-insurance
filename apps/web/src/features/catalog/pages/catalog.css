@@ -190,9 +190,18 @@
 .catalog-admin-form input, .catalog-admin-form select { width: 100%; min-width: 0; min-height: 42px; padding: 9px 11px; border: 1px solid var(--line2, #ccc); border-radius: 8px; outline: 0; background: var(--bg, #fff); color: var(--ink, #17181c); font: inherit; font-size: 12px; font-weight: 400; }
 .catalog-admin-form input:focus, .catalog-admin-form select:focus { border-color: var(--edit, #2563eb); box-shadow: 0 0 0 3px color-mix(in srgb, var(--edit, #2563eb) 12%, transparent); }
 .catalog-form-wide { grid-column: 1 / -1; }
+.catalog-admin-form textarea { width: 100%; min-width: 0; padding: 9px 11px; border: 1px solid var(--line2, #ccc); border-radius: 8px; outline: 0; background: var(--bg, #fff); color: var(--ink, #17181c); font: inherit; font-size: 12px; font-weight: 400; line-height: 1.6; resize: vertical; }
+.catalog-admin-form textarea:focus { border-color: var(--edit, #2563eb); box-shadow: 0 0 0 3px color-mix(in srgb, var(--edit, #2563eb) 12%, transparent); }
+.catalog-form-section { display: grid; gap: 2px; margin-top: 6px; padding-top: 14px; border-top: 1px dashed var(--line2, #ccc); }
+.catalog-form-section strong { font-size: 13px; }
+.catalog-form-section span { color: var(--mute, #777); font-size: 10px; }
+.catalog-admin-form label.catalog-form-check { display: flex; align-items: center; align-self: end; gap: 8px; min-height: 42px; cursor: pointer; }
+.catalog-admin-form label.catalog-form-check input { width: 17px; min-height: 0; height: 17px; accent-color: var(--red, #c8102e); }
 .catalog-form-help { grid-column: 1 / -1; margin: -4px 0 0; color: var(--mute, #777); font-size: 10px; line-height: 1.7; }
 .catalog-primary-button { min-height: 44px; padding: 11px 15px; border: 0; border-radius: 9px; background: var(--red, #c8102e); color: #fff; font: inherit; font-size: 12px; font-weight: 800; }
 .catalog-primary-button:hover { filter: brightness(.93); }
+/* The global reset in showroom.css (button:not(.s-btn)...) made this button transparent, so its white text vanished. */
+button.catalog-primary-button:not(.s-btn):not(.s-var):not(.s-sw) { background: var(--red, #c8102e); color: #fff; }
 .catalog-admin-list-panel > .catalog-search-field { margin-bottom: 10px; }
 .catalog-admin-car-list { display: grid; max-height: 850px; overflow: auto; }
 .catalog-admin-car-row { display: flex; align-items: center; gap: 11px; min-width: 0; padding: 11px 0; border-bottom: 1px solid var(--line, #e5e5e9); }
@@ -368,6 +377,8 @@
 .catalog-upload-preview img { display: block; width: 100%; aspect-ratio: 1.25 / 1; object-fit: cover; border-radius: 5px; }
 .catalog-upload-preview > span { overflow: hidden; color: var(--ink2, #555); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 .catalog-upload-preview > small { color: var(--mute, #777); font-size: 9px; }
+.catalog-upload-preview small button.catalog-upload-make-main:not(.s-btn):not(.s-var):not(.s-sw) { padding: 2px 0; border: 0; background: none; color: var(--red-ink, #9e1025); font: inherit; font-size: 9px; font-weight: 800; text-decoration: underline; cursor: pointer; }
+.catalog-upload-preview > button:not(.s-btn):not(.s-var):not(.s-sw) { background: #202126dc; }
 .catalog-upload-preview > button { position: absolute; top: 8px; right: 8px; display: grid; width: 23px; height: 23px; place-items: center; border: 1px solid #ffffffb8; border-radius: 50%; background: #202126dc; color: white; font-size: 17px; cursor: pointer; }
 .catalog-admin-photo-count { color: var(--mute, #777); font-size: 9px; }
 .catalog-admin-car-actions { flex-wrap: wrap; }

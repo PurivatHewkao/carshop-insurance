@@ -7,10 +7,14 @@ export const MAX_STOCK = 500;
 const MYSQL_ROW_REFERENCED = 1451;
 
 // One row per car model. Stock = number of cars of that model with status AVAILABLE.
+// A model with trims (TOYOTY configurator) is made to order: its price is the cheapest
+// trim ("from" price) and its AVAILABLE cars are showroom cars for test drives.
 const MODEL_SELECT = `
   SELECT m.id, m.slug, m.brand, m.model_name, m.body_type, m.description, m.tag, m.featured,
     m.variant, m.engine, m.horsepower, m.transmission, m.drive, m.fuel, m.seats, m.location,
-    m.warranty, m.features, m.color_options,
+    m.warranty, m.features, m.color_options, m.is_active,
+    (SELECT MIN(t.price) FROM car_trims t WHERE t.car_model_id = m.id AND t.is_active = 1) AS from_price,
+    (SELECT COUNT(*) FROM car_trims t WHERE t.car_model_id = m.id AND t.is_active = 1) AS trim_count,
     COALESCE(SUM(c.status = 'AVAILABLE'), 0) AS stock,
     COUNT(c.id) AS car_count,
     COALESCE(MIN(CASE WHEN c.status = 'AVAILABLE' THEN c.price END), MIN(c.price)) AS price,
@@ -48,7 +52,11 @@ function toModel(row, photos, { gallery }) {
     tag: row.tag,
     featured: Boolean(row.featured),
     description: row.description,
-    price: row.price,
+    price: row.from_price ?? row.price,
+    fromPrice: row.from_price ?? row.price,
+    configurable: Number(row.trim_count) > 0,
+    trimCount: Number(row.trim_count),
+    active: Boolean(row.is_active),
     currency: 'THB',
     year: row.year === null ? null : Number(row.year),
     color: row.color,
@@ -95,9 +103,11 @@ export async function listModels({
   page,
   pageSize,
   gallery,
+  includeHidden = false,
 }) {
   const pool = getMysqlPool();
-  const where = [];
+  // Old brands are hidden (is_active = 0), not deleted: orders still use their cars.
+  const where = includeHidden ? [] : ['m.is_active = 1'];
   const params = [];
   if (q) {
     where.push("CONCAT(m.brand, ' ', m.model_name) LIKE ?");
@@ -177,7 +187,8 @@ export async function getStockSummary() {
        COALESCE(SUM(stock > 0 AND stock <= ?), 0) AS low,
        COALESCE(SUM(stock <= 0), 0) AS out_of_stock
      FROM (SELECT m.id, COALESCE(SUM(c.status = 'AVAILABLE'), 0) AS stock
-       FROM car_models m LEFT JOIN cars c ON c.car_model_id = m.id GROUP BY m.id) AS s`,
+       FROM car_models m LEFT JOIN cars c ON c.car_model_id = m.id
+       WHERE m.is_active = 1 GROUP BY m.id) AS s`,
     [LOW_STOCK_LIMIT],
   );
   return {
@@ -325,9 +336,36 @@ export async function updateModel(ref, input) {
         id,
       ],
     );
-    // Sold cars keep the price they were sold at.
+    // Details customers see. Only fields the request actually sent are changed, so an
+    // older caller that sends just the spec above does not wipe them.
+    const details = {
+      tag: 'tag',
+      featured: 'featured',
+      description: 'description',
+      transmission: 'transmission',
+      drive: 'drive',
+      location: 'location',
+      warranty: 'warranty',
+      features: 'features',
+    };
+    const sets = [];
+    const values = [];
+    for (const [field, column] of Object.entries(details)) {
+      if (!input.sent?.has(field)) continue;
+      sets.push(column + ' = ?');
+      if (field === 'features') values.push(JSON.stringify(input.features));
+      else if (field === 'featured') values.push(input.featured ? 1 : 0);
+      else values.push(input[field]);
+    }
+    if (sets.length) {
+      await connection.query(
+        `UPDATE car_models SET ${sets.join(', ')} WHERE id = ?`,
+        [...values, id],
+      );
+    }
+    // Sold cars keep the price they were sold at; made-to-order cars keep their quoted price.
     await connection.query(
-      "UPDATE cars SET price = ?, manufacture_year = ? WHERE car_model_id = ? AND status <> 'SOLD'",
+      "UPDATE cars SET price = ?, manufacture_year = ? WHERE car_model_id = ? AND status <> 'SOLD' AND production_status IS NULL",
       [input.price, input.year, id],
     );
     return id;
@@ -379,6 +417,20 @@ export async function deleteModel(ref) {
       await connection.query('DELETE FROM cars WHERE car_model_id = ?', [
         modelId,
       ]);
+      // Trims, their colour / wheel choices and the production queue go with the model.
+      for (const table of ['trim_colors', 'trim_wheels']) {
+        await connection.query(
+          `DELETE FROM ${table} WHERE trim_id IN (SELECT id FROM car_trims WHERE car_model_id = ?)`,
+          [modelId],
+        );
+      }
+      await connection.query('DELETE FROM car_trims WHERE car_model_id = ?', [
+        modelId,
+      ]);
+      await connection.query(
+        'DELETE FROM production_slots WHERE car_model_id = ?',
+        [modelId],
+      );
       await connection.query('DELETE FROM car_models WHERE id = ?', [modelId]);
     });
   } catch (error) {
@@ -398,7 +450,8 @@ export async function deleteModel(ref) {
  * Sets the number of AVAILABLE cars of a model to `target`.
  * Increase: re-activate INACTIVE cars first, then add new rows copied from an existing car.
  * Decrease: mark the newest AVAILABLE cars INACTIVE. Rows are never deleted, and
- * RESERVED / SOLD cars are never touched.
+ * RESERVED / SOLD cars are never touched. Made-to-order cars (production_status set)
+ * are never counted, re-activated or copied here; showroom cars keep their trim/colour/wheel.
  */
 export async function setStock(ref, target) {
   const pool = getMysqlPool();
@@ -410,8 +463,8 @@ export async function setStock(ref, target) {
       [modelId],
     );
     const [cars] = await connection.query(
-      `SELECT id, status, color, manufacture_year, price FROM cars
-       WHERE car_model_id = ? ORDER BY created_at, id FOR UPDATE`,
+      `SELECT id, status, color, manufacture_year, price, trim_id, paint_color_id, wheel_id FROM cars
+       WHERE car_model_id = ? AND production_status IS NULL ORDER BY created_at, id FOR UPDATE`,
       [modelId],
     );
     const available = cars.filter((car) => car.status === 'AVAILABLE');
@@ -444,9 +497,12 @@ export async function setStock(ref, target) {
           template.manufacture_year,
           template.price,
           'AVAILABLE',
+          template.trim_id,
+          template.paint_color_id,
+          template.wheel_id,
         ]);
         await connection.query(
-          'INSERT INTO cars (id, car_model_id, vin, color, manufacture_year, price, status) VALUES ?',
+          'INSERT INTO cars (id, car_model_id, vin, color, manufacture_year, price, status, trim_id, paint_color_id, wheel_id) VALUES ?',
           [values],
         );
       }
