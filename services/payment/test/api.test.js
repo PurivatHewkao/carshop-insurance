@@ -50,6 +50,13 @@ async function setupDatabase() {
     .sort()) {
     await admin.query(await readFile(path.join(migrationsDir, file), 'utf8'));
   }
+  // Production columns on cars (Catalog, made-to-order cars).
+  await admin.query(
+    await readFile(
+      path.join(here, '../../catalog/database/09_production_queue.sql'),
+      'utf8',
+    ),
+  );
 }
 
 // One user per test actor. `profile` = which table gets the domain row.
@@ -1187,6 +1194,211 @@ describe('customer views and invoice PDF', () => {
     assert.equal(
       (await getPdf(`/invoices/${randomUUID()}/pdf`, 'admin')).status,
       404,
+    );
+  });
+});
+
+describe('made-to-order cars (production queue)', () => {
+  const today = () => new Date().toISOString().slice(0, 10);
+  const plusDays = (date, days) =>
+    new Date(Date.parse(date) + days * 86_400_000).toISOString().slice(0, 10);
+  /** Put the order's car in a production queue state; eta_to = first promise + delayDays. */
+  async function setProduction(carId, status, { delayDays = 0 } = {}) {
+    const firstEtaTo = plusDays(today(), 30);
+    await admin.query(
+      `UPDATE cars SET production_status = ?, eta_from = ?, eta_to = ?, first_eta_to = ?,
+         ready_date = IF(? IN ('READY','DELIVERED'), ?, NULL) WHERE id = ?`,
+      [
+        status,
+        plusDays(firstEtaTo, delayDays - 7),
+        plusDays(firstEtaTo, delayDays),
+        firstEtaTo,
+        status,
+        today(),
+        carId,
+      ],
+    );
+  }
+  async function productionOf(carId) {
+    const [[row]] = await admin.query(
+      'SELECT status, production_status FROM cars WHERE id = ?',
+      [carId],
+    );
+    return { ...row };
+  }
+
+  test('balance and invoice wait until the car has arrived', async () => {
+    const { orderId, carId } = await makeOrder('200000.00');
+    await setProduction(carId, 'SCHEDULED');
+    const deposit = await api('POST', `/orders/${orderId}/payments`, {
+      as: 'customer',
+      key: 'mto-dep-0001',
+      body: {
+        amount: '50000.00',
+        paymentMethod: 'CREDIT_CARD',
+        paymentType: 'BOOKING_DEPOSIT',
+      },
+    });
+    assert.equal(deposit.status, 201, JSON.stringify(deposit.json));
+    const down = await api('POST', `/orders/${orderId}/payments`, {
+      key: 'mto-down-0001',
+      body: {
+        amount: '30000.00',
+        paymentMethod: 'CASH',
+        paymentType: 'DOWN_PAYMENT',
+      },
+    });
+    assert.equal(down.status, 201, JSON.stringify(down.json));
+
+    let res = await api('POST', `/orders/${orderId}/payments`, {
+      key: 'mto-bal-0001',
+      body: { amount: '120000.00', paymentMethod: 'CASH' },
+    });
+    assert.equal(res.status, 409);
+    assert.equal(res.json.error.code, 'CAR_NOT_READY');
+    res = await api('POST', `/orders/${orderId}/payments`, {
+      key: 'mto-fin-0001',
+      body: {
+        amount: '120000.00',
+        paymentMethod: 'FINANCE',
+        transactionReference: 'HP-MTO-1',
+        financeCompany: 'Toyoty Leasing',
+      },
+    });
+    assert.equal(res.json.error.code, 'CAR_NOT_READY');
+    res = await api('POST', `/orders/${orderId}/invoices`, { body: {} });
+    assert.equal(res.status, 409);
+    assert.equal(res.json.error.code, 'CAR_NOT_READY');
+
+    await setProduction(carId, 'READY');
+    const invoice = await api('POST', `/orders/${orderId}/invoices`, {
+      body: {},
+    });
+    assert.equal(invoice.status, 201, JSON.stringify(invoice.json));
+    assert.equal(invoice.json.data.dueDate, plusDays(today(), 7));
+    const balance = await api('POST', `/orders/${orderId}/payments`, {
+      key: 'mto-bal-0002',
+      body: { amount: '120000.00', paymentMethod: 'CASH' },
+    });
+    assert.equal(balance.status, 201, JSON.stringify(balance.json));
+    assert.equal(await orderStatus(orderId), 'PAID');
+  });
+
+  test('stock cars are not affected', async () => {
+    const { orderId } = await makeOrder('5000.00');
+    const res = await api('POST', `/orders/${orderId}/payments`, {
+      key: 'mto-stock-001',
+      body: { amount: '5000.00', paymentMethod: 'CASH' },
+    });
+    assert.equal(res.status, 201, JSON.stringify(res.json));
+  });
+
+  test('customer refund after production starts only when more than 30 days late', async () => {
+    const { orderId, carId } = await makeOrder('200000.00');
+    await setProduction(carId, 'SCHEDULED');
+    const deposit = await api('POST', `/orders/${orderId}/payments`, {
+      as: 'customer',
+      key: 'mto-dep-0002',
+      body: {
+        amount: '50000.00',
+        paymentMethod: 'CREDIT_CARD',
+        paymentType: 'BOOKING_DEPOSIT',
+      },
+    });
+    const paymentId = deposit.json.data.id;
+    const ask = (key, as = 'customer') =>
+      api('POST', `/payments/${paymentId}/refunds`, {
+        as,
+        key,
+        body: { amount: '50000.00', reason: 'ขอยกเลิกการสั่งผลิต' },
+      });
+
+    // Before production: allowed (Finance rejects it here to keep testing).
+    let res = await ask('mto-ref-0001');
+    assert.equal(res.status, 201, JSON.stringify(res.json));
+    await api('POST', `/refunds/${res.json.data.id}/reject`, {
+      body: { reason: 'ทดสอบ' },
+    });
+
+    await setProduction(carId, 'IN_PRODUCTION', { delayDays: 30 });
+    res = await ask('mto-ref-0002');
+    assert.equal(res.status, 409);
+    assert.equal(res.json.error.code, 'PRODUCTION_STARTED');
+
+    await setProduction(carId, 'IN_PRODUCTION', { delayDays: 31 });
+    res = await ask('mto-ref-0003');
+    assert.equal(res.status, 201, JSON.stringify(res.json));
+    const approved = await api('POST', `/refunds/${res.json.data.id}/approve`, {
+      body: { refundReference: 'RF-MTO-001' },
+    });
+    assert.equal(approved.status, 200, JSON.stringify(approved.json));
+    // Every baht went back: order and build cancelled, the car is not resold as stock.
+    assert.equal(await orderStatus(orderId), 'CANCELLED');
+    assert.deepEqual(await productionOf(carId), {
+      status: 'INACTIVE',
+      production_status: 'CANCELLED',
+    });
+  });
+
+  test('staff may still refund after production started', async () => {
+    const { orderId, carId } = await makeOrder('200000.00');
+    await setProduction(carId, 'SCHEDULED');
+    const deposit = await api('POST', `/orders/${orderId}/payments`, {
+      as: 'customer',
+      key: 'mto-dep-0003',
+      body: {
+        amount: '10000.00',
+        paymentMethod: 'CREDIT_CARD',
+        paymentType: 'BOOKING_DEPOSIT',
+      },
+    });
+    await setProduction(carId, 'READY');
+    const res = await api(
+      'POST',
+      `/payments/${deposit.json.data.id}/refunds`,
+      { key: 'mto-ref-staff1', body: { amount: '1000.00', reason: 'ส่วนลดพิเศษ' } },
+    );
+    assert.equal(res.status, 201, JSON.stringify(res.json));
+  });
+
+  test('order-balances shows the delivery window and delay', async () => {
+    const { orderId, carId } = await makeOrder('200000.00');
+    await setProduction(carId, 'IN_TRANSIT', { delayDays: 12 });
+    const res = await api('GET', '/order-balances?limit=100');
+    assert.equal(res.status, 200);
+    const row = res.json.data.find((r) => r.orderId === orderId);
+    assert.equal(row.production.status, 'IN_TRANSIT');
+    assert.equal(row.production.delayDays, 12);
+    assert.equal(row.production.etaTo, plusDays(today(), 42));
+    assert.ok(
+      res.json.data.some((r) => r.production === null),
+      'stock cars have production null',
+    );
+  });
+
+  test('car description on PDFs includes trim and wheels when configured', async () => {
+    const orders = await import('../src/clients/orders.js');
+    const { carId, orderId } = await makeOrder('1000.00');
+    // Before the configurator tables exist: plain description.
+    let context = await orders.findInvoiceContext(admin, orderId, null);
+    assert.equal(context.spec, null);
+    assert.equal(orders.carDescription(context), 'Toyoty Test ปี 2026 สี white');
+    // Minimal stand-in for Catalog 07_toyoty_configurator.sql.
+    const trimId = randomUUID();
+    const wheelId = randomUUID();
+    await admin.query(
+      `CREATE TABLE car_trims (id CHAR(36) PRIMARY KEY, code VARCHAR(30) NOT NULL);
+       CREATE TABLE wheel_options (id CHAR(36) PRIMARY KEY, name VARCHAR(80) NOT NULL);
+       ALTER TABLE cars ADD COLUMN trim_id CHAR(36) NULL, ADD COLUMN wheel_id CHAR(36) NULL;
+       INSERT INTO car_trims VALUES (?, 'HIGH_PERFORMANCE');
+       INSERT INTO wheel_options VALUES (?, '19" ฟอร์จ สีดำ');
+       UPDATE cars SET trim_id = ?, wheel_id = ? WHERE id = ?;`,
+      [trimId, wheelId, trimId, wheelId, carId],
+    );
+    context = await orders.findInvoiceContext(admin, orderId, null);
+    assert.equal(
+      orders.carDescription(context),
+      'Toyoty Test High Performance ปี 2026 สี white · ล้อ 19" ฟอร์จ สีดำ',
     );
   });
 });

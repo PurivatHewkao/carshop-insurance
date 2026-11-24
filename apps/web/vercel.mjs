@@ -26,6 +26,9 @@ const apiRewrites = services.flatMap((service) => {
 });
 
 export const config = {
+  git: {
+    deploymentEnabled: false,
+  },
   rewrites: [
     ...apiRewrites,
     { source: '/((?!api/).*)', destination: '/index.html' },

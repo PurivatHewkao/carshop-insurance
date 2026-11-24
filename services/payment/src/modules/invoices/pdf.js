@@ -4,7 +4,11 @@
 import { fileURLToPath } from 'node:url';
 import PDFDocument from 'pdfkit';
 import { query } from '../../db/transaction.js';
-import { findInvoiceContext, findOrderLines } from '../../clients/orders.js';
+import {
+  carDescription,
+  findInvoiceContext,
+  findOrderLines,
+} from '../../clients/orders.js';
 import { orderScope } from '../../middleware/auth.js';
 import { httpError } from '../../utils/httpError.js';
 import {
@@ -232,9 +236,7 @@ export async function renderInvoicePdf(actor, invoiceId) {
     align: 'right',
   });
   y += 32;
-  const carName = context
-    ? `${context.brand} ${context.model_name} ปี ${context.manufacture_year} สี ${context.color}`
-    : 'รถยนต์ตามออเดอร์';
+  const carName = carDescription(context);
   doc
     .font('th')
     .fontSize(11)

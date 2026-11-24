@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { query } from '../../db/transaction.js';
-import { listOrderOverview } from '../../clients/orders.js';
+import { listOrderOverview, productionInfo } from '../../clients/orders.js';
 import { orderScope } from '../../middleware/auth.js';
 import { openForPayment } from '../payments/balance.js';
 import { formatMoney, toSatang } from '../../utils/money.js';
@@ -37,6 +37,8 @@ export function overviewToApi(row) {
       color: row.color,
       year: row.manufacture_year,
     },
+    // Made-to-order cars only (null = stock car): status + delivery window.
+    production: productionInfo(row),
     totalAmount: formatMoney(total),
     paidAmount: formatMoney(paid),
     pendingAmount: formatMoney(pending),
