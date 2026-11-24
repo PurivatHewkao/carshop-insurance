@@ -23,16 +23,6 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(Boolean(token));
   const [revision, setRevision] = useState(0);
   const [offset, setOffset] = useState(0);
-  const [connection, setConnection] = useState(null);
-  useEffect(() => {
-    const controller = new AbortController();
-    request('/connection', { signal: controller.signal })
-      .then((data) => {
-        if (!controller.signal.aborted) setConnection(data);
-      })
-      .catch(() => {});
-    return () => controller.abort();
-  }, []);
   useEffect(() => {
     if (!token) return;
     const controller = new AbortController();
@@ -133,7 +123,6 @@ export default function AdminPage() {
       busy={busy}
       loading={loading}
       offset={offset}
-      connection={connection}
       login={login}
       logout={logout}
       approve={approve}
