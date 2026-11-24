@@ -1,0 +1,73 @@
+/* Dashboard ของ Admin / Manager */
+.db-page { gap: 20px; }
+.db-muted { color: var(--mute); font-size: 13px; margin: 2px 0 0; }
+.db-hint { color: var(--mute); font-size: 12px; margin-top: 4px; }
+.db-bad { color: var(--bad); }
+.db-warn { color: var(--warn); font-size: 13px; margin: 0; }
+.db-card-h { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.db-card-h h2 { margin: 0; }
+.s-card-h.db-card-h { margin-bottom: 0; }
+.db-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 980px) { .db-grid { grid-template-columns: 1fr; } }
+
+/* งานที่ต้องจัดการ */
+.db-todo { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 10px; }
+.db-todo li { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--bg); min-width: 0; }
+.db-todo li.todo { border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); background: var(--warn-bg); }
+.db-todo-n { flex: none; display: grid; place-items: center; min-width: 38px; height: 38px; padding: 0 8px; border-radius: 99px; font: 600 16px var(--fd); background: var(--bg2); color: var(--ink2); font-variant-numeric: tabular-nums; }
+.db-todo li.todo .db-todo-n { background: var(--warn); color: #fff; }
+.db-todo li.done .db-todo-n { background: var(--good-bg); color: var(--good); }
+.db-todo-t { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.db-todo-t b { font: 500 14px var(--fd); }
+.db-todo-t span { color: var(--ink2); font-size: 12.5px; }
+.db-todo .s-act { white-space: nowrap; margin-top: 6px; align-self: flex-start; font: 500 13px var(--fd); }
+
+/* กราฟรายเดือน */
+.db-chart-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+.db-seg { display: inline-flex; border: 1px solid var(--line2); border-radius: 99px; padding: 2px; }
+.db-seg button { border: 0; background: transparent; color: var(--ink2); font: 500 13px var(--fd); padding: 5px 12px; border-radius: 99px; cursor: pointer; }
+/* ต้องชนะ button:not(.s-btn)... ใน showroom.css */
+.db-chart .db-seg button.on.on { background: var(--ink); color: var(--bg); }
+.db-link { border: 0; background: none; color: var(--edit); font-size: 13px; cursor: pointer; padding: 4px; }
+.db-select select { border: 1px solid var(--line2); border-radius: var(--r-sm); background: var(--bg); color: var(--ink); padding: 6px 10px; font-size: 13px; }
+.db-plot { position: relative; }
+.db-plot svg { display: block; width: 100%; height: auto; overflow: visible; }
+.db-plot .db-gl { stroke: var(--line); stroke-width: 1; }
+.db-plot .db-base { stroke: var(--line2); stroke-width: 1; }
+.db-plot .db-tick { font: 400 12px var(--fb); fill: var(--mute); }
+.db-plot .db-tick.now { fill: var(--ink); font-weight: 600; }
+.db-plot .db-val { font: 600 12px var(--fd); fill: var(--ink); }
+.db-plot .db-bar { fill: color-mix(in srgb, var(--ink) 22%, var(--card)); }
+.db-plot .db-bar.now { fill: var(--red); }
+.db-plot .db-hover-band { fill: var(--ink); opacity: 0.05; }
+.db-plot rect[tabindex]:focus { outline: none; }
+.db-empty-note { position: absolute; inset: 0 0 30px 56px; display: grid; place-items: center; color: var(--mute); font-size: 13px; margin: 0; pointer-events: none; }
+.db-tip { position: absolute; top: 0; transform: translateX(var(--tip-shift, -50%)); display: flex; flex-direction: column; gap: 1px; padding: 8px 12px; border-radius: var(--r-sm); background: var(--night); color: var(--on-night); font-size: 12.5px; white-space: nowrap; pointer-events: none; box-shadow: var(--shadow); z-index: 2; }
+.db-tip strong { font: 600 13px var(--fd); }
+
+/* แถบแนวนอน (นัดหมาย, สัดส่วนยอดขาย) */
+.db-hbars { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.db-hbars li { display: grid; grid-template-columns: 110px minmax(0, 1fr) 40px; align-items: center; gap: 10px; font-size: 13.5px; }
+.db-hbars .n { text-align: right; font: 600 14px var(--fd); font-variant-numeric: tabular-nums; }
+.track { display: block; height: 8px; border-radius: 99px; background: var(--bg2); overflow: hidden; }
+.track .fill { display: block; height: 100%; border-radius: 99px; background: color-mix(in srgb, var(--ink) 45%, var(--card)); min-width: 2px; }
+.db-share { display: grid; grid-template-columns: minmax(60px, 140px) auto; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; }
+
+/* ตารางรุ่นรถ */
+.db-model-tbl .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.db-search { max-width: 260px; }
+.db-mini-tbl { font-size: 13px; }
+.db-mini-tbl td, .db-mini-tbl th { white-space: nowrap; }
+
+/* หน้าต่างรายละเอียดรุ่น */
+.order-modal.db-dialog { width: min(100% - 24px, 880px); max-height: 90vh; padding: 24px; }
+.db-dialog-h { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.db-dialog-h h2 { margin: 2px 0 0; }
+.db-dialog .db-dialog-h .s-btn { margin-top: 0; }
+.db-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 16px 0 8px; }
+.db-stat { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: var(--r-sm); background: var(--bg2); min-width: 0; }
+.db-stat .l, .db-stat .h { color: var(--mute); font-size: 12px; }
+.db-stat strong { font: 600 18px var(--fd); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.db-dsec { margin-top: 20px; }
+.db-dsec h3 { font: 600 15px var(--fd); margin: 0; }
+.db-dsec > .db-muted { margin-bottom: 8px; }
