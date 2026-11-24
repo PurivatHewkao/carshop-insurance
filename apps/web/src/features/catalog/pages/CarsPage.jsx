@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CarPhoto from '../components/CarPhoto.jsx';
+import InstallmentButton from '../components/InstallmentButton.jsx';
 import {
   CATEGORY_LABELS,
   formatBaht,
   stockStatus,
 } from '../data/catalogData.js';
-import { useCars, usePromotions } from '../api/catalogApi.js';
+import { useCars, useCovers, usePromotions } from '../api/catalogApi.js';
 import './catalog.css';
 
 export default function CarsPage() {
@@ -18,7 +19,18 @@ export default function CarsPage() {
   const { promotions: allPromotions } = usePromotions();
   const promotions = useMemo(() => allPromotions.filter((item) => item.active).slice(0, 3), [allPromotions]);
   const categories = [...new Set(cars.map((car) => car.type))];
-  const showcaseCar = useMemo(() => cars.find((car) => car.featured && car.configurable) || cars.find((car) => car.configurable) || cars[0], [cars]);
+  // Cover set by admin (/admin/cars → ปกหน้ารายการรถ): its car first, then its uploaded image.
+  // Wait for the cover so the page does not flash the automatic pick first.
+  const { covers, loading: coversLoading } = useCovers();
+  const showcaseCar = useMemo(() => {
+    if (coversLoading) return null;
+    const cover = covers.catalog || {};
+    const base = cars.find((car) => car.id === cover.carId)
+      || cars.find((car) => car.featured && car.configurable)
+      || cars.find((car) => car.configurable)
+      || cars[0];
+    return base && cover.imageUrl ? { ...base, imageUrl: cover.imageUrl } : base;
+  }, [cars, covers, coversLoading]);
   const trimCount = cars.reduce((sum, car) => sum + (Number(car.trimCount) || 0), 0);
 
   const filteredCars = cars
@@ -50,11 +62,7 @@ export default function CarsPage() {
           {showcaseCar && (
             <div className="catalog-showcase-actions">
               <Link className="catalog-cta solid" to={`/catalog/${encodeURIComponent(showcaseCar.id)}`}>{showcaseCar.configurable ? 'แต่งรถคันนี้' : 'ดูรายละเอียด'}</Link>
-              {Number(showcaseCar.stock) > 0 ? (
-                <Link className="catalog-cta ghost" to={`/requests?brand=${encodeURIComponent(showcaseCar.brand)}&car=${encodeURIComponent(showcaseCar.name)}&type=${encodeURIComponent('ทดลองขับ')}`}>นัดทดลองขับ</Link>
-              ) : (
-                <span className="catalog-cta ghost is-disabled" aria-disabled="true">หมดสต็อก</span>
-              )}
+              <InstallmentButton car={showcaseCar} />
             </div>
           )}
           <div className="catalog-showcase-stats">
@@ -134,7 +142,6 @@ export default function CarsPage() {
             {filteredCars.map((car) => {
               const status = car.configurable ? { label: 'สั่งผลิต · 3 รุ่นย่อย', tone: 'in' } : stockStatus(car.stock);
               const detailUrl = `/catalog/${encodeURIComponent(car.id)}`;
-              const requestUrl = `/requests?brand=${encodeURIComponent(car.brand)}&car=${encodeURIComponent(car.name)}&type=${encodeURIComponent('ทดลองขับ')}`;
               return (
                 <article className="catalog-tile" key={car.id}>
                   <Link to={detailUrl} className="catalog-tile-link" aria-label={`ดูรายละเอียด ${car.brand} ${car.name}`}>
@@ -149,13 +156,7 @@ export default function CarsPage() {
                   <span className={`catalog-tile-status ${status.tone}`}><i />{status.label}</span>
                   <div className="catalog-tile-actions">
                     <Link className="catalog-cta solid" to={detailUrl}>{car.configurable ? 'แต่งรถ & สั่งจอง' : 'ดูรายละเอียด'}</Link>
-                    {Number(car.stock) > 0 ? (
-                      <Link className="catalog-cta ghost" to={requestUrl}>นัดทดลองขับ</Link>
-                    ) : car.configurable ? (
-                      <Link className="catalog-cta ghost" to={detailUrl}>เทียบรุ่นย่อย</Link>
-                    ) : (
-                      <span className="catalog-cta ghost is-disabled" aria-disabled="true">หมดสต็อก</span>
-                    )}
+                    <InstallmentButton car={car} />
                   </div>
                 </article>
               );

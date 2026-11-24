@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Action } from '../../../components/common/Showroom.jsx';
 import InstallmentCalculator from '../../payment/components/InstallmentCalculator.jsx';
+import InstallmentButton from './InstallmentButton.jsx';
 import CarPhoto from './CarPhoto.jsx';
 import { useConfigurator, useQuote } from '../api/catalogApi.js';
 import {
@@ -94,7 +95,6 @@ export default function CarConfigurator({ car, promotions }) {
       wheelId: wheel.code,
     })}`
     : '';
-  const testDriveUrl = `/requests?${new URLSearchParams({ type: 'ทดลองขับ', brand: car.brand, car: car.name })}`;
   const matchingPromotions = promotions
     .filter((promo) => `${promo.appliesTo} ${promo.title}`.includes('ทุกรุ่น'))
     .slice(0, 2);
@@ -225,7 +225,7 @@ export default function CarConfigurator({ car, promotions }) {
           </div>
           <div className="catalog-detail-actions">
             {selection && !quoteError ? <Action to={requestUrl}>ส่งคำขอซื้อ</Action> : <button type="button" className="s-btn catalog-soldout-btn" disabled>ส่งคำขอซื้อ</button>}
-            {Number(car.stock) > 0 && <Action to={testDriveUrl} variant="out">นัดทดลองขับรถโชว์</Action>}
+            <InstallmentButton car={car} price={total} className="s-btn out" subtitle={trim ? `${trim.name} · ${color?.name ?? ''} · ล้อ ${wheel?.sizeInch ?? '–'}" ราคารวม` : undefined} />
           </div>
           <details className="cfg-finance">
             <summary>คำนวณค่างวดผ่อน</summary>
