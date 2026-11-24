@@ -52,6 +52,7 @@ Endpoint อิงแท็บ **API** ใน Google Doc "Car Shop" (Car Shop �
 | GET    | `/payments` · `/payments/{id}`                                | ตามสิทธิ์                                   | กรอง `status`, `paymentMethod`, `paymentType`, `dateFrom`, `dateTo`, `page`, `limit`                                                                                                                                            |
 | PATCH  | `/payments/{id}`                                              | admin, finance                              | `{ status: SUCCESS\|FAILED }` เฉพาะ `PENDING`                                                                                                                                                                                   |
 | GET    | `/payments/{id}/receipt`                                      | ตามสิทธิ์ (เหมือน `/payments/{id}`)         | ใบเสร็จรับเงิน A4 PDF (เลขที่ `RC-YYYYMMDD-XXXXXX`, แยก VAT, จำนวนเงินเป็นตัวอักษรไทย) เฉพาะยอด `SUCCESS`/`REFUNDED` อื่น ๆ = 409 `RECEIPT_NOT_AVAILABLE`                                                                        |
+| GET    | `/orders/{orderId}/booking-document`                          | ตามสิทธิ์ (เหมือนออเดอร์)                   | ใบจองรถยนต์ A4 PDF (`BK-YYYYMMDD-XXXXXX`) ขั้นที่ 2: เงินจอง/เงินดาวน์ที่ต้องจ่ายเพิ่ม/ยอดจัดไฟแนนซ์ ให้ลูกค้ายื่นขอสินเชื่อ ออกได้หลังอนุมัติ + ได้รับเงินจอง อื่น ๆ = 409 `BOOKING_DOCUMENT_NOT_AVAILABLE` |
 | GET    | `/financing/quote`                                            | **ไม่ต้อง login**                           | ประมาณค่างวดผ่อน `?price=&downPercent=(0–90)&months=(12…84)&annualRate=(0–20, ค่าเริ่ม 2.49)` ดอกเบี้ยคงที่ (flat) ค่างวดปัดขึ้นเป็นบาท + ตาราง `terms` ทุกระยะผ่อน                                                                |
 | POST   | `/payments/{paymentId}/refunds`                               | customer (ของตัวเอง), admin, finance        | `{ amount, reason }` payment ต้อง `SUCCESS`, ไม่เกินยอดที่ยังไม่คืน, ค้างขอได้ทีละ 1                                                                                                                                            |
 | GET    | `/orders/{orderId}/refunds` · `/refunds` · `/refunds/{id}`    | ตามสิทธิ์                                   | กรอง `status` (REQUESTED\|REFUNDED\|REJECTED), `dateFrom`, `dateTo`                                                                                                                                                             |
@@ -70,7 +71,20 @@ Endpoint อิงแท็บ **API** ใน Google Doc "Car Shop" (Car Shop �
 - ซื้อสด: `BOOKING_DEPOSIT` (เงินจอง) → `BALANCE` (ชำระยอด)
 - ผ่อน: `BOOKING_DEPOSIT` → `DOWN_PAYMENT` (เงินดาวน์) → `FINANCE_DISBURSEMENT` (ไฟแนนซ์โอนยอดจัด, คู่กับ `paymentMethod: FINANCE` เท่านั้น)
 - ไม่ส่ง `paymentType` = `BALANCE` (FINANCE = `FINANCE_DISBURSEMENT`) · เงินจองมีได้ 1 ก้อนและต้องเป็นยอดแรก (409) · ยอดจัดไฟแนนซ์มีได้ 1 ก้อน (409)
-- เงินจองจ่ายได้ตั้งแต่ order ยัง `PENDING` (รอผู้จัดการอนุมัติ) ไม่เกิน `BOOKING_DEPOSIT_MAX` (ค่าเริ่ม 50,000) เกิน = 422 `DEPOSIT_TOO_HIGH` · ยอดอื่นต้องรอ `CONFIRMED` · ถ้าผู้จัดการไม่อนุมัติ (order `CANCELLED`) การเงินคืนเงินจองผ่าน `/payments/{id}/refunds` ตามปกติ (หน้าการเงินขึ้นรายการ "ยกเลิกแล้วแต่ยังไม่คืนเงิน")
+- **ทุกยอดต้องรอผู้จัดการอนุมัติ (order `CONFIRMED`) ก่อน** · ระหว่าง `PENDING` = 409 `ORDER_NOT_PAYABLE` · เงินจองไม่เกิน `BOOKING_DEPOSIT_MAX` (ค่าเริ่ม 50,000) เกิน = 422 `DEPOSIT_TOO_HIGH`
+
+### ขั้นตอนการซื้อ (`flow`) — `src/modules/payments/flow.js`
+
+ออเดอร์ที่มี `installment_count > 0` (ทุกออเดอร์จากฟอร์มเซลส์) = **ซื้อผ่อน 4 ขั้น** หลังผู้จัดการอนุมัติ:
+
+1. `BOOKING_DEPOSIT` ลูกค้าจ่ายเงินจอง
+2. `FINANCE_APPLICATION` ดาวน์โหลดใบจอง (`/orders/{id}/booking-document`) ไปยื่นไฟแนนซ์เอง (นอกระบบ)
+3. `DOWN_PAYMENT` กลับมาจ่ายเงินดาวน์ **เต็มจำนวนครั้งเดียว** = `orders.down_payment` − เงินจอง ต้องส่ง `financeCompany` (บริษัทที่อนุมัติ) · ยอดไม่ตรง = 422 `DOWN_PAYMENT_MUST_BE_FULL` (details.expected) · จ่ายซ้ำ = 409 `DOWN_PAYMENT_EXISTS` · เงินจองครอบคลุมดาวน์แล้ว = 409 `DOWN_PAYMENT_NOT_REQUIRED`
+4. `DELIVERY` ไฟแนนซ์โอนยอดจัด (`FINANCE_DISBURSEMENT`, ต้องรถ READY) → order `PAID` → Catalog `PATCH /production/cars/{id} {action: DELIVER}` (ต้อง order `PAID`) → รถ `SOLD` + order `COMPLETED`
+
+ลำดับบังคับ: ยอดอื่นก่อนเงินจอง `SUCCESS` = 409 `BOOKING_DEPOSIT_REQUIRED` / `BOOKING_DEPOSIT_NOT_CONFIRMED` · ยอดจัด/ยอดที่เหลือก่อนเงินดาวน์ `SUCCESS` = 409 `DOWN_PAYMENT_REQUIRED`
+ออเดอร์ไม่มีงวดผ่อน = ซื้อเงินสด 3 ขั้น (`BOOKING_DEPOSIT` → `BALANCE` → `DELIVERY`) ห้ามใช้ `DOWN_PAYMENT` (422 `DOWN_PAYMENT_NOT_IN_PLAN`)
+`GET /orders/{id}/payments` และ `GET /order-balances` มี `flow` = { plan, currentStep (0 = รออนุมัติ), completed, steps[{key,done}], bookingDeposit, bookingDocumentAvailable, downPayment{agreedAmount, depositDeducted, dueAmount, status}, finance{amount, received, …}, car{ready, delivered} }
 - บัตรเครดิตรวมต่อออเดอร์ไม่เกิน `CREDIT_CARD_MAX_PER_ORDER` (ค่าเริ่ม 100,000) เกิน = 422 `CARD_LIMIT_EXCEEDED`
 - ราคารวม VAT 7% แล้ว: invoice ส่ง `amountBeforeVat` + `vatAmount` และ PDF แยกรายการ รถ / ประกัน / ส่วนลด / VAT
 

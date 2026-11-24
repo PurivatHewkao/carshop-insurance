@@ -28,11 +28,82 @@ export const netPaid = (order) =>
 export const canPay = (order) =>
   order.orderStatus === 'CONFIRMED' && outstanding(order) > 0;
 
-/** วางเงินจองได้ไหม: ออเดอร์รอผู้จัดการอนุมัติ และยังไม่มียอดชำระ/รอตรวจเลย */
-export const canBook = (order) =>
-  order.orderStatus === 'PENDING' &&
-  toSatang(order.paidAmount) === 0 &&
-  toSatang(order.pendingAmount) === 0;
+// ---------- ขั้นตอนการซื้อ (backend คิดให้ใน order.flow — services/payment/src/modules/payments/flow.js) ----------
+// ซื้อผ่อน: 1 จ่ายเงินจอง → 2 รับใบจองไปยื่นไฟแนนซ์เอง → 3 กลับมาจ่ายเงินดาวน์เต็มจำนวน → 4 รับรถ
+// ซื้อเงินสด: 1 เงินจอง → 2 ชำระส่วนที่เหลือ → 3 รับรถ
+export const STEP_LABELS = {
+  BOOKING_DEPOSIT: 'ชำระเงินจอง',
+  FINANCE_APPLICATION: 'ยื่นไฟแนนซ์ด้วยใบจอง',
+  DOWN_PAYMENT: 'ชำระเงินดาวน์',
+  BALANCE: 'ชำระส่วนที่เหลือ',
+  DELIVERY: 'รับรถ',
+};
+
+/** ออเดอร์ยังเดินขั้นตอนอยู่ (รวมรออนุมัติ และจ่ายครบแล้วรอรับรถ) */
+export const inProgress = (order) =>
+  Boolean(order.flow) && !order.flow.completed && !order.flow.cancelled;
+
+/**
+ * ยอดถัดไปที่ "ลูกค้า" จ่ายเองได้ หรือ null ถ้าไม่มี (รออนุมัติ / รอตรวจยอด / รอไฟแนนซ์ / รอรับรถ)
+ * ซื้อผ่อน: ขั้น 1 เงินจอง, ขั้น 2–3 เงินดาวน์ (ยอดตายตัว) · ซื้อเงินสด: เงินจองหรือชำระยอด
+ */
+export function customerNextPayment(order) {
+  const flow = order.flow;
+  if (!flow || order.orderStatus !== 'CONFIRMED') return null;
+  if (flow.plan === 'CASH') {
+    if (outstanding(order) <= 0) return null;
+    return toSatang(order.paidAmount) + toSatang(order.pendingAmount) === 0
+      ? 'BOOKING_DEPOSIT'
+      : 'BALANCE';
+  }
+  if (flow.bookingDeposit.status === 'NOT_PAID') return 'BOOKING_DEPOSIT';
+  if (flow.bookingDeposit.status !== 'PAID') return null;
+  if (flow.downPayment.status === 'NOT_PAID') return 'DOWN_PAYMENT';
+  return null;
+}
+
+/**
+ * ฝ่ายการเงินรับเงินที่โชว์รูมได้แบบไหนบ้างตามขั้นตอน
+ * types = ชนิดยอดเงินสดที่เลือกได้, finance = รับยอดจัดจากไฟแนนซ์ได้แล้วหรือยัง
+ */
+export function staffPaymentOptions(order) {
+  const flow = order.flow;
+  if (!flow || flow.plan === 'CASH')
+    return { types: ['BOOKING_DEPOSIT', 'BALANCE'], finance: true };
+  if (flow.bookingDeposit.status !== 'PAID')
+    return { types: ['BOOKING_DEPOSIT'], finance: false };
+  if (!['PAID', 'NOT_REQUIRED'].includes(flow.downPayment.status))
+    return {
+      types: flow.downPayment.status === 'NOT_PAID' ? ['DOWN_PAYMENT'] : [],
+      finance: false,
+    };
+  return { types: ['BALANCE'], finance: true };
+}
+
+/** ข้อความสั้นบอกว่าตอนนี้รออะไรอยู่ */
+export function flowWaitingText(order) {
+  const flow = order.flow;
+  if (!flow) return '';
+  if (flow.currentStep === 0) return 'รอผู้จัดการอนุมัติ — อนุมัติแล้วจึงชำระเงินจองได้';
+  if (flow.cancelled) return 'ออเดอร์ถูกยกเลิก';
+  if (flow.completed) return 'รับรถแล้ว';
+  if (flow.bookingDeposit.status === 'PENDING')
+    return 'แจ้งโอนเงินจองแล้ว รอฝ่ายการเงินตรวจยอด';
+  if (flow.plan === 'FINANCE') {
+    if (flow.currentStep === 2)
+      return 'ดาวน์โหลดใบจองไปยื่นขอสินเชื่อกับไฟแนนซ์ อนุมัติแล้วกลับมาชำระเงินดาวน์';
+    if (flow.downPayment.status === 'PENDING')
+      return 'แจ้งโอนเงินดาวน์แล้ว รอฝ่ายการเงินตรวจยอด';
+    if (!flow.finance.received)
+      return 'รอบริษัทไฟแนนซ์โอนยอดจัดให้ศูนย์ ' +
+        Number(flow.finance.amount).toLocaleString('th-TH') + ' บาท';
+  } else if (order.orderStatus === 'CONFIRMED') {
+    return 'ชำระส่วนที่เหลือเมื่อรถพร้อมส่งมอบ';
+  }
+  return flow.car.ready
+    ? 'ชำระครบแล้ว รอนัดส่งมอบรถ'
+    : 'ชำระครบแล้ว รอรถผลิตเสร็จ/มาถึงศูนย์';
+}
 
 /** ออเดอร์ถูกยกเลิก (เช่น ผู้จัดการไม่อนุมัติ) แต่โชว์รูมยังถือเงินลูกค้าอยู่ → ต้องคืน */
 export const needsRefund = (order) =>

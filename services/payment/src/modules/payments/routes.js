@@ -10,6 +10,7 @@ import {
   reviewPayment,
 } from './service.js';
 import { renderReceiptPdf } from './receipt.js';
+import { renderBookingPdf } from './booking.js';
 
 // Mounted at /api/v1 after requireSession + loadActor (src/app.js).
 // Customers and sellers only reach their own orders (checked in service.js).
@@ -32,6 +33,19 @@ router.get('/orders/:orderId/payments', async (req, res) => {
   res
     .set('Cache-Control', 'no-store')
     .json(await listOrderPayments(req.actor, orderId));
+});
+
+// ใบจอง (step 2): after approval + deposit received; the customer applies for a loan with it.
+router.get('/orders/:orderId/booking-document', async (req, res) => {
+  const orderId = requireUuid(req.params.orderId, 'orderId');
+  const { fileName, buffer } = await renderBookingPdf(req.actor, orderId);
+  res
+    .set({
+      'Cache-Control': 'no-store',
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'inline; filename="' + fileName + '"',
+    })
+    .send(buffer);
 });
 
 router.get('/payments', async (req, res) => {

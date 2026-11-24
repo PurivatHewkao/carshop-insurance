@@ -50,6 +50,17 @@ async function setupDatabase() {
     .sort()) {
     await admin.query(await readFile(path.join(migrationsDir, file), 'utf8'));
   }
+  // Down payment + installment terms on orders (Sales database/04_order_configuration.sql,
+  // which uses DELIMITER, so the columns are added here directly).
+  await admin.query(
+    `ALTER TABLE orders
+       ADD COLUMN vehicle_configuration JSON NULL,
+       ADD COLUMN down_payment DECIMAL(14,2) NULL,
+       ADD COLUMN down_payment_percent TINYINT UNSIGNED NULL,
+       ADD COLUMN interest_rate DECIMAL(6,3) NULL,
+       ADD COLUMN installment_count SMALLINT UNSIGNED NULL,
+       ADD COLUMN installment_years TINYINT UNSIGNED NULL`,
+  );
   // Production columns on cars (Catalog, made-to-order cars).
   await admin.query(
     await readFile(
@@ -116,7 +127,13 @@ let vinCounter = 0;
 async function makeOrder(
   total,
   status = 'CONFIRMED',
-  { customerId = ids.customer, sellerId = ids.employee } = {},
+  {
+    customerId = ids.customer,
+    sellerId = ids.employee,
+    // Hire purchase (what the Sales form makes): { downPayment: '300000.00' }.
+    // Without it the order is a cash order.
+    finance = null,
+  } = {},
 ) {
   const carId = randomUUID();
   const orderId = randomUUID();
@@ -124,8 +141,9 @@ async function makeOrder(
   await admin.query(
     `INSERT INTO cars (id, car_model_id, vin, color, manufacture_year, price, status)
        VALUES (?, ?, ?, 'white', 2026, ?, 'RESERVED');
-     INSERT INTO orders (id, customer_id, seller_id, car_id, subtotal, discount, total_amount, status)
-       VALUES (?, ?, ?, ?, ?, 0, ?, ?);`,
+     INSERT INTO orders (id, customer_id, seller_id, car_id, subtotal, discount, total_amount, status,
+                         down_payment, down_payment_percent, interest_rate, installment_count, installment_years)
+       VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?);`,
     [
       carId,
       ids.model,
@@ -138,6 +156,11 @@ async function makeOrder(
       total,
       total,
       status,
+      finance ? finance.downPayment : null,
+      finance ? (finance.percent ?? 30) : null,
+      finance ? '2.490' : null,
+      finance ? 60 : null,
+      finance ? 5 : null,
     ],
   );
   return { orderId, carId };
@@ -427,10 +450,25 @@ describe('payment plan (deposit, down payment, finance, card limit)', () => {
     assert.equal(res.json.error.code, 'CARD_LIMIT_EXCEEDED');
   });
 
-  test('hire purchase: deposit -> down payment -> finance disbursement -> cash rest', async () => {
-    const { orderId } = await makeOrder('1000000.00');
+  test('4 steps: approve -> deposit -> booking document -> full down payment -> finance -> PAID', async () => {
+    // Net 1,000,000; down 300,000 agreed with the seller; deposit 20,000 counts toward it.
+    const { orderId } = await makeOrder('1000000.00', 'CONFIRMED', {
+      finance: { downPayment: '300000.00' },
+    });
     const pay = (key, body, as = 'admin') =>
       api('POST', `/orders/${orderId}/payments`, { key, body, as });
+    const flow = async () =>
+      (await api('GET', `/orders/${orderId}/payments`, { as: 'customer' })).json
+        .flow;
+
+    let state = await flow();
+    assert.equal(state.plan, 'FINANCE');
+    assert.equal(state.currentStep, 1);
+    assert.deepEqual(
+      state.steps.map((s) => s.key),
+      ['BOOKING_DEPOSIT', 'FINANCE_APPLICATION', 'DOWN_PAYMENT', 'DELIVERY'],
+    );
+    assert.equal(state.bookingDocumentAvailable, false);
 
     // Customer cannot record a finance payment; Finance must give company + contract no.
     let res = await pay(
@@ -460,16 +498,39 @@ describe('payment plan (deposit, down payment, finance, card limit)', () => {
     assert.equal(res.status, 400);
     assert.equal(res.json.error.details[0].field, 'paymentType');
 
+    // Step 1 comes first: no down payment / loan before the deposit.
+    res = await pay(
+      'hp-early-0001',
+      {
+        amount: '280000.00',
+        paymentMethod: 'BANK_TRANSFER',
+        paymentType: 'DOWN_PAYMENT',
+        financeCompany: 'Toyoty Leasing',
+        transactionReference: 'TRF-EARLY-1',
+      },
+      'customer',
+    );
+    assert.equal(res.status, 409);
+    assert.equal(res.json.error.code, 'BOOKING_DEPOSIT_REQUIRED');
+    res = await api('GET', `/orders/${orderId}/booking-document`, {
+      as: 'customer',
+    });
+    assert.equal(res.status, 409);
+    assert.equal(res.json.error.code, 'BOOKING_DOCUMENT_NOT_AVAILABLE');
+
+    // Step 1: deposit by bank transfer, waits for Finance.
     res = await pay(
       'hp-step-0001',
       {
         amount: '20000.00',
-        paymentMethod: 'CREDIT_CARD',
+        paymentMethod: 'BANK_TRANSFER',
         paymentType: 'BOOKING_DEPOSIT',
+        transactionReference: 'TRF-DEP-HP-1',
       },
       'customer',
     );
     assert.equal(res.status, 201);
+    const depositId = res.json.data.id;
     res = await pay('hp-step-0002', {
       amount: '5000.00',
       paymentMethod: 'CASH',
@@ -477,25 +538,138 @@ describe('payment plan (deposit, down payment, finance, card limit)', () => {
     });
     assert.equal(res.status, 409);
     assert.equal(res.json.error.code, 'BOOKING_DEPOSIT_EXISTS');
-
     res = await pay(
-      'hp-step-0003',
+      'hp-early-0002',
       {
-        amount: '180000.00',
+        amount: '280000.00',
         paymentMethod: 'BANK_TRANSFER',
         paymentType: 'DOWN_PAYMENT',
+        financeCompany: 'Toyoty Leasing',
+        transactionReference: 'TRF-EARLY-2',
+      },
+      'customer',
+    );
+    assert.equal(res.json.error.code, 'BOOKING_DEPOSIT_NOT_CONFIRMED');
+    assert.equal(
+      (await api('PATCH', `/payments/${depositId}`, { body: { status: 'SUCCESS' } }))
+        .status,
+      200,
+    );
+
+    // Step 2: booking document for the finance company.
+    state = await flow();
+    assert.equal(state.currentStep, 2);
+    assert.equal(state.bookingDocumentAvailable, true);
+    assert.deepEqual(state.downPayment, {
+      status: 'NOT_PAID',
+      agreedAmount: '300000.00',
+      depositDeducted: '20000.00',
+      dueAmount: '280000.00',
+      financeCompany: null,
+    });
+    assert.equal(state.finance.amount, '700000.00');
+    assert.equal(state.finance.installmentCount, 60);
+    res = await fetch(base + `/orders/${orderId}/booking-document`, {
+      headers: { authorization: 'Bearer tok-customer' },
+    });
+    assert.equal(res.status, 200);
+    assert.equal(res.headers.get('content-type'), 'application/pdf');
+    assert.match(
+      res.headers.get('content-disposition'),
+      /filename="BK-\d{8}-[0-9A-F]{6}\.pdf"/,
+    );
+    const pdf = Buffer.from(await res.arrayBuffer());
+    assert.equal(pdf.subarray(0, 5).toString(), '%PDF-');
+    assert.equal(
+      (await api('GET', `/orders/${orderId}/booking-document`, { as: 'customer2' }))
+        .status,
+      404,
+    );
+
+    // No loan / balance before the down payment.
+    res = await pay('hp-early-0003', {
+      amount: '700000.00',
+      paymentMethod: 'FINANCE',
+      financeCompany: 'Toyoty Leasing',
+      transactionReference: 'HP-EARLY-3',
+    });
+    assert.equal(res.status, 409);
+    assert.equal(res.json.error.code, 'DOWN_PAYMENT_REQUIRED');
+
+    // Step 3: the down payment is paid in full, once, with the approving company.
+    res = await pay(
+      'hp-down-0001',
+      {
+        amount: '100000.00',
+        paymentMethod: 'BANK_TRANSFER',
+        paymentType: 'DOWN_PAYMENT',
+        financeCompany: 'Toyoty Leasing',
+        transactionReference: 'TRF-DOWN-PART',
+      },
+      'customer',
+    );
+    assert.equal(res.status, 422);
+    assert.equal(res.json.error.code, 'DOWN_PAYMENT_MUST_BE_FULL');
+    assert.equal(res.json.error.details[0].expected, '280000.00');
+    res = await pay(
+      'hp-down-0002',
+      {
+        amount: '280000.00',
+        paymentMethod: 'BANK_TRANSFER',
+        paymentType: 'DOWN_PAYMENT',
+        transactionReference: 'TRF-DOWN-NOCO',
+      },
+      'customer',
+    );
+    assert.equal(res.status, 400);
+    assert.equal(res.json.error.details[0].field, 'financeCompany');
+    res = await pay(
+      'hp-down-0003',
+      {
+        amount: '280000.00',
+        paymentMethod: 'BANK_TRANSFER',
+        paymentType: 'DOWN_PAYMENT',
+        financeCompany: 'Toyoty Leasing',
         transactionReference: 'TRF-DOWN-0001',
       },
       'customer',
     );
     assert.equal(res.status, 201);
     assert.equal(res.json.data.status, 'PENDING');
-    const confirm = await api('PATCH', `/payments/${res.json.data.id}`, {
-      body: { status: 'SUCCESS' },
+    assert.equal(res.json.data.financeCompany, 'Toyoty Leasing');
+    const downId = res.json.data.id;
+    state = await flow();
+    assert.equal(state.currentStep, 3); // waiting for Finance to check the transfer
+    res = await pay(
+      'hp-down-0004',
+      {
+        amount: '280000.00',
+        paymentMethod: 'BANK_TRANSFER',
+        paymentType: 'DOWN_PAYMENT',
+        financeCompany: 'Toyoty Leasing',
+        transactionReference: 'TRF-DOWN-0002',
+      },
+      'customer',
+    );
+    assert.equal(res.json.error.code, 'DOWN_PAYMENT_EXISTS');
+    res = await pay('hp-early-0004', {
+      amount: '700000.00',
+      paymentMethod: 'FINANCE',
+      financeCompany: 'Toyoty Leasing',
+      transactionReference: 'HP-EARLY-4',
     });
-    assert.equal(confirm.status, 200);
+    assert.equal(res.json.error.code, 'DOWN_PAYMENT_REQUIRED');
+    assert.equal(
+      (await api('PATCH', `/payments/${downId}`, { body: { status: 'SUCCESS' } }))
+        .status,
+      200,
+    );
 
-    res = await pay('hp-step-0004', {
+    // Step 4: the finance company pays the loan -> order PAID -> car handed over (Catalog).
+    state = await flow();
+    assert.equal(state.currentStep, 4);
+    assert.equal(state.finance.received, false);
+    res = await pay('hp-fin-0001', {
       amount: '700000.00',
       paymentMethod: 'FINANCE',
       financeCompany: 'Toyoty Leasing',
@@ -503,88 +677,141 @@ describe('payment plan (deposit, down payment, finance, card limit)', () => {
     });
     assert.equal(res.status, 201);
     assert.equal(res.json.data.paymentType, 'FINANCE_DISBURSEMENT');
-    res = await pay('hp-step-0005', {
-      amount: '100000.00',
+    res = await pay('hp-fin-0002', {
+      amount: '1.00',
       paymentMethod: 'FINANCE',
       financeCompany: 'Toyoty Leasing',
       transactionReference: 'HP-2026-0002',
     });
     assert.equal(res.status, 409);
-    assert.equal(res.json.error.code, 'FINANCE_ALREADY_DISBURSED');
-    assert.equal(await orderStatus(orderId), 'CONFIRMED');
-
-    res = await pay('hp-step-0006', {
-      amount: '100000.00',
-      paymentMethod: 'CASH',
-    });
-    assert.equal(res.status, 201);
-    assert.equal(res.json.data.paymentType, 'BALANCE');
     assert.equal(await orderStatus(orderId), 'PAID');
+    state = await flow();
+    assert.equal(state.finance.received, true);
+    assert.equal(state.currentStep, 4); // paid, waiting for the hand-over
+    assert.deepEqual(
+      state.steps.map((s) => s.done),
+      [true, true, true, false],
+    );
+    await admin.query("UPDATE orders SET status = 'COMPLETED' WHERE id = ?", [
+      orderId,
+    ]);
+    state = await flow();
+    assert.equal(state.completed, true);
+    assert.equal(state.currentStep, null);
 
     const history = await api('GET', `/orders/${orderId}/payments`);
     assert.deepEqual(
       history.json.data.map((p) => p.paymentType),
-      ['BOOKING_DEPOSIT', 'DOWN_PAYMENT', 'FINANCE_DISBURSEMENT', 'BALANCE'],
+      ['BOOKING_DEPOSIT', 'DOWN_PAYMENT', 'FINANCE_DISBURSEMENT'],
     );
     const downOnly = await api('GET', '/payments?paymentType=DOWN_PAYMENT');
     assert.ok(downOnly.json.data.some((p) => p.orderId === orderId));
     assert.ok(downOnly.json.data.every((p) => p.paymentType === 'DOWN_PAYMENT'));
+    // order-balances carries the same flow for the finance pages.
+    const balances = await api('GET', '/order-balances', { as: 'customer' });
+    const row = balances.json.data.find((o) => o.orderId === orderId);
+    assert.equal(row.flow.plan, 'FINANCE');
+    assert.equal(row.flow.completed, true);
   });
 
-  test('deposit before approval: only BOOKING_DEPOSIT (max 50,000) on a PENDING order', async () => {
-    const { orderId } = await makeOrder('800000.00', 'PENDING');
+  test('deposit covers the whole down payment: step 3 is skipped', async () => {
+    const { orderId } = await makeOrder('500000.00', 'CONFIRMED', {
+      finance: { downPayment: '0.00', percent: 0 },
+    });
+    let res = await api('POST', `/orders/${orderId}/payments`, {
+      key: 'nodown-0001',
+      body: {
+        amount: '20000.00',
+        paymentMethod: 'CASH',
+        paymentType: 'BOOKING_DEPOSIT',
+      },
+    });
+    assert.equal(res.status, 201);
+    res = await api('POST', `/orders/${orderId}/payments`, {
+      key: 'nodown-0002',
+      body: {
+        amount: '1.00',
+        paymentMethod: 'CASH',
+        paymentType: 'DOWN_PAYMENT',
+        financeCompany: 'X',
+      },
+    });
+    assert.equal(res.status, 409);
+    assert.equal(res.json.error.code, 'DOWN_PAYMENT_NOT_REQUIRED');
+    const { flow } = (await api('GET', `/orders/${orderId}/payments`)).json;
+    assert.equal(flow.downPayment.status, 'NOT_REQUIRED');
+    assert.equal(flow.finance.amount, '480000.00');
+    assert.equal(flow.currentStep, 2);
+    res = await api('POST', `/orders/${orderId}/payments`, {
+      key: 'nodown-0003',
+      body: {
+        amount: '480000.00',
+        paymentMethod: 'FINANCE',
+        financeCompany: 'Toyoty Leasing',
+        transactionReference: 'HP-NODOWN-1',
+      },
+    });
+    assert.equal(res.status, 201);
+    assert.equal(await orderStatus(orderId), 'PAID');
+  });
+
+  test('cash order: no DOWN_PAYMENT, deposit then balance', async () => {
+    const { orderId } = await makeOrder('300000.00');
+    let res = await api('POST', `/orders/${orderId}/payments`, {
+      key: 'cash-plan-001',
+      body: {
+        amount: '1000.00',
+        paymentMethod: 'CASH',
+        paymentType: 'DOWN_PAYMENT',
+        financeCompany: 'X',
+      },
+    });
+    assert.equal(res.status, 422);
+    assert.equal(res.json.error.code, 'DOWN_PAYMENT_NOT_IN_PLAN');
+    const { flow } = (await api('GET', `/orders/${orderId}/payments`)).json;
+    assert.equal(flow.plan, 'CASH');
+    assert.deepEqual(
+      flow.steps.map((s) => s.key),
+      ['BOOKING_DEPOSIT', 'BALANCE', 'DELIVERY'],
+    );
+  });
+
+  test('nothing is paid before the manager approves (deposit max 50,000 after)', async () => {
+    const { orderId } = await makeOrder('800000.00', 'PENDING', {
+      finance: { downPayment: '240000.00' },
+    });
     const pay = (key, body, as = 'customer') =>
       api('POST', `/orders/${orderId}/payments`, { key, body, as });
 
     let res = await pay('pend-0001', {
-      amount: '10000.00',
+      amount: '20000.00',
       paymentMethod: 'CREDIT_CARD',
+      paymentType: 'BOOKING_DEPOSIT',
     });
     assert.equal(res.status, 409);
     assert.equal(res.json.error.code, 'ORDER_NOT_PAYABLE');
+    let state = (await api('GET', `/orders/${orderId}/payments`)).json.flow;
+    assert.equal(state.currentStep, 0); // waiting for the manager
+
+    await admin.query("UPDATE orders SET status = 'CONFIRMED' WHERE id = ?", [
+      orderId,
+    ]);
     res = await pay('pend-0002', {
       amount: '50000.01',
-      paymentMethod: 'CREDIT_CARD',
+      paymentMethod: 'BANK_TRANSFER',
       paymentType: 'BOOKING_DEPOSIT',
+      transactionReference: 'TRF-DEP-TOOHIGH',
     });
     assert.equal(res.status, 422);
     assert.equal(res.json.error.code, 'DEPOSIT_TOO_HIGH');
-
-    // Bank transfer deposit: Finance can confirm it while the order still waits.
     res = await pay('pend-0003', {
       amount: '20000.00',
-      paymentMethod: 'BANK_TRANSFER',
+      paymentMethod: 'CREDIT_CARD',
       paymentType: 'BOOKING_DEPOSIT',
-      transactionReference: 'TRF-DEP-0001',
     });
     assert.equal(res.status, 201);
-    const confirm = await api('PATCH', `/payments/${res.json.data.id}`, {
-      body: { status: 'SUCCESS' },
-    });
-    assert.equal(confirm.status, 200);
-    assert.equal(await orderStatus(orderId), 'PENDING');
-
-    // Manager rejects the deal (Sales sets CANCELLED): the deposit is refunded.
-    await admin.query("UPDATE orders SET status = 'CANCELLED' WHERE id = ?", [
-      orderId,
-    ]);
-    const refund = await api(
-      'POST',
-      `/payments/${confirm.json.data.id}/refunds`,
-      {
-        key: 'pend-refund-01',
-        as: 'customer',
-        body: { amount: '20000.00', reason: 'ไม่อนุมัติการขาย' },
-      },
-    );
-    assert.equal(refund.status, 201);
-    const approved = await api(
-      'POST',
-      `/refunds/${refund.json.data.id}/approve`,
-      { body: { refundReference: 'RF-DEP-0001' } },
-    );
-    assert.equal(approved.status, 200);
-    assert.equal(approved.json.data.status, 'REFUNDED');
+    state = (await api('GET', `/orders/${orderId}/payments`)).json.flow;
+    assert.equal(state.currentStep, 2);
   });
 
   test('booking deposit must be the first payment', async () => {
@@ -1228,7 +1455,9 @@ describe('made-to-order cars (production queue)', () => {
   }
 
   test('balance and invoice wait until the car has arrived', async () => {
-    const { orderId, carId } = await makeOrder('200000.00');
+    const { orderId, carId } = await makeOrder('200000.00', 'CONFIRMED', {
+      finance: { downPayment: '80000.00' },
+    });
     await setProduction(carId, 'SCHEDULED');
     const deposit = await api('POST', `/orders/${orderId}/payments`, {
       as: 'customer',
@@ -1246,6 +1475,7 @@ describe('made-to-order cars (production queue)', () => {
         amount: '30000.00',
         paymentMethod: 'CASH',
         paymentType: 'DOWN_PAYMENT',
+        financeCompany: 'Toyoty Leasing',
       },
     });
     assert.equal(down.status, 201, JSON.stringify(down.json));
