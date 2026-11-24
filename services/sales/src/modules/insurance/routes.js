@@ -3,8 +3,23 @@ import { Router } from 'express';
 import { requireRoles } from '../../../../../packages/auth/index.js';
 import { novaPlans } from './client.js';
 import { customerInsurance, insuranceVehicle } from './repository.js';
-import { requireUuid } from '../../utils/httpError.js';
+import { requireUuid, requireBody } from '../../utils/httpError.js';
+import { insuranceConfiguration } from './configuration.js';
 const router = Router();
+const displayPlans = (plans) =>
+  plans.map(({ quoteToken: _token, ...plan }) => ({
+    ...plan,
+    label: `${plan.name} (NOVA)`,
+    premium: plan.finalAmount,
+  }));
+router.post(
+  '/quotes',
+  requireRoles('seller', 'manager', 'admin'),
+  async (req, res) => {
+    const vehicle = await insuranceConfiguration(requireBody(req.body));
+    res.json({ data: displayPlans(await novaPlans(vehicle)) });
+  },
+);
 router.get(
   '/plans',
   requireRoles('seller', 'manager', 'admin'),
@@ -13,11 +28,7 @@ router.get(
     const plans = await novaPlans(await insuranceVehicle(carId));
     // The quote token remains in the backend; the seller only needs display prices.
     res.json({
-      data: plans.map(({ quoteToken: _token, ...plan }) => ({
-        ...plan,
-        label: `${plan.name} (NOVA)`,
-        premium: plan.finalAmount,
-      })),
+      data: displayPlans(plans),
     });
   },
 );

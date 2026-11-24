@@ -1,15 +1,26 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { resolveActor } from '../api/actor.js';
+import { createOrder, fetchCustomers, fetchSellers } from '../api/salesApi.js';
 import {
-  createOrder,
-  fetchCustomers,
-  fetchSellers,
-} from '../api/salesApi.js';
-import { createConfiguredUnit, fetchCars as fetchCatalogCars, releaseConfiguredUnit } from '../../catalog/api/catalogApi.js';
+  createConfiguredUnit,
+  fetchCars as fetchCatalogCars,
+  releaseConfiguredUnit,
+} from '../../catalog/api/catalogApi.js';
 import { useAction, useSalesData } from './useSalesData.js';
 // Insurance: load NOVA separately so an outage cannot block a car-only sale.
+import { fetchNovaConfigurationPlans } from '../api/insuranceApi.js';
 
-const EMPTY = { customerId: '', insuranceId: '', sellerId: '', discount: '0', note: '', vehicleConfiguration: null, downPaymentPercent: '0', interestRate: '', installmentCount: '' };
+const EMPTY = {
+  customerId: '',
+  insuranceId: '',
+  sellerId: '',
+  discount: '0',
+  note: '',
+  vehicleConfiguration: null,
+  downPaymentPercent: '0',
+  interestRate: '',
+  installmentCount: '',
+};
 
 /**
  * State and submit logic shared by the two "create order" pages.
@@ -37,9 +48,25 @@ export function useOrderForm({ onCreated } = {}) {
 
   const customerId = form.customerId || customers[0]?.id || '';
   const carId = '';
-  const nova = useSalesData(() => Promise.resolve([]), []);
-  const insurances = nova.data ?? [];
-  const sellerId = (!actor?.isStandIn && actor?.employeeId) || sellers[0]?.id || '';
+  const selection = form.vehicleConfiguration;
+  const insuranceKey = selection
+    ? JSON.stringify({
+        modelSlug: selection.modelSlug,
+        trim: selection.trim,
+        colorId: selection.colorId,
+        wheelId: selection.wheelId,
+      })
+    : '';
+  const nova = useSalesData(
+    (signal) =>
+      insuranceKey
+        ? fetchNovaConfigurationPlans(signal, JSON.parse(insuranceKey))
+        : Promise.resolve([]),
+    [insuranceKey],
+  );
+  const insurances = nova.loading ? [] : (nova.data ?? []);
+  const sellerId =
+    (!actor?.isStandIn && actor?.employeeId) || sellers[0]?.id || '';
   const customer = customers.find((item) => item.id === customerId);
   const insurance = insurances.find((item) => item.id === form.insuranceId);
 
@@ -53,7 +80,24 @@ export function useOrderForm({ onCreated } = {}) {
   const downPaymentPercent = Number(form.downPaymentPercent || 0);
   const downPayment = Math.round(netTotal * downPaymentPercent) / 100;
   const installmentYears = Number(form.installmentCount || 0) / 12;
-  const canSubmit = Boolean(customerId && sellerId && form.vehicleConfiguration && form.vehicleConfiguration.price) && discount >= 0 && netTotal >= 0 && downPayment >= 0 && downPayment <= netTotal && Number(form.interestRate || 0) >= 0 && Number(form.interestRate || 0) <= 20 && Number(form.installmentCount || 0) > 0 && Number.isInteger(installmentYears) && installmentYears <= 10 && !form.insuranceId;
+  const canSubmit =
+    Boolean(
+      customerId &&
+      sellerId &&
+      form.vehicleConfiguration &&
+      form.vehicleConfiguration.price,
+    ) &&
+    discount >= 0 &&
+    netTotal >= 0 &&
+    downPayment >= 0 &&
+    downPayment <= netTotal &&
+    Number(form.interestRate || 0) >= 0 &&
+    Number(form.interestRate || 0) <= 20 &&
+    Number(form.installmentCount || 0) > 0 &&
+    Number.isInteger(installmentYears) &&
+    installmentYears <= 10 &&
+    (!form.insuranceId ||
+      Boolean(insurance && form.deliveryDate && !nova.loading && !nova.error));
 
   async function submit(event) {
     event.preventDefault();
@@ -67,21 +111,24 @@ export function useOrderForm({ onCreated } = {}) {
       });
       try {
         return await createOrder({
-        customerId,
-        sellerId,
-        carId: unit.carId,
-        vehicleConfiguration: { ...form.vehicleConfiguration, price: unit.total },
-        downPaymentPercent,
-        interestRate: String(form.interestRate || '0'),
-        installmentCount: Number(form.installmentCount),
-        installmentYears,
-        // Insurance: NOVA ids never enter the legacy insurance foreign key.
-        insuranceId: null,
-        novaPlanId: form.insuranceId || null,
-        deliveryDate: form.insuranceId ? form.deliveryDate : undefined,
-        expectedPremium: insurancePrice,
-        discount: String(form.discount || '0'),
-        note: form.note,
+          customerId,
+          sellerId,
+          carId: unit.carId,
+          vehicleConfiguration: {
+            ...form.vehicleConfiguration,
+            price: unit.total,
+          },
+          downPaymentPercent,
+          interestRate: String(form.interestRate || '0'),
+          installmentCount: Number(form.installmentCount),
+          installmentYears,
+          // Insurance: NOVA ids never enter the legacy insurance foreign key.
+          insuranceId: null,
+          novaPlanId: form.insuranceId || null,
+          deliveryDate: form.insuranceId ? form.deliveryDate : undefined,
+          expectedPremium: insurancePrice,
+          discount: String(form.discount || '0'),
+          note: form.note,
         });
       } catch (error) {
         await releaseConfiguredUnit(unit.carId).catch(() => {});
@@ -105,9 +152,16 @@ export function useOrderForm({ onCreated } = {}) {
     setForm,
     submit,
     canSubmit,
-    lookups, nova, action, form, setForm, submit, canSubmit,
-    customers, cars: models, insurances, sellers,
-    customerId, carId, sellerId, customer,
-    carPrice, insurancePrice, netTotal,
+    customers,
+    cars: models,
+    insurances,
+    sellers,
+    customerId,
+    carId,
+    sellerId,
+    customer,
+    carPrice,
+    insurancePrice,
+    netTotal,
   };
 }

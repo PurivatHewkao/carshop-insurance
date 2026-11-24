@@ -1,6 +1,11 @@
 // Insurance: server-only NOVA API. No secret is sent to React.
 import { httpError } from '../../utils/httpError.js';
-import { partnerEndpoint } from '../../../../../packages/insurance/index.js';
+import {
+  partnerEndpoint,
+  signQuote,
+  verifyQuote,
+} from '../../../../../packages/insurance/index.js';
+import { rateVehicle } from '../../../../../packages/insurance/rating.js';
 
 export async function novaRequest(path, body) {
   const secret = process.env.NOVA_PARTNER_KEY;
@@ -27,9 +32,16 @@ export async function novaRequest(path, body) {
       },
     );
     const result = await response.json();
+    if (response.status === 401)
+      throw httpError(
+        503,
+        'NOVA_PARTNER_UNAUTHORIZED',
+        'คีย์เชื่อมต่อ NOVA ไม่ตรงกับระบบประกัน กรุณาตรวจ NOVA_PARTNER_KEY ของ Sales',
+      );
     if (!response.ok || !result.data) throw new Error('NOVA rejected request');
     return result.data;
-  } catch {
+  } catch (error) {
+    if (error.apiSafe) throw error;
     throw httpError(
       503,
       'NOVA_UNAVAILABLE',
@@ -37,5 +49,29 @@ export async function novaRequest(path, body) {
     );
   }
 }
-export const novaPlans = (vehicle) =>
-  vehicle ? novaRequest('quotes', { vehicle }) : novaRequest('plans');
+export async function novaPlans(vehicle) {
+  const plans = await novaRequest('plans');
+  if (!vehicle) return plans;
+  return ratePartnerPlans(plans, vehicle, process.env.NOVA_PARTNER_KEY);
+}
+export function ratePartnerPlans(plans, vehicle, secret) {
+  return plans.map((plan) => {
+    let signed;
+    try {
+      signed = verifyQuote(plan.quoteToken, secret);
+    } catch {
+      throw httpError(
+        503,
+        'NOVA_INVALID_QUOTE',
+        'ตรวจสอบแผนประกันจาก NOVA ไม่สำเร็จ',
+      );
+    }
+    let rated;
+    try {
+      rated = { ...signed, ...rateVehicle(vehicle, signed.slug, 'toyoty') };
+    } catch (error) {
+      throw httpError(400, 'UNSUPPORTED_INSURANCE_VEHICLE', error.message);
+    }
+    return { ...rated, quoteToken: signQuote(rated, secret) };
+  });
+}

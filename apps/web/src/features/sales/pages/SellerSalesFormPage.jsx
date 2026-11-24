@@ -79,9 +79,10 @@ export default function SellerSalesFormPage() {
                             <select
                                 className="sales-select"
                                 value={form.insuranceId}
+                                disabled={!form.vehicleConfiguration || order.nova.loading}
                                 onChange={(e) => setForm({ ...form, insuranceId: e.target.value })}
                             >
-                                <option value="">ไม่รับประกันภัยเพิ่มเติม</option>
+                                <option value="">{order.nova.loading ? 'กำลังคำนวณราคาประกัน…' : 'ไม่รับประกันภัยเพิ่มเติม'}</option>
                                 {insurances.map((p) => (
                                     <option key={p.id} value={p.id}>{p.label}</option>
                                 ))}
@@ -89,6 +90,7 @@ export default function SellerSalesFormPage() {
                         </div>
 
                         {/* Insurance: delivery date and NOVA discount, separate from sale discount. */}
+                        {!form.vehicleConfiguration && <small className="sales-slot-help">เลือกสเปกรถให้ครบเพื่อดูแพ็กเกจและราคาประกัน</small>}
                         <NovaInsuranceFields form={form} setForm={setForm} plans={insurances} {...order.nova} />
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                             <div className="sales-form-group">

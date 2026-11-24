@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import {
   configureVehicle,
   rateVehicle,
+  ratingModels,
+  ratingTrims,
+  ratingColors,
 } from '../../../packages/insurance/rating.js';
 import { plans } from '../scripts/seed.js';
 import { createApp } from '../src/app.js';
@@ -18,10 +21,10 @@ const config = (overrides = {}) => ({
 });
 test('agreed annual premiums cover all twelve model/trim combinations', () => {
   const expected = {
-    'e-san': [32000, 34400, 43200],
-    khon: [41600, 45100, 54900],
-    iburaporn: [44400, 47100, 58200],
-    rushri: [46200, 49000, 60600],
+    'e-san': [22200, 23600, 28100],
+    khon: [27000, 29000, 33500],
+    iburaporn: [29400, 31000, 36400],
+    rushri: [29800, 31400, 36900],
   };
   for (const [modelSlug, amounts] of Object.entries(expected))
     ['ECO', 'BALANCED', 'HIGH_PERFORMANCE'].forEach((trimCode, i) => {
@@ -43,13 +46,13 @@ test('factory options counted once, default wheel included, partner discount cap
   assert.equal(vehicle.vehicleValue, 1885000);
   const quote = rateVehicle(vehicle, 'signature', 'toyoty');
   assert.equal(quote.sumInsured, 1500000);
-  assert.equal(quote.originalAmount, 35000);
-  assert.equal(quote.finalAmount, 34000);
+  assert.equal(quote.originalAmount, 24000);
+  assert.equal(quote.finalAmount, 23000);
   assert.equal(
     configureVehicle(config({ trimCode: 'BALANCED' })).vehicleValue,
     1840000,
   );
-  assert.equal(rateVehicle(vehicle, 'essential', 'toyoty').finalAmount, 3315.5);
+  assert.equal(rateVehicle(vehicle, 'essential', 'toyoty').finalAmount, 2375);
   assert.equal(rateVehicle(vehicle, 'smart-drive').collisionLimit, 200000);
   assert.equal(rateVehicle(vehicle, 'extra-care').fireTheftLimit, 1500000);
 });
@@ -110,7 +113,7 @@ test('HTTP quotes ignore browser prices, require partner auth, and bind signed q
   assert.equal(result.vehicle.vehicleValue, 1690000);
   assert.equal(
     result.plans.find((p) => p.slug === 'signature').finalAmount,
-    31000,
+    21200,
   );
   assert.equal(
     (await send('/quotes', config({ colorCode: 'sport-red' }))).status,
@@ -139,7 +142,7 @@ test('HTTP quotes ignore browser prices, require partner auth, and bind signed q
     customer: { fullName: 'Demo', phone: '', email: 'demo@example.com' },
     vehicle: { brand: 'TOYOTY', model: 'E-san', year: 2026, vin: vehicle.vin },
   };
-  assert.equal(validatePartnerRequest(body).plan.finalAmount, 31000);
+  assert.equal(validatePartnerRequest(body).plan.finalAmount, 21200);
   assert.throws(
     () =>
       validatePartnerRequest({
@@ -148,4 +151,55 @@ test('HTTP quotes ignore browser prices, require partner auth, and bind signed q
       }),
     { code: 'QUOTE_VEHICLE_MISMATCH' },
   );
+});
+
+test('every factory option preserves coverage, ordered premiums and monotonic prices', () => {
+  const slugs = ['essential', 'smart-drive', 'extra-care', 'signature'];
+  for (const model of ratingModels)
+    for (const trim of ratingTrims) {
+      const base = configureVehicle(
+        config({ modelSlug: model.slug, trimCode: trim.code }),
+      );
+      for (const color of ratingColors.filter(
+        (c) => !c.trim || c.trim === trim.code,
+      ))
+        for (const wheelCode of ['standard', 'upgrade']) {
+          const vehicle = configureVehicle(
+            config({
+              modelSlug: model.slug,
+              trimCode: trim.code,
+              colorCode: color.code,
+              wheelCode,
+            }),
+          );
+          const quotes = slugs.map((slug) =>
+            rateVehicle(vehicle, slug, 'toyoty'),
+          );
+          quotes.forEach((quote, i) => {
+            assert.ok(
+              quote.finalAmount >=
+                rateVehicle(base, slugs[i], 'toyoty').finalAmount,
+            );
+            assert.ok(quote.discountAmount <= 1000);
+            assert.ok(
+              quote.finalAmount <= rateVehicle(vehicle, slugs[i]).finalAmount,
+            );
+            if (i) assert.ok(quote.finalAmount > quotes[i - 1].finalAmount);
+          });
+          assert.equal(
+            quotes[0].finalAmount,
+            rateVehicle(base, 'essential', 'toyoty').finalAmount,
+          );
+          assert.equal(
+            quotes[1].finalAmount,
+            rateVehicle(base, 'smart-drive', 'toyoty').finalAmount,
+          );
+          assert.equal(quotes[1].collisionLimit, 200000);
+          assert.equal(quotes[2].collisionLimit, 200000);
+          assert.equal(quotes[2].fireTheftLimit, quotes[3].sumInsured);
+          assert.equal(quotes[3].collisionLimit, quotes[3].sumInsured);
+          assert.equal(quotes[3].repairType, 'GARAGE');
+          assert.equal(quotes[3].deductible, 0);
+        }
+    }
 });

@@ -7,3 +7,7 @@ export const fetchNovaPlans = (signal, carId) =>
     .then(unwrap);
 export const fetchMyInsurance = (signal) =>
   salesClient.get('insurance/me', { signal }).then(unwrap);
+export const fetchNovaConfigurationPlans = (signal, selection) =>
+  salesClient
+    .post('insurance/quotes', selection, { signal, timeout: 25000 })
+    .then(unwrap);

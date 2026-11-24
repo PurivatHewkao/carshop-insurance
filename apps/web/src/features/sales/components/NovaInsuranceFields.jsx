@@ -13,7 +13,7 @@ export default function NovaInsuranceFields({
       {loading && <p role="status">กำลังโหลดแพ็กเกจ NOVA…</p>}
       {error && (
         <p role="alert">
-          โหลดแพ็กเกจ NOVA ไม่สำเร็จ ยังขายรถแบบไม่รับประกันได้{' '}
+          {error} · ยังขายรถแบบไม่รับประกันได้{' '}
           <button type="button" onClick={reload}>
             ลองใหม่
           </button>

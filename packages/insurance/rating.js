@@ -1,14 +1,14 @@
-// Versioned underwriting configuration, based on TOYOTY configurator 2026-11-24.
-// Educational rates, not an insurer tariff. Keep separate from catalogue sale prices.
-export const ratingVersion = 'nova-demo-2026-11-24-v1';
+// Project pricing calibrated against published market examples; not an insurer quote.
+// See docs/nova-insurance-pricing.md for formulas, assumptions and sources.
+export const ratingVersion = 'nova-demo-2026-11-25-v2';
 export const ratingModels = [
   {
     slug: 'e-san',
     name: 'E-san',
     type: 'ซีดาน 5 ที่นั่ง',
     factor: 100,
-    third: 3490,
-    thirdPlus: 6900,
+    third: 2500,
+    thirdPlus: 4500,
     prices: [1690000, 1840000, 2040000],
     horsepower: [111, 140, 245],
   },
@@ -16,9 +16,9 @@ export const ratingModels = [
     slug: 'khon',
     name: 'Khon',
     type: 'SUV 5 ที่นั่ง',
-    factor: 110,
-    third: 3990,
-    thirdPlus: 7900,
+    factor: 105,
+    third: 2700,
+    thirdPlus: 4800,
     prices: [2060000, 2250000, 2410000],
     horsepower: [111, 140, 245],
   },
@@ -26,9 +26,9 @@ export const ratingModels = [
     slug: 'iburaporn',
     name: 'Iburaporn',
     type: 'SUV 7 ที่นั่ง',
-    factor: 110,
-    third: 3990,
-    thirdPlus: 7900,
+    factor: 108,
+    third: 2900,
+    thirdPlus: 5000,
     prices: [2220000, 2370000, 2570000],
     horsepower: [150, 204, 224],
   },
@@ -36,9 +36,9 @@ export const ratingModels = [
     slug: 'rushri',
     name: 'RushRi',
     type: 'กระบะ 4 ประตู',
-    factor: 115,
-    third: 4490,
-    thirdPlus: 8900,
+    factor: 110,
+    third: 3000,
+    thirdPlus: 5200,
     prices: [2200000, 2350000, 2550000],
     horsepower: [150, 204, 224],
   },
@@ -130,16 +130,19 @@ export function rateVehicle(vehicle, slug, source = 'direct') {
     throw new Error('รถคันนี้ยังไม่อยู่ในเงื่อนไขประกัน NOVA');
   const sumInsured =
     Math.floor((vehicle.vehicleValue * 80) / 100 / 10000) * 10000;
-  const risk = vehicle.trimCode === 'HIGH_PERFORMANCE' ? 115 : 100;
+  const risk = vehicle.trimCode === 'HIGH_PERFORMANCE' ? 110 : 100;
   const round100 = (amount) => Math.round(amount / 100) * 100;
   const amounts = {
     essential: model.third,
     'smart-drive': round100((model.thirdPlus * risk) / 100),
     'extra-care': round100(
-      ((((4000 + (sumInsured * 6) / 1000) * model.factor) / 100) * risk) / 100,
+      ((((model.thirdPlus + 1500 + (sumInsured * 3) / 1000) * model.factor) /
+        100) *
+        risk) /
+        100,
     ),
     signature: round100(
-      ((((5000 + (sumInsured * 2) / 100) * model.factor) / 100) * risk) / 100,
+      ((((6000 + (sumInsured * 12) / 1000) * model.factor) / 100) * risk) / 100,
     ),
   };
   const originalAmount = amounts[slug];

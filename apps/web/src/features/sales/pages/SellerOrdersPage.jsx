@@ -6,6 +6,7 @@ import { useSalesData } from '../hooks/useSalesData.js';
 import { ActionError, LoadStatus } from '../components/SalesState.jsx';
 import '../sales.css';
 import VehicleConfigurationPicker from '../components/VehicleConfigurationPicker.jsx';
+import NovaInsuranceFields from '../components/NovaInsuranceFields.jsx';
 
 export default function SellerOrdersPage() {
   const orderList = useSalesData((signal) => fetchOrders({}, signal), []);
@@ -75,15 +76,18 @@ export default function SellerOrdersPage() {
               <select
                 className="sales-select"
                 value={form.insuranceId}
+                disabled={!form.vehicleConfiguration || order.nova.loading}
                 onChange={(e) => setForm({ ...form, insuranceId: e.target.value })}
               >
-                <option value="">ไม่รับประกันภัยเพิ่มเติม</option>
+                <option value="">{order.nova.loading ? 'กำลังคำนวณราคาประกัน…' : 'ไม่รับประกันภัยเพิ่มเติม'}</option>
                 {insurances.map((p) => (
                   <option key={p.id} value={p.id}>{p.label}</option>
                 ))}
               </select>
             </div>
 
+            {!form.vehicleConfiguration && <small className="sales-slot-help">เลือกสเปกรถให้ครบเพื่อดูแพ็กเกจและราคาประกัน</small>}
+            <NovaInsuranceFields form={form} setForm={setForm} plans={insurances} {...order.nova} />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div className="sales-form-group">
                 <label>ราคารถยนต์ (บาท) — จากระบบ</label>
