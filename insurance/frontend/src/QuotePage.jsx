@@ -8,6 +8,7 @@ import {
   RotateCcw,
   Download,
   BadgePercent,
+  ChevronDown,
 } from 'lucide-react';
 import { request, money, toyotyUrl } from './api.js';
 import { State } from './components.jsx';
@@ -187,10 +188,6 @@ export default function QuotePage({ source }) {
             กับรถของคุณ
           </h1>
           <p>เลือกสเปกที่ใช่ เปรียบเทียบความคุ้มครอง แล้วดูราคาของคุณ</p>
-          <span className="quote-demo">
-            <ShieldCheck size={16} /> ระบบจำลองเพื่อการศึกษา ·
-            ไม่มีความคุ้มครองจริง
-          </span>
         </div>
         <ol className="quote-steps" aria-label="ขั้นตอนขอราคา">
           {steps.map((label, index) => (
@@ -239,23 +236,34 @@ export default function QuotePage({ source }) {
             </div>
             {step === 0 && (
               <>
-                <div className="quote-models">
-                  {catalog.models.map((item) => (
-                    <Choice
-                      key={item.slug}
-                      selected={config.modelSlug === item.slug}
-                      onClick={() => update({ modelSlug: item.slug })}
+                <div className="quote-model-picker">
+                  <label htmlFor="quote-model">รุ่นรถยนต์</label>
+                  <div className="quote-select-wrap">
+                    <CarFront size={22} aria-hidden="true" />
+                    <select
+                      id="quote-model"
+                      value={config.modelSlug}
+                      onChange={(event) =>
+                        update({ modelSlug: event.target.value })
+                      }
                     >
-                      <span className="quote-car-icon">
-                        <CarFront size={40} strokeWidth={1.3} />
+                      <option value="">เลือกรุ่นรถยนต์ของคุณ</option>
+                      {catalog.models.map((item) => (
+                        <option key={item.slug} value={item.slug}>
+                          TOYOTY {item.name} · {item.type}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={19} aria-hidden="true" />
+                  </div>
+                  {model && (
+                    <div className="quote-selected-model">
+                      <strong>TOYOTY {model.name}</strong>
+                      <span>
+                        {model.type} · ราคาเริ่มต้น ฿{baht(model.prices[0])}
                       </span>
-                      <span className="quote-model-name">{item.name}</span>
-                      <span className="quote-small">{item.type}</span>
-                      <span className="quote-start">
-                        ราคาเริ่มต้น <b>฿{baht(item.prices[0])}</b>
-                      </span>
-                    </Choice>
-                  ))}
+                    </div>
+                  )}
                 </div>
                 <p className="quote-note">รถ TOYOTY ปี 2026 · ใช้ส่วนบุคคล</p>
               </>
@@ -289,54 +297,56 @@ export default function QuotePage({ source }) {
                     ))}
                   </div>
                 </fieldset>
-                <fieldset className="quote-fieldset">
-                  <legend>สีตัวถัง</legend>
-                  <div className="quote-colors">
-                    {catalog.colors
-                      .filter(
-                        (item) => !item.trim || item.trim === config.trimCode,
-                      )
-                      .map((item) => (
-                        <Choice
-                          key={item.code}
-                          selected={config.colorCode === item.code}
-                          onClick={() => update({ colorCode: item.code })}
-                        >
-                          <span
-                            className="quote-swatch"
-                            style={{ backgroundColor: item.hex }}
-                          />
-                          <strong>{item.name}</strong>
-                          <span className="quote-small">
+                <div className="quote-option-field">
+                  <label htmlFor="quote-color">สีตัวถัง</label>
+                  <div className="quote-select-wrap">
+                    <select
+                      id="quote-color"
+                      className="quote-option-select"
+                      value={config.colorCode}
+                      onChange={(event) =>
+                        update({ colorCode: event.target.value })
+                      }
+                    >
+                      {catalog.colors
+                        .filter(
+                          (item) => !item.trim || item.trim === config.trimCode,
+                        )
+                        .map((item) => (
+                          <option key={item.code} value={item.code}>
+                            {item.name} ·{' '}
                             {item.extra
                               ? `+฿${baht(item.extra)}`
                               : 'รวมในราคารถ'}
-                          </span>
-                        </Choice>
-                      ))}
+                          </option>
+                        ))}
+                    </select>
+                    <ChevronDown size={19} aria-hidden="true" />
                   </div>
-                </fieldset>
-                <fieldset className="quote-fieldset">
-                  <legend>ล้อ</legend>
-                  <div className="quote-wheels">
-                    {['standard', 'upgrade'].map((code) => (
-                      <Choice
-                        key={code}
-                        selected={config.wheelCode === code}
-                        onClick={() => update({ wheelCode: code })}
-                      >
-                        <strong>
-                          {code === 'standard' ? trim.wheel : trim.upgrade}
-                        </strong>
-                        <span className="quote-small">
+                </div>
+                <div className="quote-option-field">
+                  <label htmlFor="quote-wheel">ล้อ</label>
+                  <div className="quote-select-wrap">
+                    <select
+                      id="quote-wheel"
+                      className="quote-option-select"
+                      value={config.wheelCode}
+                      onChange={(event) =>
+                        update({ wheelCode: event.target.value })
+                      }
+                    >
+                      {['standard', 'upgrade'].map((code) => (
+                        <option key={code} value={code}>
+                          {code === 'standard' ? trim.wheel : trim.upgrade} ·{' '}
                           {code === 'standard'
                             ? 'รวมในราคารุ่นย่อยแล้ว'
                             : `+฿${baht(trim.extra)}`}
-                        </span>
-                      </Choice>
-                    ))}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={19} aria-hidden="true" />
                   </div>
-                </fieldset>
+                </div>
                 <div className="quote-info">
                   <SlidersHorizontal size={20} />
                   <p>
@@ -570,11 +580,6 @@ export default function QuotePage({ source }) {
             ทุนชั้น 1 และทุนสูญหาย/ไฟไหม้ชั้น 2+ เท่ากับ 80% ของมูลค่ารถ
             ปัดลงหลักหมื่น เบี้ยคำนวณตามกลุ่มรถและรุ่นย่อย
             ออปชันมาตรฐานรวมในราคารถแล้ว
-          </p>
-          <p>
-            ตารางรับประกันอ้างอิงแค็ตตาล็อก TOYOTY วันที่ 24 พฤศจิกายน 2569
-            เป็นกติกาสาธิต ไม่ใช่อัตราของบริษัทประกันจริง สำหรับรถปี 2025–2027
-            ที่อยู่ในรายการเท่านั้น
           </p>
         </section>
       </div>

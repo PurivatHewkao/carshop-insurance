@@ -94,9 +94,6 @@ function Header({ source }) {
           <Link to="/admin">ผู้ดูแล NOVA</Link>
         </nav>
       </div>
-      <div className="demo-strip">
-        EDUCATIONAL DEMO <span>·</span> เว็บไซต์ประกันรถยนต์จำลองเพื่อการศึกษา
-      </div>
       {location.pathname !== '/' && (
         <div className="container breadcrumb">
           <Link to={home}>หน้าแรก</Link> /{' '}

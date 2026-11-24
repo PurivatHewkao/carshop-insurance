@@ -15,13 +15,80 @@
 .quote-heading > p {
   font-size: 1.05rem;
 }
-.quote-demo {
-  display: inline-flex;
+.quote-model-picker label {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.quote-select-wrap {
+  position: relative;
+  display: flex;
   align-items: center;
-  gap: 7px;
-  color: #536783;
+}
+.quote-select-wrap > svg:first-child {
+  position: absolute;
+  left: 16px;
+  color: var(--blue);
+  pointer-events: none;
+}
+.quote-select-wrap > svg:last-child {
+  position: absolute;
+  right: 16px;
+  color: #647c9c;
+  pointer-events: none;
+}
+.quote-select-wrap select {
+  width: 100%;
+  min-height: 58px;
+  appearance: none;
+  padding: 15px 48px;
+  background: white;
+  color: var(--navy);
+  border: 1px solid #cedaeb;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.quote-select-wrap select:focus-visible {
+  border-color: var(--blue);
+  outline: 3px solid #dce7ff;
+  outline-offset: 2px;
+}
+.quote-selected-model {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 18px;
+  padding: 18px 20px;
+  border: 1px solid #dce7f8;
+  background: #f5f8ff;
+  border-radius: 11px;
+}
+.quote-selected-model strong {
+  font-size: 1.125rem;
+}
+.quote-selected-model span {
+  color: var(--muted);
   font-size: 0.875rem;
-  margin-top: 15px;
+}
+.quote-option-field {
+  margin-bottom: 24px;
+  padding: 19px;
+  border: 1px solid #e0e7f1;
+  border-radius: 12px;
+  background: #fafcff;
+}
+.quote-option-field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.quote-select-wrap .quote-option-select {
+  padding-left: 14px;
+  padding-right: 38px;
+  font-size: 0.9375rem;
 }
 .quote-mobile-break {
   display: none;
@@ -576,9 +643,6 @@
   }
   .quote-heading > p {
     font-size: 0.9375rem;
-  }
-  .quote-demo {
-    font-size: 0.8125rem;
   }
   .quote-layout {
     grid-template-columns: 1fr;
