@@ -12,6 +12,8 @@ import {
   getFinancialReport,
   getOrdersReport,
   getActivityFeed,
+  getSalesByConfiguration,
+  getProductionDelays,
 } from './controller.js';
 
 const router = Router();
@@ -26,7 +28,9 @@ router.use(requireSession, requireReportRole);
 router.get('/sales-summary', validateQuery(salesSummaryQuerySchema), getSalesSummary);
 router.get('/sales-by-seller', validateQuery(reportDateRangeQuerySchema), getSalesBySeller);
 router.get('/sales-by-model', validateQuery(reportDateRangeQuerySchema), getSalesByModel);
+router.get('/sales-by-configuration', validateQuery(reportDateRangeQuerySchema), getSalesByConfiguration);
 router.get('/inventory', getInventoryReport);
+router.get('/production-delays', getProductionDelays);
 router.get('/appointments', validateQuery(reportDateRangeQuerySchema), getAppointmentsReport);
 router.get('/finance', validateQuery(reportDateRangeQuerySchema), getFinancialReport);
 router.get('/orders', validateQuery(reportDateRangeQuerySchema), getOrdersReport);

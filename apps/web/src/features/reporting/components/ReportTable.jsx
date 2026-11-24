@@ -3,6 +3,7 @@ import { REPORT_COLUMNS, formatDate, statusText } from './reportFormat.js';
 
 function renderCell(row, [key, , type]) {
   const value = key === 'createdAt' && row.createdAt == null ? row.issueDate : row[key];
+  if (type === 'yesno') return value ? 'ได้ (ช้าเกิน 30 วัน)' : '—';
   if (value == null || value === '') return '—';
   if (type === 'money') return formatMoney(value);
   if (type === 'number') return new Intl.NumberFormat('th-TH').format(Number(value));
@@ -11,9 +12,9 @@ function renderCell(row, [key, , type]) {
   return typeof value === 'object' ? JSON.stringify(value) : String(value);
 }
 
-export default function ReportTable({ title, reportKey, value, loading, error, emptyText = 'ไม่พบข้อมูลในช่วงวันที่ที่เลือก' }) {
+export default function ReportTable({ title, reportKey, columnsKey = reportKey, value, loading, error, emptyText = 'ไม่พบข้อมูลในช่วงวันที่ที่เลือก' }) {
   const rows = getRows(value);
-  const columns = REPORT_COLUMNS[reportKey] || Object.keys(rows[0] || {}).filter((key) => key !== 'id').map((key) => [key, key]);
+  const columns = REPORT_COLUMNS[columnsKey] || Object.keys(rows[0] || {}).filter((key) => key !== 'id').map((key) => [key, key]);
   return (
     <section className="s-card min-w-0">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">

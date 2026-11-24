@@ -9,6 +9,8 @@ export const REPORTS = [
   ['appointments', 'รายงานนัดหมาย'],
   ['finance', 'รายงานการเงิน'],
   ['orders', 'รายการออเดอร์'],
+  ['sales-by-configuration', 'ยอดขายตามสเปก (รุ่นย่อย / สี / ล้อ)'],
+  ['production-delays', 'รถสั่งผลิตที่ล่าช้ากว่าช่วงวันคาดการณ์'],
 ];
 
 export function formatMoney(value) {

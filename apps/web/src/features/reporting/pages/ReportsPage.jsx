@@ -17,9 +17,9 @@ const VIEWS = {
   sales: {
     title: 'ยอดขายและออเดอร์',
     description: 'ยอดขายรวม ยอดขายตามพนักงานและรุ่นรถ และรายการออเดอร์จาก Sales',
-    reports: ['sales-summary', 'sales-by-seller', 'sales-by-model', 'orders'],
+    reports: ['sales-summary', 'sales-by-seller', 'sales-by-model', 'sales-by-configuration', 'orders'],
     salesCards: true,
-    wide: ['orders'],
+    wide: ['sales-by-configuration', 'orders'],
   },
   finance: {
     title: 'การเงิน',
@@ -30,13 +30,24 @@ const VIEWS = {
   },
   inventory: {
     title: 'รถและสต็อก',
-    description: 'จำนวนรถคงเหลือของแต่ละรุ่นจาก Catalog (นับรถสถานะ AVAILABLE)',
-    reports: ['inventory'],
+    description: 'รถ TOYOTY แยกรุ่น × รุ่นย่อย ตามขั้นผลิต คิวผลิตรายสัปดาห์ และรถที่ล่าช้า จาก Catalog',
+    reports: ['inventory', 'production-delays'],
     stockCards: true,
     noDateFilter: true,
-    wide: ['inventory'],
+    wide: ['inventory', 'production-delays'],
   },
 };
+
+// ตารางย่อยที่มาจากรายงานเดียวกัน: [report, field, title, columns]
+const EXTRA_TABLES = [
+  ['inventory', 'queue', 'คิวผลิตรายสัปดาห์ (8 สัปดาห์)', 'inventory-queue'],
+  ['sales-by-configuration', 'byTrim', 'ยอดขายตามรุ่นย่อย', 'configuration-group'],
+  ['sales-by-configuration', 'byColor', 'ยอดขายตามสี', 'configuration-group'],
+  ['sales-by-configuration', 'byWheel', 'ยอดขายตามล้อ', 'configuration-group'],
+];
+
+// Catalog ที่ยังไม่ได้รัน migration TOYOTY ตอบรายงานแบบเดิม (mode legacy)
+const columnsFor = (key, value) => (key === 'inventory' && value?.mode === 'legacy' ? 'inventory-legacy' : key);
 
 const number = (value) => (value == null ? '—' : new Intl.NumberFormat('th-TH').format(Number(value)));
 
@@ -74,6 +85,8 @@ export default function ReportsPage({ view = 'all', base = '', title, breadcrumb
   const summary = data['sales-summary'];
   const finance = data.finance?.summary;
   const stock = data.inventory?.summary;
+  const toyotyStock = data.inventory?.mode === 'toyoty';
+  const delays = data['production-delays'];
   const salesLimited = ['sales-summary', 'sales-by-seller', 'sales-by-model', 'appointments', 'orders'].some((key) => data[key]?.sourceLimitReached);
 
   return (
@@ -138,7 +151,19 @@ export default function ReportsPage({ view = 'all', base = '', title, breadcrumb
         />
       )}
 
-      {config.stockCards && (
+      {config.stockCards && toyotyStock && (
+        <Cards
+          error={errors.inventory}
+          items={[
+            ['รถสั่งผลิตที่ยังไม่ส่งมอบ (คัน)', stock?.open, false],
+            ['กำลังผลิต + ขนส่ง (คัน)', stock ? stock.inProduction + stock.inTransit : null, false],
+            ['ถึงศูนย์ รอส่งมอบ (คัน)', stock?.ready, false],
+            ['ล่าช้ากว่าช่วงวันคาดการณ์ (คัน)', stock?.delayed, false],
+          ]}
+        />
+      )}
+
+      {config.stockCards && !toyotyStock && (
         <Cards
           error={errors.inventory}
           items={[
@@ -155,15 +180,30 @@ export default function ReportsPage({ view = 'all', base = '', title, breadcrumb
           <div key={key} className={config.wide?.includes(key) ? 'xl:col-span-2' : ''}>
             <ReportTable
               reportKey={key}
+              columnsKey={columnsFor(key, data[key])}
               title={key === 'finance' ? 'รายการทางการเงิน' : titleOf[key]}
               value={key === 'sales-summary' ? summary?.series : data[key]}
               loading={loading}
               error={errors[key]}
-              emptyText={key === 'inventory' ? 'ยังไม่มีรุ่นรถใน Catalog' : undefined}
+              emptyText={data[key]?.available === false ? data[key].message : key === 'inventory' ? 'ยังไม่มีรุ่นรถใน Catalog' : key === 'production-delays' ? 'ไม่มีรถที่ล่าช้า' : undefined}
             />
           </div>
         ))}
+        {EXTRA_TABLES.filter(([key, field]) => config.reports.includes(key) && Array.isArray(data[key]?.[field])).map(([key, field, tableTitle, columnsKey]) => (
+          <ReportTable
+            key={key + field}
+            reportKey={key}
+            columnsKey={columnsKey}
+            title={tableTitle}
+            value={data[key][field]}
+            loading={loading}
+            error={errors[key]}
+            emptyText={key === 'inventory' ? 'ยังไม่มีคิวผลิต' : undefined}
+          />
+        ))}
       </div>
+
+      {delays?.cancellable > 0 && <p className="mt-5 text-sm" style={{ color: 'var(--warn)' }}>มีรถ {number(delays.cancellable)} คันที่ล่าช้าเกิน 30 วัน ลูกค้ายกเลิกและขอคืนเงินจองเต็มจำนวนได้</p>}
 
       {salesLimited && <p className="mt-5 text-sm" style={{ color: 'var(--warn)' }}>คำเตือน: Sales API ส่งข้อมูลได้สูงสุด 500 รายการต่อคำขอ รายงานยอดขาย ออเดอร์ หรือนัดหมายอาจไม่ครอบคลุมทั้งหมด</p>}
       {data.inventory?.sourceLimitReached && <p className="mt-2 text-sm" style={{ color: 'var(--warn)' }}>คำเตือน: ดึงข้อมูลรุ่นรถได้ไม่ครบตามจำนวนทั้งหมดจาก Catalog API</p>}

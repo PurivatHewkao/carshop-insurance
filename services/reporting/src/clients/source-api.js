@@ -42,6 +42,8 @@ export async function getSourceJson(req, baseUrl, path, params = {}) {
         : 'A source service returned an error',
     );
     error.status = response.status === 401 || response.status === 403 ? response.status : 502;
+    // สถานะจริงของ service ต้นทาง (เช่น 404 = Catalog ยังไม่มี endpoint TOYOTY)
+    error.upstreamStatus = response.status;
     throw error;
   }
   return payload;

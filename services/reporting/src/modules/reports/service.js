@@ -146,7 +146,235 @@ export async function salesByModel(req, query = {}) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// TOYOTY: รถสั่งผลิต 4 model × 3 trim (Catalog migration 07 ของกร)
+// Catalog ที่ยังไม่ได้รัน migration ตอบ 404 ที่ /cars/inventory และ /cars/units
+// รายงานจะถอยไปใช้แบบเดิม (นับตามยี่ห้อ/รุ่น) แทนการพัง
+const isMissingEndpoint = (error) => error?.upstreamStatus === 404;
+
+// ขั้นผลิตของกร (QUOTED) กับของดิว (WAITING) คือขั้นเดียวกัน: สั่งแล้วแต่ยังไม่จองคิว
+const STEP_KEYS = {
+  QUOTED: 'waiting',
+  WAITING: 'waiting',
+  SCHEDULED: 'scheduled',
+  IN_PRODUCTION: 'inProduction',
+  IN_TRANSIT: 'inTransit',
+  READY: 'ready',
+  DELIVERED: 'delivered',
+};
+const TRIM_ORDER = { ECO: 0, BALANCED: 1, HIGH_PERFORMANCE: 2 };
+const COUNT_KEYS = ['showroom', 'inStock', 'waiting', 'scheduled', 'inProduction', 'inTransit', 'ready', 'delivered', 'open', 'delayed', 'cancelled'];
+
+function productionSteps(production = {}) {
+  const steps = { waiting: 0, scheduled: 0, inProduction: 0, inTransit: 0, ready: 0, delivered: 0 };
+  for (const [step, count] of Object.entries(production || {})) {
+    const key = STEP_KEYS[step];
+    if (key) steps[key] += Number(count || 0);
+  }
+  return steps;
+}
+
+function stockRow(model, trim) {
+  const source = trim || model;
+  return {
+    id: trim ? `${model.uuid || model.id}/${trim.code}` : `${model.uuid || model.id}/-`,
+    brand: model.brand,
+    model: model.name,
+    trim: trim?.code || null,
+    trimName: trim?.name || (trim ? trim.code : 'ไม่ระบุรุ่นย่อย'),
+    price: trim?.price ?? null,
+    showroom: Number(source.showroom || 0),
+    inStock: Number(source.inStock || 0),
+    ...productionSteps(source.production),
+    open: Number(source.open || 0),
+    delayed: Number(source.delayed || 0),
+    cancelled: Number(source.cancelled || 0),
+  };
+}
+
+/** สต็อก TOYOTY แยก model × trim + คิวผลิต จาก Catalog GET /cars/inventory */
+function toyotyInventory(payload) {
+  const models = Array.isArray(payload?.models) ? payload.models : [];
+  const items = [];
+  const queue = [];
+  for (const model of models) {
+    const trims = [...(model.trims || [])].sort((a, b) => (TRIM_ORDER[a.code] ?? 9) - (TRIM_ORDER[b.code] ?? 9));
+    for (const trim of trims) items.push(stockRow(model, trim));
+    // รถของ model ที่ยังไม่ผูก trim (เช่นรถสต็อกเดิม) = ยอดของ model ลบยอดของทุก trim
+    const rest = stockRow(model, null);
+    for (const trim of trims) {
+      const counted = stockRow(model, trim);
+      for (const key of COUNT_KEYS) rest[key] -= counted[key];
+    }
+    if (COUNT_KEYS.some((key) => rest[key] > 0)) items.push(rest);
+    for (const week of model.queue || []) {
+      const capacity = Number(week.capacity || 0);
+      const booked = Number(week.booked || 0);
+      queue.push({
+        id: `${model.uuid || model.id}/${week.weekStart}`,
+        model: `${model.brand} ${model.name}`.trim(),
+        weekStart: week.weekStart,
+        capacity,
+        booked,
+        free: Math.max(0, capacity - booked),
+      });
+    }
+  }
+  const totals = payload?.totals || {};
+  const steps = productionSteps(totals.production);
+  return {
+    mode: 'toyoty',
+    asOf: payload?.asOf || null,
+    summary: {
+      models: Number(totals.models ?? models.length),
+      trims: Number(totals.trims ?? items.filter((item) => item.trim).length),
+      showroom: Number(totals.showroom || 0),
+      inStock: Number(totals.inStock || 0),
+      open: Number(totals.open || 0),
+      delayed: Number(totals.delayed || 0),
+      cancelled: Number(totals.cancelled || 0),
+      ...steps,
+    },
+    totalModels: models.length,
+    items,
+    queue,
+    sourceLimitReached: false,
+  };
+}
+
 export async function inventoryReport(req) {
+  try {
+    const payload = await getCatalogData(req, 'cars/inventory', { weeks: 8 });
+    return toyotyInventory(payload?.data);
+  } catch (error) {
+    if (!isMissingEndpoint(error)) throw error;
+  }
+  return legacyInventoryReport(req);
+}
+
+/** อ่านรถสั่งผลิตทุกหน้าจาก Catalog GET /cars/units (สูงสุด 100 ต่อหน้า) */
+async function loadUnits(req, params = {}) {
+  const pageSize = 100;
+  const first = await getCatalogData(req, 'cars/units', { ...params, page: 1, pageSize });
+  const items = rowsFrom(first);
+  const total = Number(first?.meta?.total ?? items.length);
+  const pageCount = Math.min(1000, Math.ceil(total / pageSize));
+  for (let page = 2; page <= pageCount; page += 1) {
+    items.push(...rowsFrom(await getCatalogData(req, 'cars/units', { ...params, page, pageSize })));
+  }
+  return { items, total, truncated: items.length < total };
+}
+
+const notConfigured = (extra = {}) => ({
+  available: false,
+  message: 'Catalog ยังไม่มีข้อมูลรุ่นย่อย/คิวผลิต (ยังไม่ได้รัน migration 07_toyoty_configurator)',
+  items: [],
+  ...extra,
+});
+
+/** รถที่ขายได้จริง: ผูกกับ order ที่ยังไม่ยกเลิก และรถไม่ถูกยกเลิก (INACTIVE) */
+const isSoldUnit = (unit) => Boolean(unit.orderId) && unit.status !== 'INACTIVE' && unit.orderStatus !== 'CANCELLED';
+
+function groupUnits(units, keyOf, labelOf) {
+  const grouped = new Map();
+  for (const unit of units) {
+    const key = keyOf(unit) ?? 'ไม่ระบุ';
+    const current = grouped.get(key) || { key, label: labelOf(unit) || key, orderCount: 0, totalSales: 0 };
+    current.orderCount += 1;
+    current.totalSales += cents(unit.price);
+    grouped.set(key, current);
+  }
+  return [...grouped.values()]
+    .sort((a, b) => b.orderCount - a.orderCount || b.totalSales - a.totalSales || String(a.label).localeCompare(String(b.label)))
+    .map((item) => ({ ...item, totalSales: money(item.totalSales) }));
+}
+
+const wheelLabel = (unit) => unit.wheelName || (unit.wheelSizeInch ? `${unit.wheelSizeInch} นิ้ว` : unit.wheel);
+
+/**
+ * ยอดขายแยกตามสเปกที่ลูกค้าเลือก (model × trim × สี × ล้อ) + สรุปแยก trim / สี / ล้อ
+ * ยอดเงิน = ราคารถตอนสั่ง (cars.price snapshot) ไม่รวมเบี้ยประกัน
+ */
+export async function salesByConfiguration(req, query = {}) {
+  let result;
+  try {
+    result = await loadUnits(req, { state: 'all' });
+  } catch (error) {
+    if (isMissingEndpoint(error)) return notConfigured({ byTrim: [], byColor: [], byWheel: [] });
+    throw error;
+  }
+  const units = result.items.filter((unit) => isSoldUnit(unit) && inDateRange(unit.createdAt, query.date_from, query.date_to));
+  const combos = new Map();
+  for (const unit of units) {
+    const key = [unit.modelSlug || unit.model, unit.trim, unit.colorCode || unit.color, unit.wheel].join('|');
+    const current = combos.get(key) || {
+      id: key,
+      model: unit.model,
+      trim: unit.trim,
+      trimName: unit.trimName || unit.trim,
+      color: unit.color,
+      wheel: wheelLabel(unit),
+      orderCount: 0,
+      totalSales: 0,
+    };
+    current.orderCount += 1;
+    current.totalSales += cents(unit.price);
+    combos.set(key, current);
+  }
+  return {
+    available: true,
+    orderCount: units.length,
+    totalSales: money(sum(units, (unit) => unit.price)),
+    currency: 'THB',
+    items: [...combos.values()]
+      .sort((a, b) => b.orderCount - a.orderCount || b.totalSales - a.totalSales)
+      .map((item) => ({ ...item, totalSales: money(item.totalSales) })),
+    byTrim: groupUnits(units, (unit) => unit.trim, (unit) => unit.trimName || unit.trim),
+    byColor: groupUnits(units, (unit) => unit.colorCode || unit.color, (unit) => unit.color),
+    byWheel: groupUnits(units, (unit) => unit.wheel, wheelLabel),
+    sourceLimitReached: result.truncated,
+  };
+}
+
+/** รถสั่งผลิตที่ล่าช้ากว่าช่วงวันคาดการณ์ (Catalog state=delayed) เรียงจากช้ามากสุด */
+export async function productionDelays(req) {
+  let result;
+  try {
+    result = await loadUnits(req, { state: 'delayed' });
+  } catch (error) {
+    if (isMissingEndpoint(error)) return notConfigured({ total: 0, cancellable: 0 });
+    throw error;
+  }
+  const items = result.items
+    .map((unit) => ({
+      id: unit.id,
+      orderId: unit.orderId || null,
+      vin: unit.vin,
+      model: unit.model,
+      trim: unit.trim,
+      trimName: unit.trimName || unit.trim,
+      color: unit.color,
+      wheel: wheelLabel(unit),
+      productionStatus: unit.productionStatus,
+      buildWeek: unit.buildWeek || null,
+      etaFrom: unit.estimatedReady?.from || null,
+      etaTo: unit.estimatedReady?.to || null,
+      delayDays: Number(unit.delayDays || 0),
+      canCancelForDelay: Boolean(unit.canCancelForDelay),
+    }))
+    .sort((a, b) => b.delayDays - a.delayDays || String(a.etaTo || '').localeCompare(String(b.etaTo || '')));
+  return {
+    available: true,
+    total: items.length,
+    // ล่าช้าเกิน 30 วัน: ลูกค้ายกเลิกและขอคืนเงินจองเต็มจำนวนได้
+    cancellable: items.filter((item) => item.canCancelForDelay).length,
+    items,
+    sourceLimitReached: result.truncated,
+  };
+}
+
+/** แบบเดิมก่อนมี TOYOTY: นับรถ AVAILABLE ต่อรุ่น (ใช้เมื่อ Catalog ยังไม่มี /cars/inventory) */
+async function legacyInventoryReport(req) {
   const summaryPromise = getCatalogData(req, 'cars/stock-summary');
   const firstPage = await getCatalogData(req, 'cars', { page: 1, pageSize: 100, availability: 'all' });
   const models = rowsFrom(firstPage);
@@ -158,6 +386,7 @@ export async function inventoryReport(req) {
   }
   const summaryPayload = await summaryPromise;
   return {
+    mode: 'legacy',
     summary: summaryPayload?.data || null,
     totalModels,
     items: models.map((item) => ({
