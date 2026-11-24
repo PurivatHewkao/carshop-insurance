@@ -15,6 +15,11 @@ export default [
     rules: { 'no-unused-vars': ['error', { argsIgnorePattern: '^_' }] },
   },
   {
+    // Mocha: npm run test:status ยิง API จริงทุก service
+    files: ['tests/**/*.mjs'],
+    languageOptions: { globals: { ...globals.node, ...globals.mocha } },
+  },
+  {
     // Mongosh scripts: run with `mongosh`, not Node, as classic scripts.
     files: ['db schema/**/*.js'],
     languageOptions: {

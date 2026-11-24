@@ -69,6 +69,42 @@ function useHealth() {
   return { statuses, checkedAt, recheck };
 }
 
+// ผลของ npm run test:status (Mocha ยิง API จริงทุกเส้น) เขียนไว้ที่ public/api-status.json
+function useApiTestResults() {
+  const [report, setReport] = useState(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(import.meta.env.BASE_URL + 'api-status.json', { cache: 'no-store', signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => setReport(data && Array.isArray(data.results) ? data : null))
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
+  const byApi = useMemo(() => {
+    const map = new Map();
+    for (const item of report?.results || []) {
+      const key = item.service + ' ' + item.method + ' ' + item.path;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(item);
+    }
+    return map;
+  }, [report]);
+  return { report, byApi };
+}
+
+function TestResult({ items }) {
+  if (!items?.length) return <span className="ss-muted">ยังไม่ได้ทดสอบ</span>;
+  const failed = items.filter((item) => !item.pass);
+  const detail = items
+    .map((item) => (item.pass ? '✓ ' : '✗ ') + item.role + ': HTTP ' + (item.status ?? '-') + (item.error ? ' — ' + item.error : ''))
+    .join('\n');
+  return (
+    <span className={'status ' + (failed.length ? 'unavailable' : 'online')} title={detail}>
+      {failed.length ? `ไม่ผ่าน ${failed.length}/${items.length}` : `ผ่าน ${items.length}/${items.length}`}
+    </span>
+  );
+}
+
 function Chip({ active, onClick, children, count }) {
   return (
     <button type="button" className={'ss-chip' + (active ? ' on' : '')} aria-pressed={active} onClick={onClick}>
@@ -80,6 +116,7 @@ function Chip({ active, onClick, children, count }) {
 
 export default function SystemStatusPage() {
   const { statuses, checkedAt, recheck } = useHealth();
+  const { report, byApi } = useApiTestResults();
   const [role, setRole] = useState('all');
   const [service, setService] = useState('all');
   const [method, setMethod] = useState('all');
@@ -113,7 +150,7 @@ export default function SystemStatusPage() {
       <h1>สถานะระบบ (System Status)</h1>
       <p>
         ตรวจ health ของแต่ละ service และดูว่า API แต่ละเส้นเปิดให้ role ไหนเรียกได้บ้าง
-        สถานะออนไลน์ไม่ได้ยืนยันว่า business API หรือฐานข้อมูลพร้อมใช้งาน
+        สถานะออนไลน์ไม่ได้ยืนยันว่า business API หรือฐานข้อมูลพร้อมใช้งาน — ดูคอลัมน์ผลทดสอบจริงด้านล่างแทน
       </p>
 
       <div className="ss-summary" aria-live="polite">
@@ -166,6 +203,24 @@ export default function SystemStatusPage() {
           </p>
         </div>
       )}
+
+      <div className="ss-summary">
+        {report ? (
+          <>
+            <span className={'status ' + (report.failed ? 'unavailable' : 'online')}>
+              ทดสอบ API จริง (Mocha): ผ่าน {report.passed}/{report.total}
+            </span>
+            <span className="ss-muted">
+              รันล่าสุด {new Date(report.generatedAt).toLocaleString('th-TH')}
+              {report.rolesSkipped?.length ? ' · ข้าม role: ' + report.rolesSkipped.map((item) => item.role).join(', ') : ''}
+            </span>
+          </>
+        ) : (
+          <span className="ss-muted">
+            ยังไม่มีผลทดสอบ API จริง — รัน <code>npm run test:status</code> ที่ root ของโปรเจกต์ (ต้องเปิดทุก service ก่อน)
+          </span>
+        )}
+      </div>
 
       <h2 className="ss-h2">API ทั้งหมดแยกตาม role</h2>
       <div className="ss-filters">
@@ -226,6 +281,7 @@ export default function SystemStatusPage() {
                       <th scope="col">Path</th>
                       <th scope="col">ใช้ทำอะไร</th>
                       <th scope="col">Role ที่เรียกได้</th>
+                      <th scope="col">ผลทดสอบจริงล่าสุด</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -250,6 +306,7 @@ export default function SystemStatusPage() {
                             )}
                           </span>
                         </td>
+                        <td><TestResult items={byApi.get(api.service + ' ' + api.method + ' ' + api.path)} /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -267,7 +324,8 @@ export default function SystemStatusPage() {
 
       <p className="ss-muted ss-foot">
         รายการ API มาจาก <code>apps/web/src/pages/apiCatalog.js</code> (อ่านจาก routes ของแต่ละ service)
-        ถ้าเพิ่มหรือเปลี่ยนสิทธิ์ route ให้แก้ไฟล์นี้ตามด้วย
+        ถ้าเพิ่มหรือเปลี่ยนสิทธิ์ route ให้แก้ไฟล์นี้ตามด้วย ·
+        ผลทดสอบจริงมาจาก <code>npm run test:status</code> (Mocha ยิงทุกเส้นตามไฟล์นี้ ทุก role ที่มีบัญชีทดสอบ)
       </p>
     </section>
   );

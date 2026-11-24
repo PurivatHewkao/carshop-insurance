@@ -1,4 +1,5 @@
-// รายการ API ทั้งหมดของทุก service พร้อม role ที่เรียกได้ (อ่านจาก routes.js ของแต่ละ service, origin/main 22 พ.ย. 2569)
+// รายการ API ทั้งหมดของทุก service พร้อม role ที่เรียกได้ (อ่านจาก routes.js ของแต่ละ service, origin/main 24 พ.ย. 2569)
+// npm run test:status (Mocha) ใช้ไฟล์นี้เป็นรายการ API ที่ต้องยิงทดสอบจริง
 // path ต่อท้าย base URL ของ service (รวม /api/v1 แล้ว)
 // เมื่อเจ้าของ service เพิ่ม/เปลี่ยน route หรือสิทธิ์ ให้แก้ไฟล์นี้ตามด้วย
 
@@ -18,6 +19,8 @@ const SALES_STAFF = ['seller', 'manager', 'admin'];
 const CATALOG_EDITORS = ['admin', 'stock'];
 const FINANCE = ['admin', 'finance'];
 const ALL = ['guest', ...SIGNED_IN];
+// คิวผลิตรถสั่งทำ (catalog/src/modules/production ของดิว)
+const QUEUE_READERS = ['admin', 'stock', 'manager', 'finance', 'seller'];
 
 // [method, path, คำอธิบาย, roles, หมายเหตุ]
 export const API_CATALOG = {
@@ -51,6 +54,13 @@ export const API_CATALOG = {
     ['DELETE', '/promotions/:id', 'ลบโปรโมชัน', CATALOG_EDITORS],
     ['GET', '/covers', 'ภาพปกหน้าเว็บ', ALL],
     ['PUT', '/covers/:slot', 'เปลี่ยนภาพปก', CATALOG_EDITORS],
+    ['GET', '/production/eta', 'ช่วงวันรับรถโดยประมาณ (?model=&trim=)', ALL],
+    ['GET', '/production/cars/:carId', 'สถานะผลิตของรถ 1 คัน', ALL],
+    ['GET', '/production/queue', 'รายการรถสั่งผลิต', QUEUE_READERS],
+    ['GET', '/production/load', 'คิวผลิตต่อสัปดาห์แยกรุ่น', QUEUE_READERS],
+    ['PUT', '/production/capacity/:model', 'ตั้งกำลังผลิตต่อสัปดาห์', CATALOG_EDITORS],
+    ['POST', '/production/cars/:carId/schedule', 'จองคิวผลิต', CATALOG_EDITORS],
+    ['PATCH', '/production/cars/:carId', 'เลื่อนขั้นผลิต / ส่งมอบ', [...CATALOG_EDITORS, 'seller'], 'Seller ทำได้แค่ DELIVER'],
   ],
   sales: [
     ['GET', '/health', 'ตรวจสถานะ service', ALL],
@@ -102,7 +112,9 @@ export const API_CATALOG = {
     ['GET', '/reports/sales-by-seller', 'ยอดขายตามพนักงาน', ['manager', 'admin']],
     ['GET', '/reports/sales-by-model', 'ยอดขายตามรุ่นรถ', ['manager', 'admin']],
     ['GET', '/reports/orders', 'รายการออเดอร์', ['manager', 'admin']],
-    ['GET', '/reports/inventory', 'รายงานรถและสต็อก', ['manager', 'admin']],
+    ['GET', '/reports/sales-by-configuration', 'ยอดขายตามรุ่นย่อย / สี / ล้อ', ['manager', 'admin']],
+    ['GET', '/reports/inventory', 'รถ TOYOTY แยกรุ่น × รุ่นย่อย + คิวผลิต', ['manager', 'admin']],
+    ['GET', '/reports/production-delays', 'รถสั่งผลิตที่ล่าช้า', ['manager', 'admin']],
     ['GET', '/reports/appointments', 'รายงานนัดหมาย', ['manager', 'admin']],
     ['GET', '/reports/finance', 'รายงานการเงิน', ['manager', 'admin']],
     ['GET', '/reports/activity', 'ฟีดกิจกรรมจากทุก service', ['manager', 'admin']],

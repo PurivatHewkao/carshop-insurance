@@ -11,3 +11,6 @@ coverage/
 
 # Local UAT reports and evidence
 /docs/uat/
+
+# ผลของ npm run test:status (สร้างใหม่ทุกครั้งที่รัน)
+apps/web/public/api-status.json
