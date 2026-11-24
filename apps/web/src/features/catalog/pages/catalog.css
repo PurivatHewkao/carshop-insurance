@@ -864,3 +864,15 @@ button.catalog-primary-button:not(.s-btn):not(.s-var):not(.s-sw) { background: v
   .catalog-page:not(.catalog-admin-page) .catalog-showcase,
   .catalog-page:not(.catalog-admin-page) .catalog-model-hero { border-radius: 0; min-height: max(520px, 88svh); }
 }
+/* ตารางผ่อน (InstallmentButton.jsx) — replaces the old test-drive buttons */
+button.catalog-cta:not(.s-btn):not(.s-var):not(.s-sw) { font-family: inherit; cursor: pointer; }
+.catalog-installment-dialog { width: min(640px, calc(100vw - 24px)); max-height: calc(100vh - 32px); padding: 0; border: 0; border-radius: 18px; background: var(--card, #fff); color: var(--ink, #14151a); box-shadow: 0 30px 80px -20px #000a; }
+.catalog-installment-dialog::backdrop { background: #0b0c10b3; backdrop-filter: blur(3px); }
+.catalog-installment-body { display: grid; gap: 18px; padding: 22px 24px 24px; text-align: left; }
+.catalog-installment-body > header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.catalog-installment-body > header h2 { margin: 2px 0 4px; font-size: 22px; letter-spacing: -.02em; }
+.catalog-installment-body > header p:last-child { margin: 0; color: var(--mute, #666971); font-size: 13px; }
+button.catalog-installment-close:not(.s-btn):not(.s-var):not(.s-sw) { flex: 0 0 36px; width: 36px; height: 36px; border: 1px solid var(--line, #ddd); border-radius: 50%; background: var(--bg2, #f3f3f5); color: var(--ink, #14151a); font-size: 20px; line-height: 1; cursor: pointer; }
+.catalog-installment-body > footer { display: grid; gap: 12px; padding-top: 14px; border-top: 1px solid var(--line, #e5e5e9); }
+.catalog-installment-body > footer small { color: var(--mute, #666971); font-size: 11px; line-height: 1.6; }
+.catalog-page:not(.catalog-admin-page) .catalog-installment-body .catalog-cta.solid { justify-self: start; background: var(--ink, #14151a); color: #fff; }

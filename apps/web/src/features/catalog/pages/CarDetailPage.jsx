@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Action } from '../../../components/common/Showroom.jsx';
 import CarPhoto from '../components/CarPhoto.jsx';
 import CarConfigurator from '../components/CarConfigurator.jsx';
+import InstallmentButton from '../components/InstallmentButton.jsx';
 import {
   CATEGORY_LABELS,
   formatBaht,
@@ -112,7 +113,7 @@ export default function CarDetailPage() {
               <Link className="catalog-soldout-link" to="/catalog">ดูรุ่นอื่นที่พร้อมจำหน่าย</Link>
             </div>
           ) : (
-            <div className="catalog-detail-actions"><Action to={`${requestUrl}&type=จอง`}>ส่งคำขอจองรถ</Action><Action to={`${requestUrl}&type=ทดลองขับ`} variant="out">นัดทดลองขับ</Action></div>
+            <div className="catalog-detail-actions"><Action to={`${requestUrl}&type=จอง`}>ส่งคำขอจองรถ</Action><InstallmentButton car={car} className="s-btn out" /></div>
           )}
           <div className="catalog-trust-notes"><span>✓ ข้อมูลรถและออปชันตามรุ่น</span><span>✓ สอบถามเงื่อนไขกับที่ปรึกษาการขาย</span><span>✓ ราคาและสต็อกเป็นข้อมูลจำลอง</span></div>
         </aside>
