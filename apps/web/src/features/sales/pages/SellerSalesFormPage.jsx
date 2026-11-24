@@ -1,11 +1,12 @@
 // apps/web/src/features/sales/pages/SellerSalesFormPage.jsx
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useOrderForm } from '../hooks/useOrderForm.js';
 import { ActionError, LoadStatus } from '../components/SalesState.jsx';
 import '../sales.css';
 import SearchPicker from '../components/SearchPicker.jsx';
 // Insurance: keep extra NOVA fields in a separate component.
 import NovaInsuranceFields from '../components/NovaInsuranceFields.jsx';
+import VehicleConfigurationPicker from '../components/VehicleConfigurationPicker.jsx';
 
 export default function SellerSalesFormPage() {
     const [successMsg, setSuccessMsg] = useState('');
@@ -17,9 +18,10 @@ export default function SellerSalesFormPage() {
     });
     const {
         form, setForm, customers, cars, insurances, sellers,
-        customerId, carId, sellerId, customer, carPrice, insurancePrice, netTotal,
+        customerId, sellerId, customer, carPrice, insurancePrice, netTotal,
     } = order;
     const handleSubmit = order.submit;
+    const setVehicleConfiguration = useCallback((vehicleConfiguration) => setForm((current) => ({ ...current, vehicleConfiguration })), [setForm]);
 
     return (
         <div className="sales-container">
@@ -69,10 +71,8 @@ export default function SellerSalesFormPage() {
                             </div>
                         </div>
 
-                        <div className="sales-form-group">
-                            <label>รถยนต์ที่จอง (เฉพาะคันที่ยังว่าง)</label>
-                            <SearchPicker label="รถยนต์ที่จอง" value={carId} options={cars.map((c) => ({ id: c.id, name: c.label, detail: c.price ? `฿${Number(c.price).toLocaleString()}` : '' }))} onChange={(id) => setForm({ ...form, carId: id })} placeholder="ค้นหารุ่นรถ…" />
-                        </div>
+                        <h3>สเปกรถสำหรับใบจอง</h3>
+                        <VehicleConfigurationPicker models={cars} initialModel={form.vehicleConfiguration?.modelSlug || ''} onChange={setVehicleConfiguration} />
 
                         <div className="sales-form-group">
                             <label>แพ็กเกจประกันภัยควบคู่</label>
@@ -119,6 +119,13 @@ export default function SellerSalesFormPage() {
                                     onChange={(e) => setForm({ ...form, discount: e.target.value })}
                                 />
                             </div>
+                        </div>
+
+                        <h3>เงื่อนไขการผ่อนชำระ</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px' }}>
+                            <div className="sales-form-group"><label>เงินดาวน์ (% จากยอดสุทธิ) *</label><select className="sales-select" required value={form.downPaymentPercent} onChange={(e) => setForm({ ...form, downPaymentPercent: e.target.value })}>{[0, 5, 10, 15, 20, 25, 30, 40, 50].map((percent) => <option key={percent} value={percent}>{percent}%</option>)}</select><small className="sales-slot-help">คิดเป็น ฿{(Math.round(netTotal * Number(form.downPaymentPercent || 0)) / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small></div>
+                            <div className="sales-form-group"><label>ดอกเบี้ยต่อปี (%) *</label><input className="sales-input" type="number" min="0" max="20" step="0.01" required value={form.interestRate} onChange={(e) => setForm({ ...form, interestRate: e.target.value })} /></div>
+                            <div className="sales-form-group"><label>ระยะผ่อน / จำนวนงวด *</label><select className="sales-select" required value={form.installmentCount} onChange={(e) => setForm({ ...form, installmentCount: e.target.value })}><option value="">เลือกระยะผ่อน</option>{[12, 24, 36, 48, 60, 72, 84].map((months) => <option key={months} value={months}>{months} งวด ({months / 12} ปี)</option>)}</select></div>
                         </div>
 
                         <div className="sales-form-group">

@@ -30,6 +30,22 @@ router.get('/', signedIn, async (req, res) => {
 // Price and premium come from the database; only ids and the discount are sent.
 router.post('/', sellerOnly, requireEmployee, async (req, res) => {
   const body = requireBody(req.body);
+  const vehicleConfiguration = body.vehicleConfiguration;
+  if (!vehicleConfiguration || typeof vehicleConfiguration !== 'object' || Array.isArray(vehicleConfiguration))
+    throw httpError(400, 'INVALID_CONFIGURATION', 'เลือกสเปกรถให้ครบก่อนสร้างใบจอง');
+  for (const field of ['modelSlug', 'modelName', 'trim', 'trimName', 'colorId', 'colorName', 'wheelId', 'wheelName']) {
+    if (typeof vehicleConfiguration[field] !== 'string' || !vehicleConfiguration[field].trim() || vehicleConfiguration[field].length > 150)
+      throw httpError(400, 'INVALID_CONFIGURATION', 'ข้อมูลรุ่นรถไม่ครบ (' + field + ')');
+  }
+  const installmentCount = Number(body.installmentCount);
+  const installmentYears = Number(body.installmentYears);
+  const downPaymentPercent = Number(body.downPaymentPercent);
+  if (![0, 5, 10, 15, 20, 25, 30, 40, 50].includes(downPaymentPercent))
+    throw httpError(400, 'INVALID_DOWN_PAYMENT_PERCENT', 'เลือกเปอร์เซ็นต์เงินดาวน์จากรายการที่กำหนด');
+  if (!Number.isInteger(installmentCount) || installmentCount < 1 || installmentCount > 120 || !Number.isInteger(installmentYears) || installmentYears < 1 || installmentYears > 10)
+    throw httpError(400, 'INVALID_FINANCE_TERMS', 'ระบุจำนวนงวดและปีผ่อนให้ถูกต้อง');
+  if (Number(body.interestRate) < 0 || Number(body.interestRate) > 20)
+    throw httpError(400, 'INVALID_INTEREST_RATE', 'ดอกเบี้ยต้องอยู่ระหว่าง 0 ถึง 20 เปอร์เซ็นต์');
   const order = await createOrder({
     customerId: requireUuid(body.customerId, 'customerId'),
     sellerId: req.salesActor.employeeId,
@@ -41,6 +57,11 @@ router.post('/', sellerOnly, requireEmployee, async (req, res) => {
     expectedPremium: body.expectedPremium,
     discount: body.discount === undefined || body.discount === '' ? '0' : body.discount,
     note: readOptionalText(body.note, 'note', 2000),
+    vehicleConfiguration,
+    downPaymentPercent,
+    interestRate: body.interestRate,
+    installmentCount,
+    installmentYears,
   });
   res.status(201).json({ data: order });
 });

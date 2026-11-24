@@ -84,10 +84,12 @@ export default function ManagerApprovalsPage() {
                   </td>
                   <td>
                     <div style={{ fontWeight: 600 }}>{ord.carModel}</div>
+                    {ord.vehicleConfiguration && <div style={{ fontSize: '0.8rem', color: '#475569' }}>{ord.vehicleConfiguration.trimName} · {ord.vehicleConfiguration.colorName} · {ord.vehicleConfiguration.wheelName}</div>}
                     <div style={{ fontSize: '0.8rem', color: '#2563eb' }}>{ord.insurancePlan}</div>
                   </td>
                   <td>
                     <div>ยอดสุทธิ: <strong>฿{ord.totalAmount.toLocaleString()}</strong></div>
+                    {ord.downPayment != null && <div style={{ fontSize: '0.8rem' }}>ดาวน์ {ord.downPaymentPercent}% (฿{ord.downPayment.toLocaleString()}) · ดอกเบี้ย {ord.interestRate}% · {ord.installmentCount} งวด / {ord.installmentYears} ปี</div>}
                     <div style={{ fontSize: '0.78rem', color: '#dc2626' }}>
                       ขอส่วนลด: ฿{ord.discount.toLocaleString()}
                     </div>

@@ -84,7 +84,7 @@ export default function CarConfigurator({ car, promotions }) {
   const eta = shownQuote?.estimatedReady ?? trim?.estimatedReady;
   const requestUrl = selection
     ? `/requests?${new URLSearchParams({
-      type: 'จอง',
+      type: 'นัดดูรถ',
       brand: car.brand,
       car: car.name,
       variant: trim.name,

@@ -58,6 +58,34 @@ router.get('/customers', allowSales, async (_req, res) => {
   });
 });
 
+router.get('/customers/pipeline', requireRoles('manager', 'admin'), async (_req, res) => {
+  const [rows] = await getMysqlPool().query(
+    `SELECT c.id, c.first_name, c.last_name, c.phone_number, u.email,
+      (SELECT a.id FROM appointments a WHERE a.customer_id = c.id ORDER BY a.created_at DESC LIMIT 1) AS appointment_id,
+      (SELECT a.created_at FROM appointments a WHERE a.customer_id = c.id ORDER BY a.created_at DESC LIMIT 1) AS appointment_created_at,
+      (SELECT a.appointment_type FROM appointments a WHERE a.customer_id = c.id ORDER BY a.created_at DESC LIMIT 1) AS appointment_type,
+      (SELECT a.status FROM appointments a WHERE a.customer_id = c.id ORDER BY a.created_at DESC LIMIT 1) AS appointment_status,
+      (SELECT o.id FROM orders o WHERE o.customer_id = c.id ORDER BY o.created_at DESC LIMIT 1) AS order_id,
+      (SELECT o.created_at FROM orders o WHERE o.customer_id = c.id ORDER BY o.created_at DESC LIMIT 1) AS order_created_at,
+      (SELECT o.approval_status FROM orders o WHERE o.customer_id = c.id ORDER BY o.created_at DESC LIMIT 1) AS approval_status,
+      (SELECT o.status FROM orders o WHERE o.customer_id = c.id ORDER BY o.created_at DESC LIMIT 1) AS order_status,
+      (SELECT p.status FROM payments p WHERE p.order_id = (SELECT o.id FROM orders o WHERE o.customer_id = c.id ORDER BY o.created_at DESC LIMIT 1) ORDER BY p.created_at DESC LIMIT 1) AS payment_status,
+      (SELECT p.payment_type FROM payments p WHERE p.order_id = (SELECT o.id FROM orders o WHERE o.customer_id = c.id ORDER BY o.created_at DESC LIMIT 1) ORDER BY p.created_at DESC LIMIT 1) AS payment_type,
+      (SELECT e.first_name FROM employees e JOIN orders o ON o.seller_id=e.id WHERE o.customer_id=c.id ORDER BY o.created_at DESC LIMIT 1) AS seller_first,
+      (SELECT e.last_name FROM employees e JOIN orders o ON o.seller_id=e.id WHERE o.customer_id=c.id ORDER BY o.created_at DESC LIMIT 1) AS seller_last
+     FROM customers c JOIN users u ON u.id=c.user_id
+     ORDER BY c.first_name,c.last_name LIMIT 500`,
+  );
+  res.json({ data: rows.map((r) => {
+    const payment = r.payment_status === 'SUCCESS' ? (r.payment_type === 'BOOKING_DEPOSIT' ? 'ชำระเงินจองแล้ว' : 'ชำระเงินแล้ว') : r.payment_status === 'PENDING' ? 'รอตรวจการชำระ' : r.payment_status === 'REFUNDED' ? 'คืนเงินแล้ว' : null;
+    const orderIsLatest = r.order_created_at && (!r.appointment_created_at || new Date(r.order_created_at) >= new Date(r.appointment_created_at));
+    const orderStage = orderIsLatest && r.approval_status ? (r.approval_status === 'PENDING_APPROVAL' ? 'รอผู้จัดการอนุมัติ' : r.approval_status === 'APPROVED' ? 'รอชำระเงินจอง' : 'คำขอถูกปฏิเสธ') : null;
+    const appointmentStage = r.appointment_status ? (r.appointment_status === 'PENDING' ? 'รอมอบหมายงานนัดหมาย' : r.appointment_status === 'CONFIRMED' ? 'นัดหมายยืนยันแล้ว' : r.appointment_status === 'COMPLETED' ? 'นัดหมายเสร็จสิ้น' : 'นัดหมายยกเลิก') : 'ยังไม่มีรายการ';
+    const stage = orderIsLatest ? (payment || orderStage || appointmentStage) : appointmentStage;
+    return { id: r.id, name: fullName(r.first_name, r.last_name), phone: r.phone_number || '', email: r.email || '', appointmentId: r.appointment_id, appointmentType: r.appointment_type || '', appointmentStatus: r.appointment_status || '', orderId: r.order_id, approvalStatus: r.approval_status || '', orderStatus: r.order_status || '', paymentStatus: r.payment_status || '', sellerName: r.seller_first ? fullName(r.seller_first, r.seller_last) : '', stage };
+  }) });
+});
+
 router.get('/customers/:id', allowSales, async (req, res) => {
   const customerId = requireUuid(req.params.id, 'customerId');
   const pool = getMysqlPool();

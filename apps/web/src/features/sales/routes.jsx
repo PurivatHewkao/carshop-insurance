@@ -15,6 +15,7 @@ import SellerCustomerDetailPage from './pages/SellerCustomerDetailPage.jsx';
 import ManagerAppointmentsPage from './pages/ManagerAppointmentsPage.jsx';
 // Insurance: replace the customer placeholder with the NOVA policy page.
 import CustomerInsurancePage from './pages/CustomerInsurancePage.jsx';
+import CustomerPipelinePage from './pages/CustomerPipelinePage.jsx';
 
 function mergeWithPlanned(role, customRoutes) {
   const planned = plannedRoutes(role, 'sales') || [];
@@ -62,10 +63,12 @@ export const sellerSalesRoutes = mergeWithPlanned('seller', [
 
 export const adminSalesRoutes = mergeWithPlanned('admin', [
   { path: 'requests', element: <AdminRequestsPage /> },
+  { path: 'customers', element: <CustomerPipelinePage base="/admin" /> },
 ]);
 
 export const managerSalesRoutes = mergeWithPlanned('manager', [
   { path: 'assignments', element: <ManagerAssignmentsPage /> },
   { path: 'approvals', element: <ManagerApprovalsPage /> },
   { path: 'appointments', element: <ManagerAppointmentsPage /> },
+  { path: 'customers', element: <CustomerPipelinePage base="/manager" /> },
 ]);

@@ -36,7 +36,13 @@ export function overviewToApi(row) {
       name: (row.brand + ' ' + row.model_name).trim(),
       color: row.color,
       year: row.manufacture_year,
+      configuration: typeof row.vehicle_configuration === 'string' ? JSON.parse(row.vehicle_configuration) : row.vehicle_configuration || null,
     },
+    downPayment: row.down_payment == null ? null : formatMoney(toSatang(row.down_payment)),
+    downPaymentPercent: row.down_payment_percent == null ? null : Number(row.down_payment_percent),
+    interestRate: row.interest_rate == null ? null : Number(row.interest_rate),
+    installmentCount: row.installment_count == null ? null : Number(row.installment_count),
+    installmentYears: row.installment_years == null ? null : Number(row.installment_years),
     // Made-to-order cars only (null = stock car): status + delivery window.
     production: productionInfo(row),
     totalAmount: formatMoney(total),

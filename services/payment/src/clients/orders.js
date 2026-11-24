@@ -169,7 +169,8 @@ export async function listOrderOverview(connection, { scope, status, paging }) {
   // Production columns exist only after Catalog 09_production_queue.sql.
   const select = (production) =>
     connection.query(
-      `SELECT o.id, o.status, o.total_amount, o.created_at, ${production}
+      `SELECT o.id, o.status, o.total_amount, o.created_at, o.vehicle_configuration,
+       o.down_payment, o.down_payment_percent, o.interest_rate, o.installment_count, o.installment_years, ${production}
        o.customer_id, TRIM(CONCAT(c.first_name, ' ', c.last_name)) AS customer_name,
        o.seller_id, TRIM(CONCAT(e.first_name, ' ', e.last_name)) AS seller_name,
        m.brand, m.model_name, car.color, car.manufacture_year,

@@ -27,6 +27,7 @@ const bangkokDate = (value) =>
 
 export function toOrder(row) {
   const premium = toNumber(row.insurance_premium);
+  const vehicleConfiguration = typeof row.vehicle_configuration === 'string' ? JSON.parse(row.vehicle_configuration) : row.vehicle_configuration || null;
   return {
     id: row.id,
     code: 'ORD-' + row.id.slice(0, 8).toUpperCase(),
@@ -34,7 +35,7 @@ export function toOrder(row) {
     customerName: (row.c_first + ' ' + row.c_last).trim(),
     phone: row.phone_number || '',
     carId: row.car_id,
-    carModel: `${row.brand} ${row.model_name} (${row.color})`,
+    carModel: vehicleConfiguration ? `${row.brand} ${row.model_name} ${vehicleConfiguration.trimName} · ${vehicleConfiguration.colorName} · ${vehicleConfiguration.wheelName}` : `${row.brand} ${row.model_name} (${row.color})`,
     insuranceId: row.insurance_id,
     insurancePlan: row.insurance_name
       ? `${row.insurance_name} (${row.insurance_company})`
@@ -43,6 +44,12 @@ export function toOrder(row) {
     insurancePrice: premium,
     discount: toNumber(row.discount),
     totalAmount: toNumber(row.total_amount),
+    vehicleConfiguration,
+    downPayment: row.down_payment == null ? null : toNumber(row.down_payment),
+    downPaymentPercent: row.down_payment_percent == null ? null : Number(row.down_payment_percent),
+    interestRate: row.interest_rate == null ? null : toNumber(row.interest_rate),
+    installmentCount: row.installment_count == null ? null : Number(row.installment_count),
+    installmentYears: row.installment_years == null ? null : Number(row.installment_years),
     sellerId: row.seller_id,
     sellerName: (row.e_first + ' ' + row.e_last).trim(),
     createdAt: bangkokDate(row.created_at),
@@ -56,7 +63,8 @@ export function toOrder(row) {
 const SELECT = `
   SELECT o.id, o.customer_id, o.seller_id, o.car_id, o.insurance_id, o.insurance_premium,
          o.subtotal, o.discount, o.total_amount, o.status, o.approval_status,
-         o.manager_comment, o.note, o.created_at,
+         o.manager_comment, o.note, o.created_at, o.vehicle_configuration,
+         o.down_payment, o.down_payment_percent, o.interest_rate, o.installment_count, o.installment_years,
          c.first_name AS c_first, c.last_name AS c_last, c.phone_number,
          m.brand, m.model_name, car.color,
          i.insurance_name, i.insurance_company,
@@ -126,26 +134,23 @@ export async function createOrder(input) {
   try {
     await conn.beginTransaction();
     const [cars] = await conn.query(
-      'SELECT price, status FROM cars WHERE id = ? FOR UPDATE',
+      `SELECT c.price, c.status, c.trim_id, m.id AS model_id, m.slug AS model_slug,
+              t.code AS trim_code, pc.code AS color_code, w.code AS wheel_code
+         FROM cars c JOIN car_models m ON m.id = c.car_model_id
+         LEFT JOIN car_trims t ON t.id = c.trim_id
+         LEFT JOIN paint_colors pc ON pc.id = c.paint_color_id
+         LEFT JOIN wheel_options w ON w.id = c.wheel_id
+        WHERE c.id = ? FOR UPDATE`,
       [input.carId],
     );
     if (!cars[0]) throw httpError(400, 'CAR_NOT_FOUND', 'Car not found');
-    if (cars[0].status !== 'AVAILABLE')
-      throw httpError(
-        409,
-        'CAR_NOT_AVAILABLE',
-        'This car is not available for sale',
-      );
-    if (
-      novaInsurance &&
-      JSON.stringify(await insuranceVehicle(input.carId, conn)) !==
-        JSON.stringify(novaInsurance.snapshot.vehicle)
-    )
-      throw httpError(
-        409,
-        'INSURANCE_PRICE_CHANGED',
-        'สเปกรถหรือราคาเปลี่ยน กรุณาขอราคาประกันใหม่',
-      );
+    const madeToOrderUnit = cars[0].status === 'RESERVED' && Boolean(cars[0].trim_id) && Boolean(input.vehicleConfiguration);
+    if (cars[0].status !== 'AVAILABLE' && !madeToOrderUnit)
+      throw httpError(409, 'CAR_NOT_AVAILABLE', 'This car is not available for sale');
+    if (!madeToOrderUnit || (cars[0].model_slug || cars[0].model_id) !== input.vehicleConfiguration.modelSlug || cars[0].trim_code !== input.vehicleConfiguration.trim || cars[0].color_code !== input.vehicleConfiguration.colorId || cars[0].wheel_code !== input.vehicleConfiguration.wheelId)
+      throw httpError(400, 'CONFIGURATION_MISMATCH', 'สเปกรถไม่ตรงกับรถที่ catalog สร้าง');
+    if (novaInsurance && JSON.stringify(await insuranceVehicle(input.carId, conn)) !== JSON.stringify(novaInsurance.snapshot.vehicle))
+      throw httpError(409, 'INSURANCE_PRICE_CHANGED', 'สเปกรถหรือราคาเปลี่ยน กรุณาขอราคาประกันใหม่');
 
     const [customers] = await conn.query(
       'SELECT id FROM customers WHERE id = ?',
@@ -181,27 +186,32 @@ export async function createOrder(input) {
     const subtotal = toSatang(cars[0].price) + premium;
     const discount = toSatang(input.discount);
     if (discount > subtotal)
-      throw httpError(
-        400,
-        'DISCOUNT_TOO_HIGH',
-        'Discount cannot be more than the subtotal',
-      );
+
+      throw httpError(400, 'DISCOUNT_TOO_HIGH', 'Discount cannot be more than the subtotal');
+    const downPaymentPercent = Number(input.downPaymentPercent);
+    if (![0, 5, 10, 15, 20, 25, 30, 40, 50].includes(downPaymentPercent))
+      throw httpError(400, 'INVALID_DOWN_PAYMENT_PERCENT', 'เลือกเปอร์เซ็นต์เงินดาวน์จากรายการที่กำหนด');
+    const netTotal = subtotal - discount;
+    const downPayment = (netTotal * BigInt(downPaymentPercent) + 50n) / 100n;
+    if (downPayment > subtotal - discount)
+      throw httpError(400, 'DOWN_PAYMENT_TOO_HIGH', 'เงินดาวน์ต้องไม่เกินยอดสุทธิ');
+    const interestRate = Number(input.interestRate ?? 0);
+    if (!Number.isFinite(interestRate) || interestRate < 0 || interestRate > 20)
+      throw httpError(400, 'INVALID_INTEREST_RATE', 'ดอกเบี้ยต้องอยู่ระหว่าง 0 ถึง 20 เปอร์เซ็นต์');
+
 
     await conn.query(
       `INSERT INTO orders (id, customer_id, seller_id, car_id, insurance_id, insurance_premium,
-                           subtotal, discount, total_amount, note)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                           subtotal, discount, total_amount, note, vehicle_configuration,
+                           down_payment, down_payment_percent, interest_rate, installment_count, installment_years)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id,
-        input.customerId,
-        input.sellerId,
-        input.carId,
-        input.insuranceId,
-        fromSatang(premium),
-        fromSatang(subtotal),
-        fromSatang(discount),
-        fromSatang(subtotal - discount),
-        input.note,
+
+        id, input.customerId, input.sellerId, input.carId, input.insuranceId,
+        fromSatang(premium), fromSatang(subtotal), fromSatang(discount),
+        fromSatang(subtotal - discount), input.note, JSON.stringify(input.vehicleConfiguration),
+        fromSatang(downPayment), downPaymentPercent, interestRate, input.installmentCount, input.installmentYears,
+
       ],
     );
     // Insurance: persist the snapshot atomically with the order, before payment exists.
@@ -231,7 +241,7 @@ export async function decideOrder(id, { decision, comment }) {
   try {
     await conn.beginTransaction();
     const [rows] = await conn.query(
-      'SELECT car_id, approval_status FROM orders WHERE id = ? FOR UPDATE',
+      'SELECT o.car_id, o.approval_status, c.status AS car_status, c.trim_id FROM orders o JOIN cars c ON c.id = o.car_id WHERE o.id = ? FOR UPDATE',
       [id],
     );
     if (!rows[0]) throw httpError(404, 'ORDER_NOT_FOUND', 'Order not found');
@@ -243,16 +253,30 @@ export async function decideOrder(id, { decision, comment }) {
       );
 
     if (decision === 'APPROVED') {
-      const [reserved] = await conn.query(
-        "UPDATE cars SET status = 'RESERVED' WHERE id = ? AND status = 'AVAILABLE'",
+      if (rows[0].car_status === 'AVAILABLE') {
+        const [reserved] = await conn.query(
+          "UPDATE cars SET status = 'RESERVED' WHERE id = ? AND status = 'AVAILABLE'",
+          [rows[0].car_id],
+        );
+        if (reserved.affectedRows === 0) throw httpError(409, 'CAR_NOT_AVAILABLE', 'The car is no longer available');
+      } else if (!(rows[0].car_status === 'RESERVED' && rows[0].trim_id)) {
+        throw httpError(409, 'CAR_NOT_AVAILABLE', 'The car is no longer available');
+      }
+    } else if (rows[0].trim_id) {
+      // Catalog reserved this made-to-order unit before the order was created.
+      // A rejected order must close its production slot and free the unit.
+      await conn.query(
+        "UPDATE cars SET status = 'INACTIVE', production_status = 'CANCELLED' WHERE id = ? AND status = 'RESERVED'",
         [rows[0].car_id],
       );
+
       if (reserved.affectedRows === 0)
         throw httpError(
           409,
           'CAR_NOT_AVAILABLE',
           'The car is no longer available',
         );
+
     }
     await conn.query(
       'UPDATE orders SET approval_status = ?, status = ?, manager_comment = ? WHERE id = ?',

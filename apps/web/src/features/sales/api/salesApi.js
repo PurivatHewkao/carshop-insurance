@@ -21,6 +21,8 @@ export const fetchCustomers = (signal) =>
   salesClient.get('lookups/customers', { signal }).then(unwrap);
 export const fetchCustomer = (customerId, signal) =>
   salesClient.get(`lookups/customers/${encodeURIComponent(customerId)}`, { signal }).then(unwrap);
+export const fetchCustomerPipeline = (signal) =>
+  salesClient.get('lookups/customers/pipeline', { signal }).then(unwrap);
 export const fetchSellers = (signal) =>
   salesClient.get('lookups/sellers', { signal }).then(unwrap);
 export const fetchInsurances = (signal) =>

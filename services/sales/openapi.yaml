@@ -66,6 +66,14 @@ paths:
         '200': { $ref: '#/components/responses/DataArray' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
+  /lookups/customers/pipeline:
+    get:
+      summary: List all customers with their latest sales and payment stage
+      description: Manager and admin only.
+      responses:
+        '200': { $ref: '#/components/responses/DataArray' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
   /lookups/customers/{id}:
     get:
       summary: Get customer contact details for an authorized sales relationship
@@ -184,8 +192,9 @@ paths:
                 appointmentTime:
                   { type: string, pattern: '^(?:[01][0-9]|2[0-3]):[0-5][0-9]$' }
                 note: { type: string, maxLength: 2000 }
+                vehicleConfiguration: { $ref: '#/components/schemas/VehicleConfiguration' }
               required:
-                [carId, appointmentType, appointmentDate, appointmentTime]
+                [carId, appointmentType, appointmentDate, appointmentTime, vehicleConfiguration]
       responses:
         '201': { $ref: '#/components/responses/DataObject' }
         '400': { $ref: '#/components/responses/BadRequest' }
@@ -327,7 +336,12 @@ paths:
                 discount:
                   { type: [string, number], pattern: '^\d+(?:\.\d{1,2})?$' }
                 note: { type: string, maxLength: 2000 }
-              required: [customerId, carId]
+                vehicleConfiguration: { $ref: '#/components/schemas/VehicleConfiguration' }
+                downPaymentPercent: { type: integer, enum: [0, 5, 10, 15, 20, 25, 30, 40, 50] }
+                interestRate: { type: [string, number], minimum: 0, maximum: 20 }
+                installmentCount: { type: integer, minimum: 1, maximum: 120 }
+                installmentYears: { type: integer, minimum: 1, maximum: 10 }
+              required: [customerId, carId, vehicleConfiguration, downPaymentPercent, interestRate, installmentCount, installmentYears]
       responses:
         '201': { $ref: '#/components/responses/DataObject' }
         '400': { $ref: '#/components/responses/BadRequest' }
@@ -374,6 +388,21 @@ components:
       required: true
       schema: { $ref: '#/components/schemas/Uuid' }
   schemas:
+    VehicleConfiguration:
+      type: object
+      properties:
+        modelSlug: { type: string, maxLength: 150 }
+        modelId: { $ref: '#/components/schemas/Uuid' }
+        modelName: { type: string, maxLength: 150 }
+        modelBrand: { type: string, maxLength: 150 }
+        trim: { type: string, maxLength: 150 }
+        trimName: { type: string, maxLength: 150 }
+        colorId: { type: string, maxLength: 150 }
+        colorName: { type: string, maxLength: 150 }
+        wheelId: { type: string, maxLength: 150 }
+        wheelName: { type: string, maxLength: 150 }
+        price: { type: number, minimum: 0 }
+      required: [modelSlug, modelId, modelName, trim, trimName, colorId, colorName, wheelId, wheelName]
     Uuid:
       type: string
       format: uuid

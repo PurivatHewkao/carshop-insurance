@@ -96,6 +96,7 @@ export const pageList = [
     title: 'กล่องคำขอลูกค้า',
     feature: 'sales',
   },
+  { role: 'admin', path: 'customers', title: 'ภาพรวมลูกค้า', feature: 'sales', ready: true },
   { role: 'admin', path: 'users', title: 'จัดการผู้ใช้', feature: 'identity' },
   {
     role: 'admin',
@@ -134,6 +135,7 @@ export const pageList = [
     title: 'ภาพรวมนัดหมาย',
     feature: 'sales',
   },
+  { role: 'manager', path: 'customers', title: 'ภาพรวมลูกค้า', feature: 'sales', ready: true },
   {
     role: 'manager',
     path: 'reports/insurance',

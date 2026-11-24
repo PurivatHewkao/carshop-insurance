@@ -121,6 +121,17 @@ export async function fetchQuote(selection, signal) {
   return data.data;
 }
 
+/** Create a reserved made-to-order car unit for a seller's order. */
+export async function createConfiguredUnit(selection) {
+  const { data } = await catalogClient.post('cars/units', selection);
+  return data.data;
+}
+
+export async function releaseConfiguredUnit(id) {
+  const { data } = await catalogClient.post(`cars/units/${encodeURIComponent(id)}/release`);
+  return data.data;
+}
+
 // ---- Configurator admin: trims, colours, wheels (admin / stock) ----------------
 
 /** Every trim of a model incl. ones off sale, with the colours / wheels each may use. */

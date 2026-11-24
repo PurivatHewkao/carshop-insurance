@@ -55,6 +55,14 @@ router.get('/availability', customerOnly, async (req, res) => {
 
 router.post('/', customerOnly, requireCustomer, async (req, res) => {
   const body = requireBody(req.body);
+  const config = body.vehicleConfiguration;
+  if (!config || typeof config !== 'object' || Array.isArray(config))
+    throw httpError(400, 'INVALID_CONFIGURATION', 'เลือกสเปกรถให้ครบก่อนส่งคำขอนัด');
+  for (const field of ['modelSlug', 'modelName', 'trim', 'trimName', 'colorId', 'colorName', 'wheelId', 'wheelName']) {
+    if (typeof config[field] !== 'string' || !config[field].trim() || config[field].length > 150)
+      throw httpError(400, 'INVALID_CONFIGURATION', 'ข้อมูลรุ่นรถไม่ครบ (' + field + ')');
+  }
+  config.modelId = requireUuid(config.modelId, 'vehicleConfiguration.modelId');
   const appointment = await createAppointment({
     customerId: req.salesActor.customerId,
     carId: requireUuid(body.carId, 'carId'),
@@ -62,6 +70,7 @@ router.post('/', customerOnly, requireCustomer, async (req, res) => {
     appointmentDate: readDate(body.appointmentDate),
     appointmentTime: readTime(body.appointmentTime),
     note: readOptionalText(body.note, 'note', 2000),
+    vehicleConfiguration: config,
   });
   res.status(201).json({ data: appointment });
 });

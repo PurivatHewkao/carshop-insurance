@@ -130,6 +130,8 @@ export default function CustomerTransactionsPage() {
                         {order.orderNumber}
                         {invoice && ' · ' + invoice.invoiceNumber}
                       </span>
+                      {order.car.configuration && <span className="pay-sub">{order.car.configuration.trimName} · {order.car.configuration.colorName} · {order.car.configuration.wheelName}</span>}
+                      {order.installmentCount && <span className="pay-sub">ดาวน์ {order.downPaymentPercent}% ({money(order.downPayment)}) · ดอกเบี้ย {order.interestRate}% · {order.installmentCount} งวด / {order.installmentYears} ปี</span>}
                     </div>
                     {invoice ? (
                       <StatusPill

@@ -24,6 +24,7 @@ const TASK_STATUS = {
 
 export function toAppointment(row) {
   const time = String(row.appointment_time).slice(0, 5);
+  const configuration = typeof row.vehicle_configuration === 'string' ? JSON.parse(row.vehicle_configuration) : row.vehicle_configuration || null;
   return {
     id: row.id,
     code: 'APT-' + row.id.slice(0, 8).toUpperCase(),
@@ -33,7 +34,8 @@ export function toAppointment(row) {
     appointmentType: row.appointment_type,
     type: TYPE_LABELS[row.appointment_type],
     carId: row.car_id,
-    carModel: `${row.brand} ${row.model_name} (${row.color})`,
+    carModel: configuration ? `${configuration.modelName} ${configuration.trimName} · ${configuration.colorName} · ${configuration.wheelName}` : `${row.brand} ${row.model_name} (${row.color})`,
+    vehicleConfiguration: configuration,
     preferredDate: row.appointment_date,
     preferredTime: time,
     dueDate: row.appointment_date + ' ' + time,
@@ -49,7 +51,7 @@ export function toAppointment(row) {
 
 const SELECT = `
   SELECT a.id, a.customer_id, a.car_id, a.seller_id, a.appointment_type,
-         a.appointment_date, a.appointment_time, a.status, a.note, a.created_at,
+         a.appointment_date, a.appointment_time, a.status, a.note, a.created_at, a.vehicle_configuration,
          c.first_name AS c_first, c.last_name AS c_last, c.phone_number,
          m.brand, m.model_name, car.color,
          e.first_name AS e_first, e.last_name AS e_last
@@ -98,8 +100,10 @@ export async function createAppointment(input) {
   try {
     const [customers] = await conn.query('SELECT id FROM customers WHERE id = ?', [input.customerId]);
     if (!customers[0]) throw httpError(400, 'CUSTOMER_NOT_FOUND', 'Customer not found');
-    const [cars] = await conn.query('SELECT status FROM cars WHERE id = ?', [input.carId]);
+    const [cars] = await conn.query('SELECT car_model_id, status FROM cars WHERE id = ?', [input.carId]);
     if (!cars[0]) throw httpError(400, 'CAR_NOT_FOUND', 'Car not found');
+    if (cars[0].car_model_id !== input.vehicleConfiguration.modelId)
+      throw httpError(400, 'CONFIGURATION_MISMATCH', 'รุ่นรถที่เลือกไม่ตรงกับรถสำหรับนัดหมาย');
     if (['SOLD', 'INACTIVE'].includes(cars[0].status))
       throw httpError(409, 'CAR_NOT_BOOKABLE', 'This car is no longer available for appointments');
 
@@ -119,9 +123,9 @@ export async function createAppointment(input) {
 
     const id = randomUUID();
     await conn.query(
-      `INSERT INTO appointments (id, customer_id, car_id, appointment_type, appointment_date, appointment_time, note)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [id, input.customerId, input.carId, input.appointmentType, input.appointmentDate, input.appointmentTime, input.note],
+      `INSERT INTO appointments (id, customer_id, car_id, appointment_type, appointment_date, appointment_time, note, vehicle_configuration)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, input.customerId, input.carId, input.appointmentType, input.appointmentDate, input.appointmentTime, input.note, JSON.stringify(input.vehicleConfiguration)],
     );
     return await getAppointment(conn, id);
   } finally {

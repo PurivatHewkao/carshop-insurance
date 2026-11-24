@@ -1,10 +1,11 @@
 // apps/web/src/features/sales/pages/SellerOrdersPage.jsx
-import React from 'react';
+import React, { useCallback } from 'react';
 import { fetchOrders } from '../api/salesApi.js';
 import { useOrderForm } from '../hooks/useOrderForm.js';
 import { useSalesData } from '../hooks/useSalesData.js';
 import { ActionError, LoadStatus } from '../components/SalesState.jsx';
 import '../sales.css';
+import VehicleConfigurationPicker from '../components/VehicleConfigurationPicker.jsx';
 
 export default function SellerOrdersPage() {
   const orderList = useSalesData((signal) => fetchOrders({}, signal), []);
@@ -12,8 +13,9 @@ export default function SellerOrdersPage() {
   const orders = orderList.data ?? [];
   const {
     form, setForm, customers, cars, insurances, sellers,
-    customerId, carId, sellerId, carPrice, insurancePrice, netTotal,
+    customerId, sellerId, carPrice, insurancePrice, netTotal,
   } = order;
+  const setVehicleConfiguration = useCallback((vehicleConfiguration) => setForm((current) => ({ ...current, vehicleConfiguration })), [setForm]);
 
   return (
     <div className="sales-container">
@@ -65,19 +67,8 @@ export default function SellerOrdersPage() {
               </select>
             </div>
 
-            <div className="sales-form-group">
-              <label>รถยนต์ที่จอง (เฉพาะคันที่ยังว่าง)</label>
-              <select
-                className="sales-select"
-                value={carId}
-                onChange={(e) => setForm({ ...form, carId: e.target.value })}
-                required
-              >
-                {cars.map((c) => (
-                  <option key={c.id} value={c.id}>{c.label}</option>
-                ))}
-              </select>
-            </div>
+            <h3>สเปกรถสำหรับใบจอง</h3>
+            <VehicleConfigurationPicker models={cars} initialModel={form.vehicleConfiguration?.modelSlug || ''} onChange={setVehicleConfiguration} />
 
             <div className="sales-form-group">
               <label>แพ็กเกจประกันภัยรถยนต์</label>
@@ -123,6 +114,12 @@ export default function SellerOrdersPage() {
                 value={form.discount}
                 onChange={(e) => setForm({ ...form, discount: e.target.value })}
               />
+            </div>
+
+            <div className="sales-config-grid">
+              <div className="sales-form-group"><label>เงินดาวน์ (% จากยอดสุทธิ) *</label><select className="sales-select" required value={form.downPaymentPercent} onChange={(e) => setForm({ ...form, downPaymentPercent: e.target.value })}>{[0, 5, 10, 15, 20, 25, 30, 40, 50].map((percent) => <option key={percent} value={percent}>{percent}%</option>)}</select><small className="sales-slot-help">คิดเป็น ฿{(Math.round(netTotal * Number(form.downPaymentPercent || 0)) / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</small></div>
+              <div className="sales-form-group"><label>ดอกเบี้ยต่อปี (%) *</label><input className="sales-input" type="number" min="0" max="20" step="0.01" required value={form.interestRate} onChange={(e) => setForm({ ...form, interestRate: e.target.value })} /></div>
+              <div className="sales-form-group"><label>ระยะผ่อน / จำนวนงวด *</label><select className="sales-select" required value={form.installmentCount} onChange={(e) => setForm({ ...form, installmentCount: e.target.value })}><option value="">เลือกระยะผ่อน</option>{[12, 24, 36, 48, 60, 72, 84].map((months) => <option key={months} value={months}>{months} งวด ({months / 12} ปี)</option>)}</select></div>
             </div>
 
             <div style={{

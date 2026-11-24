@@ -30,7 +30,7 @@ Orders, Appointments, Assignments และ Approval flow เชื่อมก�
 ## ฐานข้อมูลและ API ที่ implement แล้ว
 
 ใช้ฐานข้อมูล `carshop_sql` จาก `db schema/01_mysql_schema.sql` (ตั้ง `MYSQL_DATABASE=carshop_sql` ใน .env ไม่ใช่ carshop_sales)
-จากนั้นรัน `services/sales/database/03_sales_columns.sql` หนึ่งครั้ง (รันซ้ำได้) เพื่อเพิ่มคอลัมน์ใน orders: insurance_id, insurance_premium, approval_status, manager_comment, note
+จากนั้นเลือก schema เป้าหมายให้ถูก (`carshop_sql` local หรือ `railway` บน Railway) แล้วรัน `services/sales/database/03_sales_columns.sql` และ `services/sales/database/04_order_configuration.sql` (รันซ้ำได้) เพื่อเพิ่มคอลัมน์ workflow ใบจอง, สเปกรุ่น/รุ่นย่อย/สี/ล้อ, เงินดาวน์, ดอกเบี้ย, จำนวนงวดและปีผ่อน รวมถึงสเปกที่เลือกในคำขอนัดหมาย
 
 ทุก response เป็น `{ "data": ... }`; error เป็น `{ "error": { "code", "message" } }` Base URL: `http://localhost:3003/api/v1`
 รายละเอียด request/response, roles, cookie/Bearer security และ error statuses อยู่ใน [OpenAPI spec](./openapi.yaml)
