@@ -724,6 +724,7 @@ function Success() {
 export default function App() {
   const source = useSource();
   const location = useLocation();
+  const isAdmin = location.pathname === '/admin';
   useEffect(() => {
     if (location.hash) {
       requestAnimationFrame(() =>
@@ -736,7 +737,7 @@ export default function App() {
       <a href="#main" className="skip-link">
         ข้ามไปเนื้อหา
       </a>
-      <Header source={source} />
+      {!isAdmin && <Header source={source} />}
       <main id="main">
         <Routes>
           <Route path="/" element={<QuotePage source={source} />} />
@@ -763,33 +764,35 @@ export default function App() {
           />
         </Routes>
       </main>
-      <footer className="footer">
-        <div className="container footer-grid">
-          <div>
-            <Logo to={'/' + suffix(source)} />
-            <p>ความอุ่นใจ สำหรับทุกเส้นทางของคุณ</p>
-            <span className="muted">Insurance Partner of TOYOTY</span>
+      {!isAdmin && (
+        <footer className="footer">
+          <div className="container footer-grid">
+            <div>
+              <Logo to={'/' + suffix(source)} />
+              <p>ความอุ่นใจ สำหรับทุกเส้นทางของคุณ</p>
+              <span className="muted">Insurance Partner of TOYOTY</span>
+            </div>
+            <div>
+              <b>Explore NOVA</b>
+              <Link to={'/' + suffix(source) + '#plans'}>แผนประกันรถยนต์</Link>
+              <Link to={'/' + suffix(source) + '#plans'}>
+                เปรียบเทียบความคุ้มครอง
+              </Link>
+            </div>
+            <div>
+              <b>Our partner</b>
+              <a href={toyotyUrl()}>กลับเว็บไซต์ TOYOTY</a>
+              <span className="muted">แบรนด์จำลองอิสระจาก TOYOTY</span>
+            </div>
           </div>
-          <div>
-            <b>Explore NOVA</b>
-            <Link to={'/' + suffix(source) + '#plans'}>แผนประกันรถยนต์</Link>
-            <Link to={'/' + suffix(source) + '#plans'}>
-              เปรียบเทียบความคุ้มครอง
-            </Link>
+          <div className="container footer-bottom">
+            <span>
+              © {new Date().getFullYear()} NOVA INSURE · Educational Project
+            </span>
+            <span>ข้อมูลทั้งหมดเป็นตัวอย่าง ไม่ใช่คำเสนอขายประกันจริง</span>
           </div>
-          <div>
-            <b>Our partner</b>
-            <a href={toyotyUrl()}>กลับเว็บไซต์ TOYOTY</a>
-            <span className="muted">แบรนด์จำลองอิสระจาก TOYOTY</span>
-          </div>
-        </div>
-        <div className="container footer-bottom">
-          <span>
-            © {new Date().getFullYear()} NOVA INSURE · Educational Project
-          </span>
-          <span>ข้อมูลทั้งหมดเป็นตัวอย่าง ไม่ใช่คำเสนอขายประกันจริง</span>
-        </div>
-      </footer>
+        </footer>
+      )}
     </>
   );
 }

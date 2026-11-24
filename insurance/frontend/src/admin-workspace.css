@@ -1,0 +1,1075 @@
+.na-shell {
+  min-height: 100vh;
+  background: #f5f7fb;
+  color: #172c49;
+}
+.na-topbar {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+}
+.na-topbar-inner,
+.na-brand,
+.na-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.na-topbar-inner {
+  min-height: 88px;
+  justify-content: space-between;
+}
+.na-workspace-label {
+  padding-left: 24px;
+  border-left: 1px solid #dce4ee;
+  font-size: 0.6875rem;
+  letter-spacing: 1.6px;
+  font-weight: 700;
+  color: #7b899d;
+}
+.na-site-link,
+.na-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.875rem;
+  color: #566b87;
+}
+.na-logout {
+  border: 1px solid #e0e7f0;
+  padding: 9px 13px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+.na-shell .nova-admin {
+  padding-block: 28px 0;
+  min-height: calc(100vh - 88px);
+}
+.na-shell .nova-admin-source {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 0;
+  padding: 13px 18px;
+  border-color: #dbe6f9;
+  background: #eef4ff;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  color: #59718f;
+}
+.nova-admin-source > div {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+.nova-admin-source strong {
+  color: #345b91;
+  font-size: 0.875rem;
+}
+.nova-admin-source > svg {
+  color: #567cb4;
+}
+.na-eyebrow {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--blue);
+}
+.na-login-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  max-width: 1050px;
+  margin: 34px auto 46px;
+  border: 1px solid #e1e8f1;
+  border-radius: 22px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 12px 45px #1b3c6d06;
+}
+.na-login-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 44px;
+  color: #fff;
+  background: linear-gradient(145deg, #132b4e, #214b8e);
+}
+.na-intro-icon {
+  width: 68px;
+  height: 68px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #6a8cbd;
+  border-radius: 18px;
+  color: #dce9ff;
+  background: #ffffff0a;
+  margin-bottom: 28px;
+}
+.na-login-intro .na-eyebrow {
+  color: #b8d2ff;
+}
+.na-login-intro h1 {
+  font-size: 2.1rem;
+  line-height: 1.5;
+  letter-spacing: -0.5px;
+  margin: 13px 0 15px;
+}
+.na-login-intro > p {
+  color: #cad9f1;
+  font-size: 0.9375rem;
+  line-height: 1.9;
+}
+.na-login-intro ul {
+  display: grid;
+  gap: 23px;
+  list-style: none;
+  margin: 28px 0 36px;
+  padding: 0;
+}
+.na-login-intro li {
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+}
+.na-login-intro li > svg {
+  margin-top: 3px;
+  color: #b8d2fc;
+}
+.na-login-intro li strong {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.na-login-intro li span {
+  display: block;
+  font-size: 0.875rem;
+  color: #c8d8ef;
+  margin-top: 4px;
+}
+.na-intro-foot {
+  font-size: 0.625rem;
+  letter-spacing: 2px;
+  color: #b2cbea;
+  margin-top: auto;
+}
+.na-login-card {
+  align-self: center;
+  padding: 45px;
+}
+.na-login-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  background: #eff4ff;
+  color: #5276b3;
+  font-size: 0.875rem;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+.na-login-card h2 {
+  font-size: 1.65rem;
+  margin-bottom: 9px;
+}
+.na-login-card > p {
+  font-size: 0.875rem;
+}
+.na-shell .nova-admin-login {
+  display: grid;
+  gap: 22px;
+  margin-top: 28px;
+  max-width: none;
+}
+.na-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.na-field label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #3d5574;
+}
+.na-shell .na-field input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #d7e0ec;
+  border-radius: 9px;
+  padding: 12px 14px;
+  font-size: 1rem;
+  color: #213b5d;
+  background: #fff;
+}
+.na-field input::placeholder {
+  color: #8997aa;
+  font-size: 0.875rem;
+}
+.na-field input:focus {
+  outline: 3px solid #e0e9ff;
+  outline-offset: 0;
+  border-color: #7799e3;
+}
+.na-password {
+  position: relative;
+}
+.na-shell .na-password input {
+  padding-right: 48px;
+}
+.na-password button {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  bottom: 4px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  border: 0;
+  background: none;
+  color: #7a8ca5;
+}
+.na-login-submit {
+  width: 100%;
+  min-height: 48px;
+  justify-content: center;
+  font-size: 0.9375rem !important;
+}
+.na-login-divider {
+  position: relative;
+  text-align: center;
+  line-height: 1;
+  margin: 3px 0;
+}
+.na-login-divider:before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e8edf5;
+}
+.na-login-divider span {
+  position: relative;
+  background: white;
+  padding: 0 10px;
+  color: #8290a2;
+  font-size: 0.75rem;
+}
+.na-demo-fill {
+  padding: 12px;
+  border: 1px solid #dce5f2;
+  border-radius: 8px;
+  background: #f8faff;
+  color: #456da9;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.na-demo-fill:hover {
+  background: #eef4ff;
+}
+.na-login-note {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem !important;
+  margin-top: 23px;
+  color: #8997a9;
+}
+.na-page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 30px 0 25px;
+}
+.na-page-heading h1 {
+  font-size: 1.9rem;
+  margin: 5px 0 8px;
+}
+.na-page-heading p {
+  font-size: 0.9375rem;
+}
+.na-refresh {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  border: 1px solid #dbe4f0;
+  border-radius: 9px;
+  padding: 10px 16px;
+  background: #fff;
+  color: #4b6587;
+  font-size: 0.875rem;
+}
+.na-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 26px;
+}
+.na-stat {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  padding: 22px 24px;
+  border: 1px solid #e0e7f1;
+  border-radius: 13px;
+  background: #fff;
+}
+.na-stat-icon {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+.na-stat-icon.blue {
+  background: #edf3ff;
+  color: #4b74d1;
+}
+.na-stat-icon.amber {
+  background: #fff5e6;
+  color: #ad7b2e;
+}
+.na-stat-icon.green {
+  background: #eaf7f0;
+  color: #378f69;
+}
+.na-stat > div > span {
+  font-size: 0.875rem;
+  color: #71839b;
+}
+.na-stat strong {
+  display: block;
+  font-size: 1.8rem;
+  font-weight: 750;
+  line-height: 1.5;
+}
+.na-stat small {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: #8997a9;
+  margin-left: 11px;
+}
+.na-list-panel {
+  background: white;
+  border: 1px solid #dfe6f0;
+  border-radius: 15px;
+  overflow: hidden;
+}
+.na-list-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 23px 25px 20px;
+}
+.na-list-heading h2 {
+  font-size: 1.2rem;
+}
+.na-list-heading p {
+  font-size: 0.8125rem;
+  margin-top: 5px;
+  color: #8593a7;
+}
+.na-page-count {
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  padding: 4px 10px;
+  border: 1px solid #e0e7f0;
+  border-radius: 6px;
+  color: #6d829c;
+}
+.na-list-tools {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 0 25px 20px;
+}
+.na-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  background: #f3f6fa;
+  border-radius: 8px;
+}
+.na-filters button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 6px;
+  color: #708299;
+  background: none;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+.na-filters button[aria-pressed='true'] {
+  background: #fff;
+  box-shadow: 0 1px 4px #1a3e7512;
+  color: var(--blue);
+  font-weight: 600;
+}
+.na-filters button > span {
+  font-size: 0.75rem;
+  background: #e8edf5;
+  padding: 0 5px;
+  min-width: 18px;
+  border-radius: 4px;
+}
+.na-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 260px;
+  flex: 1;
+  max-width: 380px;
+}
+.na-search > svg {
+  position: absolute;
+  left: 12px;
+  color: #8698ae;
+}
+.na-search input {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 12px 9px 38px;
+  border: 1px solid #dce5f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #3e5576;
+  background: #fff;
+}
+.na-search input::placeholder {
+  color: #8999ad;
+}
+.na-table-head,
+.na-request-row {
+  display: grid;
+  grid-template-columns:
+    minmax(140px, 1.15fr) minmax(145px, 1.2fr) minmax(95px, 0.8fr)
+    minmax(110px, 0.9fr) minmax(130px, 1fr) 112px;
+  gap: 14px;
+  align-items: center;
+}
+.na-table-head {
+  padding: 12px 25px;
+  background: #f8fafc;
+  border-block: 1px solid #e7edf5;
+  font-size: 0.8125rem;
+  color: #778ba4;
+}
+.na-request {
+  border-bottom: 1px solid #e9eef5;
+}
+.na-request-row {
+  padding: 23px 25px;
+  font-size: 0.875rem;
+}
+.na-request-row strong {
+  display: block;
+  font-weight: 600;
+}
+.na-customer-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.na-avatar {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid #e3eaf5;
+  background: #eef3fb;
+  color: #7590b7;
+  flex-shrink: 0;
+}
+.na-customer-cell h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.na-subline {
+  display: block;
+  font-size: 0.8125rem;
+  color: #8595aa;
+  margin-top: 4px;
+}
+.na-cell-label {
+  display: none;
+}
+.na-premium-cell strong {
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+.na-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 6px;
+  padding: 5px 8px;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.na-status.pending {
+  background: #fff4e4;
+  color: #976713;
+}
+.na-status.issued {
+  background: #eaf7f0;
+  color: #2b815c;
+}
+.na-status.other {
+  background: #edf2f8;
+  color: #57708f;
+}
+.na-detail-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid #dce5f1;
+  border-radius: 7px;
+  background: #fff;
+  color: #5978aa;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+.na-detail-toggle:hover {
+  background: #f0f5ff;
+}
+.na-detail-toggle[aria-expanded='true'] > svg {
+  transform: rotate(180deg);
+}
+.na-request.expanded .na-request-row {
+  background: #fbfcff;
+}
+.na-details {
+  padding: 25px;
+  background: #f8faff;
+  border-top: 1px solid #e5ecf7;
+}
+.na-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px 40px;
+}
+.na-detail-grid h3 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.9375rem;
+  color: #44638d;
+  margin-bottom: 13px;
+}
+.na-detail-grid h3 > svg {
+  color: #6f8fbc;
+}
+.na-detail-grid dl {
+  margin: 0;
+}
+.na-detail-grid dl > div {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 15px;
+  padding: 5px 0;
+  font-size: 0.875rem;
+}
+.na-detail-grid dt {
+  color: #8493a7;
+}
+.na-detail-grid dd {
+  margin: 0;
+  color: #405874;
+  overflow-wrap: anywhere;
+}
+.na-highlights {
+  padding-top: 20px;
+  margin-top: 23px;
+  border-top: 1px solid #e3eaf5;
+}
+.na-highlights h3 {
+  font-size: 0.9375rem;
+}
+.na-highlights ul {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 25px;
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+.na-highlights li {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 0.875rem;
+  color: #6e839f;
+}
+.na-highlights svg {
+  color: #60937c;
+  margin-top: 3px;
+}
+.na-detail-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-top: 23px;
+  padding-top: 18px;
+  border-top: 1px solid #e0e8f4;
+}
+.na-detail-bottom > span {
+  font-size: 0.8125rem;
+  color: #8696aa;
+  overflow-wrap: anywhere;
+}
+.na-reference {
+  display: block;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.75rem;
+  margin-top: 3px;
+}
+.na-approve {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.875rem !important;
+  padding: 10px 16px !important;
+  white-space: nowrap;
+}
+.na-complete {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #2e875f !important;
+}
+.na-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 17px 25px;
+  border-top: 1px solid #e6edf5;
+}
+.na-pagination > span {
+  font-size: 0.8125rem;
+  color: #8a98aa;
+}
+.na-pagination > div {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 0.8125rem;
+  color: #70839d;
+}
+.na-pagination button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e1e8f1;
+  border-radius: 6px;
+  background: #fff;
+  color: #7188a4;
+}
+.na-shell button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.na-loading {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 14px 25px;
+  font-size: 0.875rem;
+  color: #6e85a3;
+  border-top: 1px solid #e9eef6;
+}
+.na-empty {
+  padding: 45px 25px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+  text-align: center;
+}
+.na-empty > svg {
+  color: #abbcd2;
+}
+.na-empty h3 {
+  font-size: 1rem;
+}
+.na-empty p {
+  font-size: 0.875rem;
+}
+.na-empty button {
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 7px;
+  background: #edf4ff;
+  color: var(--blue);
+  font-size: 0.875rem;
+}
+.na-shell .nova-admin-error {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: #fff1f1;
+  border: 1px solid #f3d8d8;
+  color: #a74c4c;
+  padding: 13px 16px;
+  border-radius: 9px;
+  font-size: 0.875rem;
+  margin: 17px 0;
+}
+.nova-admin-error button {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  color: #a04c4c;
+  white-space: nowrap;
+}
+.na-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 27px 0;
+  color: #8d9bae;
+  font-size: 0.75rem;
+}
+.na-shell :focus-visible {
+  outline: 3px solid #91b0fa;
+  outline-offset: 3px;
+}
+@media (max-width: 1100px) {
+  .na-workspace-label {
+    display: none;
+  }
+  .na-login-intro,
+  .na-login-card {
+    padding: 33px;
+  }
+  .na-login-intro h1 {
+    font-size: 1.9rem;
+  }
+  .na-stat {
+    padding: 20px 17px;
+  }
+  .na-table-head,
+  .na-request-row {
+    grid-template-columns:
+      minmax(130px, 1fr) minmax(130px, 1fr) minmax(90px, 0.75fr)
+      minmax(105px, 0.8fr) minmax(125px, 1fr) 105px;
+    gap: 10px;
+    padding-inline: 18px;
+  }
+  .na-search {
+    max-width: none;
+  }
+}
+@media (max-width: 960px) {
+  .na-table-head {
+    display: none;
+  }
+  .na-request-row {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 18px;
+    padding: 20px;
+  }
+  .na-customer-cell {
+    grid-column: 1/3;
+  }
+  .na-status-cell {
+    grid-column: 3;
+    grid-row: 1;
+    text-align: right;
+  }
+  .na-cell-label {
+    display: block;
+    color: #8b9aaf;
+    font-size: 0.8125rem;
+    margin-bottom: 4px;
+  }
+  .na-detail-toggle {
+    grid-column: 1/-1;
+    min-height: 38px;
+  }
+  .na-stat {
+    gap: 12px;
+  }
+  .na-stat-icon {
+    width: 42px;
+    height: 42px;
+  }
+  .na-stat > div > span {
+    font-size: 0.8125rem;
+  }
+  .na-search {
+    flex-basis: 100%;
+  }
+  .na-login-layout {
+    grid-template-columns: 0.9fr 1fr;
+  }
+  .na-login-intro,
+  .na-login-card {
+    padding: 29px 25px;
+  }
+  .na-detail-grid {
+    gap: 24px;
+  }
+}
+@media (max-width: 620px) {
+  .na-shell .container {
+    width: calc(100% - 28px);
+  }
+  .na-topbar-inner {
+    min-height: 74px;
+    gap: 10px;
+  }
+  .na-brand .logo {
+    font-size: 18px;
+  }
+  .na-brand .logo-symbol {
+    width: 35px;
+    height: 38px;
+  }
+  .na-brand .logo small {
+    font-size: 6px;
+    letter-spacing: 1.2px;
+  }
+  .na-topbar-actions {
+    gap: 10px;
+  }
+  .na-site-link,
+  .na-logout {
+    font-size: 0.75rem;
+  }
+  .na-logout {
+    padding: 8px;
+  }
+  .na-logout > svg {
+    display: none;
+  }
+  .na-shell .nova-admin {
+    padding-top: 18px;
+  }
+  .na-shell .nova-admin-source {
+    align-items: flex-start;
+    padding: 12px;
+    gap: 9px;
+    font-size: 0.8125rem;
+  }
+  .nova-admin-source > div {
+    gap: 4px;
+  }
+  .nova-admin-source strong {
+    font-size: 0.8125rem;
+  }
+  .nova-admin-source > svg {
+    margin-top: 3px;
+  }
+  .na-login-layout {
+    grid-template-columns: 1fr;
+    margin-top: 22px;
+    border-radius: 15px;
+  }
+  .na-login-intro {
+    padding: 26px;
+  }
+  .na-intro-icon {
+    height: 45px;
+    width: 45px;
+    border-radius: 12px;
+    margin-bottom: 17px;
+  }
+  .na-intro-icon > svg {
+    width: 27px;
+    height: 27px;
+  }
+  .na-login-intro h1 {
+    font-size: 1.65rem;
+    margin: 8px 0 10px;
+  }
+  .na-login-intro h1 br {
+    display: none;
+  }
+  .na-login-intro > p {
+    font-size: 0.875rem;
+  }
+  .na-login-intro ul,
+  .na-intro-foot {
+    display: none;
+  }
+  .na-login-card {
+    padding: 30px 24px;
+  }
+  .na-login-card h2 {
+    font-size: 1.4rem;
+  }
+  .na-page-heading {
+    align-items: flex-start;
+    margin: 24px 0 20px;
+  }
+  .na-page-heading h1 {
+    font-size: 1.6rem;
+  }
+  .na-page-heading p {
+    font-size: 0.875rem;
+  }
+  .na-refresh {
+    padding: 11px;
+  }
+  .na-refresh > span {
+    display: none;
+  }
+  .na-stats {
+    gap: 8px;
+    margin-bottom: 19px;
+  }
+  .na-stat {
+    padding: 14px 10px;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    border-radius: 10px;
+  }
+  .na-stat-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+  .na-stat-icon svg {
+    height: 18px;
+    width: 18px;
+  }
+  .na-stat > div > span {
+    font-size: 0.75rem;
+    line-height: 1.5;
+    min-height: 36px;
+    display: block;
+  }
+  .na-stat strong {
+    font-size: 1.5rem;
+  }
+  .na-stat small {
+    display: block;
+    margin: 0;
+    font-size: 0.6875rem;
+  }
+  .na-list-heading {
+    padding: 18px 16px;
+    gap: 10px;
+  }
+  .na-list-heading p {
+    font-size: 0.75rem;
+  }
+  .na-page-count {
+    font-size: 0.75rem;
+  }
+  .na-list-tools {
+    padding: 0 14px 16px;
+  }
+  .na-filters {
+    width: 100%;
+    justify-content: space-between;
+    gap: 3px;
+  }
+  .na-filters button {
+    font-size: 0.75rem;
+    padding: 7px 6px;
+    gap: 4px;
+  }
+  .na-search {
+    min-width: 0;
+  }
+  .na-search input {
+    font-size: 0.8125rem;
+  }
+  .na-request-row {
+    grid-template-columns: 1fr 1fr;
+    padding: 18px 16px;
+    gap: 16px;
+  }
+  .na-customer-cell {
+    grid-column: 1/-1;
+    grid-row: 1;
+    padding-right: 112px;
+    min-height: 38px;
+  }
+  .na-status-cell {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+    pointer-events: none;
+  }
+  .na-status {
+    font-size: 0.6875rem;
+    padding: 5px 6px;
+  }
+  .na-vehicle-cell {
+    grid-column: 1;
+  }
+  .na-plan-cell {
+    grid-column: 2;
+  }
+  .na-premium-cell {
+    grid-column: 1/-1;
+  }
+  .na-subline,
+  .na-cell-label {
+    font-size: 0.75rem;
+  }
+  .na-details {
+    padding: 20px 16px;
+  }
+  .na-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .na-detail-grid dl > div {
+    grid-template-columns: 105px minmax(0, 1fr);
+    gap: 12px;
+    font-size: 0.875rem;
+  }
+  .na-highlights ul {
+    grid-template-columns: 1fr;
+  }
+  .na-detail-bottom {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .na-approve {
+    justify-content: center;
+  }
+  .na-pagination {
+    padding: 16px;
+    gap: 14px;
+  }
+  .na-pagination > span {
+    font-size: 0.75rem;
+    max-width: 190px;
+  }
+  .na-pagination > div {
+    gap: 7px;
+  }
+  .na-footer {
+    padding-block: 24px;
+    font-size: 0.6875rem;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .na-footer span:last-child {
+    margin-left: auto;
+  }
+}
