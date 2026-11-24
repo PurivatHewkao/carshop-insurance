@@ -11,7 +11,6 @@ import {
   ChevronRight,
   ClipboardList,
   Clock3,
-  Database,
   Eye,
   EyeOff,
   FileCheck2,
@@ -163,7 +162,6 @@ export default function AdminWorkspace({
   busy,
   loading,
   offset,
-  connection,
   login,
   logout,
   approve,
@@ -225,18 +223,6 @@ export default function AdminWorkspace({
         </div>
       </header>
       <div className="container nova-admin">
-        {connection?.mode === 'production-api' && (
-          <div className="nova-admin-source" role="note">
-            <Database size={18} />
-            <div>
-              <strong>เชื่อมข้อมูลระบบจริง</strong>
-              <span>
-                ข้อมูลชุดเดียวกับ NOVA บน Railway ·
-                การอนุมัติมีผลกับรายการบนระบบจริง
-              </span>
-            </div>
-          </div>
-        )}
         {!token ? (
           <div className="na-login-layout">
             <section className="na-login-intro">
