@@ -25,6 +25,7 @@ import { request, money, toyotyUrl } from './api.js';
 // Insurance: separate NOVA admin and closed direct-purchase notice.
 import AdminPage from './AdminPage.jsx';
 import PartnerPurchaseNotice from './PartnerPurchaseNotice.jsx';
+import QuotePage from './QuotePage.jsx';
 import {
   Logo,
   DemoNotice,
@@ -83,11 +84,11 @@ function Header({ source }) {
           className={open ? 'nav-links open' : 'nav-links'}
           onClick={() => setOpen(false)}
         >
-          <Link to={home + '#plans'}>Insurance Plans</Link>
-          <Link to={home + '#benefits'}>Benefits</Link>
-          <Link to={home + '#how-it-works'}>How It Works</Link>
+          <Link to={home + '#plans'}>ขอราคาประกัน</Link>
+          <Link to={home + '#benefits'}>ทำไมเลือก NOVA</Link>
+          <Link to={home + '#how-it-works'}>วิธีคำนวณราคา</Link>
           <Link className="button small" to={home + '#plans'}>
-            เลือกประกัน
+            เช็กราคาของคุณ
           </Link>
           {/* Insurance: NOVA administrators have a separate login. */}
           <Link to="/admin">ผู้ดูแล NOVA</Link>
@@ -327,14 +328,26 @@ function Home({ source }) {
           <div className="how-grid">
             {[
               // Insurance: public instructions follow the seller-assisted purchase flow.
-              [ShieldCheck, 'เลือกแผนผ่าน Seller', 'เลือกแพ็กเกจ NOVA เมื่อซื้อรถกับ TOYOTY'],
-              [CarFront, 'ระบุวันส่งมอบ', 'Seller บันทึกข้อมูลรถ ผู้เอาประกัน และวันเริ่มคุ้มครอง'],
+              [
+                ShieldCheck,
+                'เลือกแผนผ่าน Seller',
+                'เลือกแพ็กเกจ NOVA เมื่อซื้อรถกับ TOYOTY',
+              ],
+              [
+                CarFront,
+                'ระบุวันส่งมอบ',
+                'Seller บันทึกข้อมูลรถ ผู้เอาประกัน และวันเริ่มคุ้มครอง',
+              ],
               [
                 MousePointer2,
                 'ชำระครบที่ TOYOTY',
                 'ระบบส่งคำขอให้ NOVA รอแอดมินอนุมัติ',
               ],
-              [FileCheck2, 'ดูกรมธรรม์', 'หลังอนุมัติ ดูที่ประกันของฉันใน TOYOTY คุ้มครอง 1 ปีจากวันส่งมอบ'],
+              [
+                FileCheck2,
+                'ดูกรมธรรม์',
+                'หลังอนุมัติ ดูที่ประกันของฉันใน TOYOTY คุ้มครอง 1 ปีจากวันส่งมอบ',
+              ],
             ].map(([Icon, title, text], i) => (
               <article key={title}>
                 <span className="how-icon">
@@ -726,7 +739,7 @@ export default function App() {
       <Header source={source} />
       <main id="main">
         <Routes>
-          <Route path="/" element={<Home source={source} />} />
+          <Route path="/" element={<QuotePage source={source} />} />
           <Route
             path="/buy/:planId"
             element={
@@ -760,7 +773,7 @@ export default function App() {
           <div>
             <b>Explore NOVA</b>
             <Link to={'/' + suffix(source) + '#plans'}>แผนประกันรถยนต์</Link>
-            <Link to={'/' + suffix(source) + '#comparison'}>
+            <Link to={'/' + suffix(source) + '#plans'}>
               เปรียบเทียบความคุ้มครอง
             </Link>
           </div>

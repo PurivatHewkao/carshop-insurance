@@ -5,16 +5,22 @@ import { rateLimit } from 'express-rate-limit';
 import { getPool, frontendOrigin } from './config.js';
 import { ApiError, errorHandler } from './errors.js';
 import { plansRouter } from './modules/plans.js';
+import { quotesRouter } from './modules/quotes.js';
 import { purchasesRouter } from './modules/purchases.js';
 import { policiesRouter } from './modules/policies.js';
 // Insurance: partner purchase flow and independent NOVA administration.
 import { partnerRouter } from './modules/partner.js';
 import { adminRouter } from './modules/admin.js';
+import { createUpstream } from './upstream.js';
 export function createApp({
   pool = getPool,
   origin = frontendOrigin(),
   purchaseLimit = 20,
+  upstreamUrl = process.env.NOVA_UPSTREAM_API_URL || '',
 } = {}) {
+  if (upstreamUrl && process.env.NODE_ENV === 'production')
+    throw new Error('NOVA_UPSTREAM_API_URL is for local development only');
+  const upstream = upstreamUrl ? createUpstream(upstreamUrl) : null;
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', Number(process.env.TRUST_PROXY || 0));
@@ -39,6 +45,20 @@ export function createApp({
     res.set('Cache-Control', 'no-store');
     next();
   });
+  app.get('/api/connection', (_req, res) =>
+    res.json({
+      data: {
+        mode: upstream ? 'production-api' : 'local-database',
+        ...(upstream ? { upstream: upstream.origin } : {}),
+      },
+    }),
+  );
+  app.use(
+    '/api/quotes',
+    rateLimit({ windowMs: 60000, limit: 90 }),
+    quotesRouter(pool, { loadPlans: upstream?.loadPlans }),
+  );
+  if (upstream) app.use('/api', upstream.proxy);
   app.get('/api/health', async (_req, res) => {
     await pool().execute('SELECT 1');
     res.json({
@@ -48,7 +68,15 @@ export function createApp({
   });
   app.use('/api/plans', plansRouter(pool));
   // Insurance: direct purchases are closed; only authenticated carshop can submit.
-  app.post('/api/purchases', (_req, _res, next) => next(new ApiError(403, 'DIRECT_PURCHASE_DISABLED', 'กรุณาซื้อประกันพร้อมรถผ่าน Seller ของ TOYOTY')));
+  app.post('/api/purchases', (_req, _res, next) =>
+    next(
+      new ApiError(
+        403,
+        'DIRECT_PURCHASE_DISABLED',
+        'กรุณาซื้อประกันพร้อมรถผ่าน Seller ของ TOYOTY',
+      ),
+    ),
+  );
   app.use('/api/partner', partnerRouter(pool));
   app.use('/api/admin', adminRouter(pool));
   app.use(
@@ -59,15 +87,13 @@ export function createApp({
       standardHeaders: 'draft-8',
       legacyHeaders: false,
       handler: (_req, res) =>
-        res
-          .status(429)
-          .json({
-            error: {
-              code: 'RATE_LIMITED',
-              message: 'ส่งคำขอบ่อยเกินไป กรุณารอสักครู่',
-              details: [],
-            },
-          }),
+        res.status(429).json({
+          error: {
+            code: 'RATE_LIMITED',
+            message: 'ส่งคำขอบ่อยเกินไป กรุณารอสักครู่',
+            details: [],
+          },
+        }),
     }),
     purchasesRouter(pool),
   );

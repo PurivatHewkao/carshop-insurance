@@ -11,6 +11,8 @@ import {
 import { createApp } from '../src/app.js';
 // Insurance: include the new partner/auth/approval regression tests in npm test.
 import './partner.test.js';
+import './rating.test.js';
+import './upstream.test.js';
 // Insurance: production serverless dispatch regression.
 import './carshopSync.test.js';
 

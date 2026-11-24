@@ -159,7 +159,7 @@ test(
     const modelId = randomUUID();
     await carDb.execute(
       'INSERT INTO car_models (id, brand, model_name) VALUES (?, ?, ?)',
-      [modelId, 'Toyota', 'Camry'],
+      [modelId, 'TOYOTY', 'E-san'],
     );
     const carIds = [randomUUID(), randomUUID(), randomUUID()];
     for (const id of carIds)
@@ -262,10 +262,14 @@ test(
       (await call(novaBase, '/purchases', '', 'POST', {})).status,
       403,
     );
-    const planResult = await call(salesBase, '/insurance/plans', 'seller');
+    const planResult = await call(
+      salesBase,
+      `/insurance/plans?carId=${carIds[0]}`,
+      'seller',
+    );
     assert.equal(planResult.status, 200);
     const plan = planResult.body.data.find((p) => p.slug === 'smart-drive');
-    assert.equal(plan.premium, 6165.5);
+    assert.equal(plan.premium, 6555);
     assert.equal(plan.quoteToken, undefined);
     assert.equal(
       (
@@ -288,7 +292,7 @@ test(
     });
     assert.equal(created.status, 201, JSON.stringify(created.body));
     const order = created.body.data;
-    assert.equal(order.totalAmount, 1006165.5);
+    assert.equal(order.totalAmount, 1006555);
     assert.equal(order.insurancePlan, 'Smart Drive (NOVA)');
     assert.equal(order.insuranceId, null);
     const { syncInsurance } =
@@ -327,8 +331,22 @@ test(
     );
     assert.equal(paid.status, 'PAID');
     // Insurance: exercise the actual serverless route, not the local server.js worker.
-    assert.equal((await call(salesBase, '/internal/insurance/sync', 'customer', 'POST')).status, 401);
-    assert.equal((await call(salesBase, '/internal/insurance/sync', process.env.NOVA_PARTNER_KEY, 'POST')).status, 200);
+    assert.equal(
+      (await call(salesBase, '/internal/insurance/sync', 'customer', 'POST'))
+        .status,
+      401,
+    );
+    assert.equal(
+      (
+        await call(
+          salesBase,
+          '/internal/insurance/sync',
+          process.env.NOVA_PARTNER_KEY,
+          'POST',
+        )
+      ).status,
+      200,
+    );
     let customer = await call(salesBase, '/insurance/me', 'customer');
     assert.equal(customer.body.data[0].status, 'PENDING_APPROVAL');
     assert.equal(

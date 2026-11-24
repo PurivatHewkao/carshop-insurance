@@ -1,5 +1,25 @@
 # NOVA deployment status — 22 November 2026
 
+<!-- Insurance: current production admin deployment, historical launch details follow. -->
+## Update — 23 November 2026: production admin login repaired
+
+- NOVA API now follows `main` in the existing production service. Deployment `9929bc30-d899-490f-b344-a1a51e3e8b4d` is **SUCCESS**, commit `5a7f412b11da26968734849b1738017ebac4fc74`.
+- The previous `deploy/nova-insure-20261122` backend did not expose `/api/admin/login`, causing the reported 404.
+- Root directory is `/` so shared `packages/insurance` is available. Build: `npm --prefix insurance/backend ci --omit=dev`; start: `npm --prefix insurance/backend start`.
+- Pre-deploy: `npm --prefix insurance/backend run migrate && npm --prefix insurance/backend run seed`. Additive admin/partner migrations completed on the existing separate NOVA database.
+- The requested NOVA admin account was provisioned using a salted password hash. The one-time provisioning command was removed afterward, and temporary setup variable values were cleared without another deployment.
+- Live Chrome verification passed at `https://nova-insure-web.vercel.app/admin`: autofill, login **200**, admin request list **200**, and logout. No transactions were approved or modified during verification.
+- No carshop services or databases were changed for this repair.
+
+## Historical launch record
+
+<!-- Insurance: production partner configuration repair, 23 November 2026. -->
+### Production Sales → NOVA package connection
+
+- Added production-only `NOVA_API_URL` and secret `NOVA_PARTNER_KEY` to the existing `carshop-insurance-sales` Vercel project. NOVA's existing Railway production API received the same newly generated server-only key.
+- Sales deployment `dpl_GhPDJFWwKho9aNDdCu6DrAy2wZdg` is READY; NOVA deployment `b80c3733-2083-44c3-bda1-923122b5d2b7` is SUCCESS. Sales reused commit `5a7f412` and existing protection settings.
+- Verified in the user's existing signed-in production Seller tab: clicking the package retry control removed the load error and populated Essential, Smart Drive, Extra Care, and Signature. Existing form selections were preserved; no order or payment was submitted.
+
 Source: existing repository `PurivatHewkao/carshop-insurance`, branch `deploy/nova-insure-20261122`, commit `aa98acf83b6f6127f35a6094402e15d9ce779962`. This branch includes latest GitHub main `8a0dbf7` plus NOVA; no new GitHub repository was created. The original workspace and unrelated local files remain intact.
 
 ## Vercel

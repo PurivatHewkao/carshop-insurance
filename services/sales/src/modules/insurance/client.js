@@ -37,4 +37,5 @@ export async function novaRequest(path, body) {
     );
   }
 }
-export const novaPlans = () => novaRequest('plans');
+export const novaPlans = (vehicle) =>
+  vehicle ? novaRequest('quotes', { vehicle }) : novaRequest('plans');

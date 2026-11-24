@@ -3,7 +3,12 @@ import { getMysqlPool } from '../../config/mysql.js';
 import { httpError } from '../../utils/httpError.js';
 import { fromSatang, toNumber, toSatang } from '../../utils/money.js';
 // Insurance: isolate NOVA pricing and snapshots from existing order rules.
-import { prepareInsurance, saveInsurance, enrichOrders } from '../insurance/repository.js';
+import {
+  prepareInsurance,
+  saveInsurance,
+  enrichOrders,
+  insuranceVehicle,
+} from '../insurance/repository.js';
 
 const MYSQL_BAD_FIELD = 1054;
 const MYSQL_DUPLICATE = 1062;
@@ -11,7 +16,9 @@ const MYSQL_DUPLICATE = 1062;
 // `orders` needs the columns from database/03_sales_columns.sql.
 function hintMigration(error) {
   if (error?.errno === MYSQL_BAD_FIELD)
-    console.error('orders is missing columns: run services/sales/database/03_sales_columns.sql');
+    console.error(
+      'orders is missing columns: run services/sales/database/03_sales_columns.sql',
+    );
   return error;
 }
 
@@ -64,12 +71,22 @@ const SELECT = `
 export async function listOrders({ customerId, sellerId, approvalStatus }) {
   const where = [];
   const params = [];
-  if (customerId) { where.push('o.customer_id = ?'); params.push(customerId); }
-  if (sellerId) { where.push('o.seller_id = ?'); params.push(sellerId); }
-  if (approvalStatus) { where.push('o.approval_status = ?'); params.push(approvalStatus); }
+  if (customerId) {
+    where.push('o.customer_id = ?');
+    params.push(customerId);
+  }
+  if (sellerId) {
+    where.push('o.seller_id = ?');
+    params.push(sellerId);
+  }
+  if (approvalStatus) {
+    where.push('o.approval_status = ?');
+    params.push(approvalStatus);
+  }
   try {
     const [rows] = await getMysqlPool().query(
-      SELECT + (where.length ? ' WHERE ' + where.join(' AND ') : '') +
+      SELECT +
+        (where.length ? ' WHERE ' + where.join(' AND ') : '') +
         ' ORDER BY o.created_at DESC, o.id LIMIT 500',
       params,
     );
@@ -91,50 +108,100 @@ async function getOrder(db, id) {
 // inside the transaction, never trusted from the browser.
 export async function createOrder(input) {
   // Insurance: validate the NOVA quote before opening the existing DB transaction.
-  if (input.novaPlanId && input.insuranceId) throw httpError(400, 'INSURANCE_CONFLICT', 'เลือกประกันได้เพียงแพ็กเกจเดียว');
-  if (input.insuranceId) throw httpError(400, 'INSURANCE_LEGACY_DISABLED', 'รายการขายใหม่ต้องเลือกแพ็กเกจ NOVA');
+  if (input.novaPlanId && input.insuranceId)
+    throw httpError(
+      400,
+      'INSURANCE_CONFLICT',
+      'เลือกประกันได้เพียงแพ็กเกจเดียว',
+    );
+  if (input.insuranceId)
+    throw httpError(
+      400,
+      'INSURANCE_LEGACY_DISABLED',
+      'รายการขายใหม่ต้องเลือกแพ็กเกจ NOVA',
+    );
   const novaInsurance = await prepareInsurance(input);
   const conn = await getMysqlPool().getConnection();
   const id = randomUUID();
   try {
     await conn.beginTransaction();
-    const [cars] = await conn.query('SELECT price, status FROM cars WHERE id = ? FOR UPDATE', [input.carId]);
+    const [cars] = await conn.query(
+      'SELECT price, status FROM cars WHERE id = ? FOR UPDATE',
+      [input.carId],
+    );
     if (!cars[0]) throw httpError(400, 'CAR_NOT_FOUND', 'Car not found');
     if (cars[0].status !== 'AVAILABLE')
-      throw httpError(409, 'CAR_NOT_AVAILABLE', 'This car is not available for sale');
+      throw httpError(
+        409,
+        'CAR_NOT_AVAILABLE',
+        'This car is not available for sale',
+      );
+    if (
+      novaInsurance &&
+      JSON.stringify(await insuranceVehicle(input.carId, conn)) !==
+        JSON.stringify(novaInsurance.snapshot.vehicle)
+    )
+      throw httpError(
+        409,
+        'INSURANCE_PRICE_CHANGED',
+        'สเปกรถหรือราคาเปลี่ยน กรุณาขอราคาประกันใหม่',
+      );
 
-    const [customers] = await conn.query('SELECT id FROM customers WHERE id = ?', [input.customerId]);
-    if (!customers[0]) throw httpError(400, 'CUSTOMER_NOT_FOUND', 'Customer not found');
+    const [customers] = await conn.query(
+      'SELECT id FROM customers WHERE id = ?',
+      [input.customerId],
+    );
+    if (!customers[0])
+      throw httpError(400, 'CUSTOMER_NOT_FOUND', 'Customer not found');
     const [sellers] = await conn.query(
       `SELECT e.id FROM employees e JOIN users u ON u.id = e.user_id
         WHERE e.id = ? AND u.role = 'SELLER' AND u.status = 'ACTIVE'`,
       [input.sellerId],
     );
-    if (!sellers[0]) throw httpError(400, 'SELLER_NOT_FOUND', 'Seller not found or inactive');
+    if (!sellers[0])
+      throw httpError(400, 'SELLER_NOT_FOUND', 'Seller not found or inactive');
 
     // Insurance: use NOVA's discounted premium; no-insurance remains zero.
-    let premium = novaInsurance ? toSatang(String(novaInsurance.snapshot.finalAmount)) : 0n;
+    let premium = novaInsurance
+      ? toSatang(String(novaInsurance.snapshot.finalAmount))
+      : 0n;
     if (input.insuranceId) {
       const [plans] = await conn.query(
         "SELECT premium FROM insurances WHERE id = ? AND status = 'ACTIVE'",
         [input.insuranceId],
       );
-      if (!plans[0]) throw httpError(400, 'INSURANCE_NOT_FOUND', 'Insurance plan not found or inactive');
+      if (!plans[0])
+        throw httpError(
+          400,
+          'INSURANCE_NOT_FOUND',
+          'Insurance plan not found or inactive',
+        );
       premium = toSatang(plans[0].premium);
     }
     const subtotal = toSatang(cars[0].price) + premium;
     const discount = toSatang(input.discount);
     if (discount > subtotal)
-      throw httpError(400, 'DISCOUNT_TOO_HIGH', 'Discount cannot be more than the subtotal');
+      throw httpError(
+        400,
+        'DISCOUNT_TOO_HIGH',
+        'Discount cannot be more than the subtotal',
+      );
 
     await conn.query(
       `INSERT INTO orders (id, customer_id, seller_id, car_id, insurance_id, insurance_premium,
                            subtotal, discount, total_amount, note)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        id, input.customerId, input.sellerId, input.carId, input.insuranceId,
-        fromSatang(premium), fromSatang(subtotal), fromSatang(discount),
-        fromSatang(subtotal - discount), input.note,
+        id,
+        input.customerId,
+        input.sellerId,
+        input.carId,
+        input.insuranceId,
+        fromSatang(premium),
+        fromSatang(subtotal),
+        fromSatang(discount),
+        fromSatang(subtotal - discount),
+        input.note,
       ],
     );
     // Insurance: persist the snapshot atomically with the order, before payment exists.
@@ -144,7 +211,11 @@ export async function createOrder(input) {
     await conn.rollback();
     // uq_orders_active_car: another non-cancelled order already holds this car.
     if (error?.errno === MYSQL_DUPLICATE)
-      throw httpError(409, 'CAR_ALREADY_ORDERED', 'This car already has an active order');
+      throw httpError(
+        409,
+        'CAR_ALREADY_ORDERED',
+        'This car already has an active order',
+      );
     throw hintMigration(error);
   } finally {
     conn.release();
@@ -165,7 +236,11 @@ export async function decideOrder(id, { decision, comment }) {
     );
     if (!rows[0]) throw httpError(404, 'ORDER_NOT_FOUND', 'Order not found');
     if (rows[0].approval_status !== 'PENDING_APPROVAL')
-      throw httpError(409, 'ALREADY_DECIDED', 'This order has already been decided');
+      throw httpError(
+        409,
+        'ALREADY_DECIDED',
+        'This order has already been decided',
+      );
 
     if (decision === 'APPROVED') {
       const [reserved] = await conn.query(
@@ -173,11 +248,20 @@ export async function decideOrder(id, { decision, comment }) {
         [rows[0].car_id],
       );
       if (reserved.affectedRows === 0)
-        throw httpError(409, 'CAR_NOT_AVAILABLE', 'The car is no longer available');
+        throw httpError(
+          409,
+          'CAR_NOT_AVAILABLE',
+          'The car is no longer available',
+        );
     }
     await conn.query(
       'UPDATE orders SET approval_status = ?, status = ?, manager_comment = ? WHERE id = ?',
-      [decision, decision === 'APPROVED' ? 'CONFIRMED' : 'CANCELLED', comment, id],
+      [
+        decision,
+        decision === 'APPROVED' ? 'CONFIRMED' : 'CANCELLED',
+        comment,
+        id,
+      ],
     );
     await conn.commit();
   } catch (error) {

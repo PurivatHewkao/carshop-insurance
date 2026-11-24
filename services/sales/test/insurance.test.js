@@ -9,6 +9,7 @@ import {
 import {
   prepareInsurance,
   enrichOrders,
+  insuranceVehicle,
 } from '../src/modules/insurance/repository.js';
 import {
   coverageDates,
@@ -18,6 +19,40 @@ import {
   partnerEndpoint,
 } from '../../../packages/insurance/index.js';
 const orderId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+test('vehicle pricing uses the stored configured car price and trim, and does not hide database failures', async () => {
+  const row = {
+    price: '1885000.00',
+    manufacture_year: 2026,
+    vin: '12345678901234567',
+    slug: 'e-san',
+    model_name: 'E-san',
+  };
+  const vehicle = await insuranceVehicle(orderId, {
+    query: async (sql) =>
+      sql.includes('car_trims') ? [[{ code: 'BALANCED' }]] : [[row]],
+  });
+  assert.equal(vehicle.vehicleValue, 1885000);
+  assert.equal(vehicle.trimCode, 'BALANCED');
+  assert.equal(vehicle.carId, orderId);
+  await assert.rejects(
+    insuranceVehicle(orderId, {
+      query: async () => {
+        throw new Error('connection lost');
+      },
+    }),
+    /connection lost/,
+  );
+  const legacy = await insuranceVehicle(orderId, {
+    query: async (sql) => {
+      if (sql.includes('car_trims'))
+        throw Object.assign(new Error('old schema'), {
+          code: 'ER_NO_SUCH_TABLE',
+        });
+      return [[row]];
+    },
+  });
+  assert.equal(legacy.trimCode, 'ECO');
+});
 test('insurance sync requires its backend key, not a customer session', () => {
   assert.throws(
     () =>

@@ -10,7 +10,14 @@ import { useAction, useSalesData } from './useSalesData.js';
 // Insurance: load NOVA separately so an outage cannot block a car-only sale.
 import { fetchNovaPlans } from '../api/insuranceApi.js';
 
-const EMPTY = { customerId: '', carId: '', insuranceId: '', sellerId: '', discount: '0', note: '' };
+const EMPTY = {
+  customerId: '',
+  carId: '',
+  insuranceId: '',
+  sellerId: '',
+  discount: '0',
+  note: '',
+};
 
 /**
  * State and submit logic shared by the two "create order" pages.
@@ -28,19 +35,23 @@ export function useOrderForm({ onCreated } = {}) {
     return { customers, cars, sellers, actor };
   }, []);
   // Insurance: independent loading and retry for optional NOVA packages.
-  const nova = useSalesData(fetchNovaPlans);
   const action = useAction();
   const [form, setForm] = useState(EMPTY);
 
   const customers = lookups.data?.customers ?? [];
   const cars = lookups.data?.cars ?? [];
-  const insurances = nova.data ?? [];
   const sellers = lookups.data?.sellers ?? [];
   const actor = lookups.data?.actor;
 
   const customerId = form.customerId || customers[0]?.id || '';
   const carId = form.carId || cars[0]?.id || '';
-  const sellerId = (!actor?.isStandIn && actor?.employeeId) || sellers[0]?.id || '';
+  const nova = useSalesData(
+    (signal) => (carId ? fetchNovaPlans(signal, carId) : Promise.resolve([])),
+    [carId],
+  );
+  const insurances = nova.loading ? [] : (nova.data ?? []);
+  const sellerId =
+    (!actor?.isStandIn && actor?.employeeId) || sellers[0]?.id || '';
   const customer = customers.find((item) => item.id === customerId);
   const car = cars.find((item) => item.id === carId);
   const insurance = insurances.find((item) => item.id === form.insuranceId);
@@ -49,9 +60,15 @@ export function useOrderForm({ onCreated } = {}) {
   const insurancePrice = insurance?.premium ?? 0;
   const discount = Number(form.discount || 0);
   // Preview only (the server recalculates in integer satang).
-  const netTotal = Math.round((carPrice + insurancePrice - discount) * 100) / 100;
+  const netTotal =
+    Math.round((carPrice + insurancePrice - discount) * 100) / 100;
   // Insurance: require a valid selected NOVA plan and delivery date only when insured.
-  const canSubmit = Boolean(customerId && carId && sellerId) && discount >= 0 && netTotal >= 0 && (!form.insuranceId || Boolean(insurance && form.deliveryDate && !nova.error && !nova.loading));
+  const canSubmit =
+    Boolean(customerId && carId && sellerId) &&
+    discount >= 0 &&
+    netTotal >= 0 &&
+    (!form.insuranceId ||
+      Boolean(insurance && form.deliveryDate && !nova.error && !nova.loading));
 
   async function submit(event) {
     event.preventDefault();
@@ -80,9 +97,23 @@ export function useOrderForm({ onCreated } = {}) {
 
   return {
     // Insurance: expose NOVA load state to the small supplemental form component.
-    lookups, nova, action, form, setForm, submit, canSubmit,
-    customers, cars, insurances, sellers,
-    customerId, carId, sellerId, customer,
-    carPrice, insurancePrice, netTotal,
+    lookups,
+    nova,
+    action,
+    form,
+    setForm,
+    submit,
+    canSubmit,
+    customers,
+    cars,
+    insurances,
+    sellers,
+    customerId,
+    carId,
+    sellerId,
+    customer,
+    carPrice,
+    insurancePrice,
+    netTotal,
   };
 }

@@ -36,10 +36,12 @@ export default function InsurancePartnerPage() {
           </p>
           <a className="s-btn pri" href={href}>
             {/* Insurance: NOVA only accepts purchases through a carshop seller. */}
-            ดูแพ็กเกจ NOVA
+            เช็กราคาประกันตามสเปกรถ
           </a>
           {/* Insurance: clarify the new purchase channel. */}
-          <small>ดูแพ็กเกจแล้วแจ้ง Seller เพื่อซื้อพร้อมรถ ติดตามผลในเมนูประกันของฉัน</small>
+          <small>
+            ดูแพ็กเกจแล้วแจ้ง Seller เพื่อซื้อพร้อมรถ ติดตามผลในเมนูประกันของฉัน
+          </small>
         </div>
         <div className="ti-art">
           <img
@@ -99,7 +101,8 @@ export default function InsurancePartnerPage() {
             </p>
             <ul>
               {[
-                'ส่วนลดสาธิต 5% สูงสุด 1,000 บาท จากราคาแผน',
+                'คำนวณเบี้ยตามรถ รุ่นย่อย และออปชันที่เลือก',
+                'ส่วนลดสาธิต 5% สูงสุด 1,000 บาท',
                 'เลือกประกันชั้น 3, 3+, 2+ หรือชั้น 1',
                 // Insurance: issuance requires NOVA approval after full payment.
                 'ชำระครบ แล้วรอ NOVA อนุมัติออกกรมธรรม์',

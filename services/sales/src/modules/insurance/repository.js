@@ -6,9 +6,42 @@ import {
   verifyQuote,
 } from '../../../../../packages/insurance/index.js';
 import { novaPlans } from './client.js';
+import { ratingModels } from '../../../../../packages/insurance/rating.js';
 
 const jsonValue = (value) =>
   typeof value === 'string' ? JSON.parse(value) : value;
+export async function insuranceVehicle(carId, db = getMysqlPool()) {
+  requireUuid(carId, 'carId');
+  const [rows] = await db.query(
+    `SELECT c.price, c.manufacture_year, c.vin, m.slug, m.model_name
+    FROM cars c JOIN car_models m ON m.id = c.car_model_id WHERE c.id = ?`,
+    [carId],
+  );
+  const row = rows[0];
+  if (!row) throw httpError(400, 'CAR_NOT_FOUND', 'ไม่พบรถที่เลือก');
+  let trimCode = 'ECO';
+  try {
+    const [trims] = await db.query(
+      'SELECT t.code FROM cars c JOIN car_trims t ON t.id = c.trim_id WHERE c.id = ?',
+      [carId],
+    );
+    if (trims[0]) trimCode = trims[0].code;
+  } catch (error) {
+    if (!['ER_NO_SUCH_TABLE', 'ER_BAD_FIELD_ERROR'].includes(error.code))
+      throw error;
+  }
+  return {
+    carId,
+    modelSlug: ratingModels.find(
+      (model) => model.slug === row.slug || model.name === row.model_name,
+    )?.slug,
+    modelName: row.model_name,
+    trimCode,
+    vehicleValue: Number(row.price),
+    year: Number(row.manufacture_year),
+    vin: row.vin,
+  };
+}
 export async function prepareInsurance(input) {
   if (!input.novaPlanId) return null;
   requireUuid(input.novaPlanId, 'novaPlanId');
@@ -21,7 +54,8 @@ export async function prepareInsurance(input) {
       'กรุณาระบุวันส่งมอบรถที่ถูกต้อง',
     );
   }
-  const plans = await novaPlans();
+  const vehicle = await insuranceVehicle(input.carId);
+  const plans = await novaPlans(vehicle);
   const plan = plans.find((item) => item.id === input.novaPlanId);
   if (!plan)
     throw httpError(400, 'INSURANCE_NOT_FOUND', 'ไม่พบแพ็กเกจ NOVA ที่เปิดขาย');
@@ -34,6 +68,7 @@ export async function prepareInsurance(input) {
   }
   if (
     snapshot.id !== input.novaPlanId ||
+    JSON.stringify(snapshot.vehicle) !== JSON.stringify(vehicle) ||
     !Number.isFinite(snapshot.finalAmount) ||
     snapshot.finalAmount <= 0
   )

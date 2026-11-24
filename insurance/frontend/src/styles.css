@@ -1073,6 +1073,7 @@ input[aria-invalid='true'] {
   margin: 20px auto 0;
 }
 .skip-link {
+  clip-path: inset(50%);
   position: fixed;
   top: -100px;
   left: 15px;
@@ -1083,6 +1084,7 @@ input[aria-invalid='true'] {
   border-radius: 8px;
 }
 .skip-link:focus {
+  clip-path: none;
   top: 15px;
 }
 .sr-only {
@@ -1575,7 +1577,9 @@ input[aria-invalid='true'] {
   border-radius: 12px;
   background: #fffffff2;
   color: var(--blue);
-  font: 700 12px/1.5 system-ui, sans-serif;
+  font:
+    700 12px/1.5 system-ui,
+    sans-serif;
   box-shadow: 0 8px 24px #10264a14;
 }
 .nova-photo-badge small {

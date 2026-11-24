@@ -22,6 +22,16 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [revision, setRevision] = useState(0);
   const [offset, setOffset] = useState(0);
+  const [connection, setConnection] = useState(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    request('/connection', { signal: controller.signal })
+      .then((data) => {
+        if (!controller.signal.aborted) setConnection(data);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
   useEffect(() => {
     if (!token) return;
     const controller = new AbortController();
@@ -112,6 +122,12 @@ export default function AdminPage() {
     <section className="container nova-admin">
       <h1>ผู้ดูแล NOVA</h1>
       <p>ตรวจข้อมูลการขายจาก TOYOTY และอนุมัติออกกรมธรรม์</p>
+      {connection?.mode === 'production-api' && (
+        <p className="nova-admin-source" role="note">
+          เชื่อมข้อมูล NOVA ชุดเดียวกับเว็บจริงผ่าน Railway ·
+          การอนุมัติจะมีผลกับรายการบนระบบจริง
+        </p>
+      )}
       {error && (
         <p role="alert" className="nova-admin-error">
           {error}

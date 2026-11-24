@@ -75,7 +75,7 @@ export async function runInsuranceBrowserTest({
     await page
       .getByLabel('วันส่งมอบรถ / วันเริ่มคุ้มครอง *')
       .fill('2026-12-01');
-    await expect(page.getByText(/เบี้ยสุทธิ 6,165.50 บาท/)).toBeVisible();
+    await expect(page.getByText(/เบี้ยสุทธิ 6,555.00 บาท/)).toBeVisible();
     await page.screenshot({ path: evidence + 'seller.png', fullPage: true });
     await select.selectOption('');
     await expect(

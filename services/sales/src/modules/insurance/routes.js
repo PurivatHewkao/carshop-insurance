@@ -2,13 +2,15 @@
 import { Router } from 'express';
 import { requireRoles } from '../../../../../packages/auth/index.js';
 import { novaPlans } from './client.js';
-import { customerInsurance } from './repository.js';
+import { customerInsurance, insuranceVehicle } from './repository.js';
+import { requireUuid } from '../../utils/httpError.js';
 const router = Router();
 router.get(
   '/plans',
   requireRoles('seller', 'manager', 'admin'),
-  async (_req, res) => {
-    const plans = await novaPlans();
+  async (req, res) => {
+    const carId = requireUuid(req.query.carId, 'carId');
+    const plans = await novaPlans(await insuranceVehicle(carId));
     // The quote token remains in the backend; the seller only needs display prices.
     res.json({
       data: plans.map(({ quoteToken: _token, ...plan }) => ({

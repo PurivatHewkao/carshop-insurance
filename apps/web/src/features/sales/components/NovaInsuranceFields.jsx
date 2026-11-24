@@ -40,6 +40,14 @@ export default function NovaInsuranceFields({
             บาท · {plan.insuranceType}
           </p>
           <p>{plan.description}</p>
+          {plan.ratingVersion && (
+            <p>
+              คำนวณสำหรับรถที่เลือก · {plan.vehicle?.trimCode} · ทุนประกัน{' '}
+              {plan.sumInsured.toLocaleString('th-TH')} บาท · วงเงินชน{' '}
+              {plan.collisionLimit.toLocaleString('th-TH')} บาท · ซ่อมอู่ ·
+              ไม่รวม พ.ร.บ.
+            </p>
+          )}
           <div className="sales-form-group">
             <label htmlFor="nova-delivery-date">
               วันส่งมอบรถ / วันเริ่มคุ้มครอง *

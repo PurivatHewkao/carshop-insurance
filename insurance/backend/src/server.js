@@ -2,7 +2,9 @@ import { createApp } from './app.js';
 import { closePool } from './config.js';
 // Insurance: drive Sales' durable queue even when hosted on serverless Vercel.
 import { startCarshopSync } from './modules/carshopSync.js';
-const stopCarshopSync = startCarshopSync();
+const stopCarshopSync = process.env.NOVA_UPSTREAM_API_URL
+  ? () => {}
+  : startCarshopSync();
 const server = createApp().listen(
   Number(process.env.PORT || 3010),
   '0.0.0.0',

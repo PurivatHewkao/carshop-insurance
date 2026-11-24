@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { Router } from 'express';
 import { ApiError } from '../errors.js';
 import { serializePlan } from './plans.js';
+import { ratedPlan } from './quotes.js';
 import {
   coverageDates,
   digest,
@@ -99,6 +100,17 @@ export function validatePartnerRequest(body) {
     vehicle.year > 9999
   )
     throw new ApiError(400, 'INVALID_REQUEST', 'ปีรถไม่ถูกต้อง');
+  if (
+    plan.ratingVersion &&
+    (plan.vehicle?.vin !== vehicle.vin ||
+      plan.vehicle?.year !== vehicle.year ||
+      plan.vehicle?.modelName !== vehicle.model)
+  )
+    throw new ApiError(
+      400,
+      'QUOTE_VEHICLE_MISMATCH',
+      'ราคาอ้างอิงไม่ตรงกับรถที่ขอทำประกัน',
+    );
   return {
     orderId: body.orderId.toLowerCase(),
     plan,
@@ -159,15 +171,47 @@ export function partnerRouter(pool) {
       }),
     });
   });
+  router.post('/quotes', async (req, res) => {
+    const v = req.body?.vehicle;
+    if (
+      !v ||
+      !uuidPattern.test(v.carId || '') ||
+      typeof v.vin !== 'string' ||
+      v.vin.length !== 17 ||
+      typeof v.modelName !== 'string' ||
+      v.modelName.length > 150
+    )
+      throw new ApiError(
+        400,
+        'INVALID_INSURANCE_VEHICLE',
+        'ข้อมูลรถสำหรับคำนวณราคาไม่ถูกต้อง',
+      );
+    const vehicle = {
+      carId: v.carId,
+      modelSlug: v.modelSlug,
+      modelName: v.modelName,
+      trimCode: v.trimCode,
+      vehicleValue: v.vehicleValue,
+      year: v.year,
+      vin: v.vin,
+    };
+    const [rows] = await pool().execute(
+      'SELECT * FROM insurance_plans WHERE is_active = 1 ORDER BY premium_amount',
+    );
+    res.json({
+      data: rows.map((row) => {
+        const plan = ratedPlan(row, vehicle, 'toyoty');
+        return {
+          ...plan,
+          quoteToken: signQuote(plan, process.env.NOVA_PARTNER_KEY),
+        };
+      }),
+    });
+  });
   router.post('/requests', async (req, res) => {
-    res
-      .status(200)
-      .json({
-        data: await savePartnerRequest(
-          pool(),
-          validatePartnerRequest(req.body),
-        ),
-      });
+    res.status(200).json({
+      data: await savePartnerRequest(pool(), validatePartnerRequest(req.body)),
+    });
   });
   router.get('/requests/:orderId', async (req, res) => {
     if (!uuidPattern.test(req.params.orderId))
