@@ -1,0 +1,98 @@
+/* TOYOTY configurator (CarConfigurator.jsx). Builds on catalog.css (.catalog-page tokens). */
+.cfg-page {
+  --cfg-accent: var(--ct-accent, #eb0a1e);
+  --cfg-hair: var(--ct-hair, color-mix(in srgb, var(--ink, #14151a) 9%, transparent));
+  --cfg-soft: color-mix(in srgb, var(--cfg-accent) 7%, var(--card, #fff));
+}
+
+.cfg-page .catalog-model-hero { position: relative; }
+.cfg-hero-color {
+  position: absolute; z-index: 3; top: 18px; left: 18px;
+  display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px 7px 8px;
+  border-radius: 999px; background: #ffffffe6; color: #24252b; font-size: 11px; font-weight: 700;
+  box-shadow: 0 6px 18px -10px #000a;
+}
+.cfg-hero-color i { width: 16px; height: 16px; border-radius: 50%; background: var(--swatch); box-shadow: inset 0 0 0 1px #0002; }
+
+/* Steps */
+.cfg-step { display: grid; gap: 16px; margin-top: 34px; }
+.cfg-step > header { display: flex; align-items: center; gap: 14px; }
+.cfg-step > header > div { display: grid; gap: 3px; }
+.cfg-step > header h2 { margin: 0; font-size: 22px; letter-spacing: -.02em; }
+.cfg-step > header .catalog-results-count { margin-left: auto; }
+.cfg-step-no {
+  flex: 0 0 34px; width: 34px; height: 34px; display: grid; place-items: center;
+  border-radius: 50%; background: var(--ink, #14151a); color: var(--bg, #fff);
+  font-family: var(--ct-mono, monospace); font-size: 13px; font-weight: 700;
+}
+
+.cfg-trims, .cfg-colors, .cfg-wheels { display: grid; gap: 10px; }
+.cfg-trims { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cfg-colors { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.cfg-wheels { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+
+button.cfg-trim:not(.s-btn):not(.s-var):not(.s-sw), button.cfg-color:not(.s-btn):not(.s-var):not(.s-sw), button.cfg-wheel:not(.s-btn):not(.s-var):not(.s-sw) {
+  display: grid; align-content: start; gap: 6px; min-width: 0; padding: 16px;
+  border: 1px solid var(--cfg-hair); border-radius: 16px; background: var(--card, #fff);
+  color: var(--ink, #14151a); font: inherit; text-align: left; cursor: pointer;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease, background .18s ease;
+}
+.cfg-trim:hover:not(:disabled), .cfg-color:hover:not(:disabled), .cfg-wheel:hover:not(:disabled) {
+  transform: translateY(-2px); border-color: color-mix(in srgb, var(--cfg-accent) 35%, transparent);
+}
+button.cfg-trim:not(.s-btn):not(.s-var):not(.s-sw).is-active, button.cfg-color:not(.s-btn):not(.s-var):not(.s-sw).is-active, button.cfg-wheel:not(.s-btn):not(.s-var):not(.s-sw).is-active {
+  border-color: var(--cfg-accent); background: var(--cfg-soft);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cfg-accent) 16%, transparent);
+}
+.cfg-trim:focus-visible, .cfg-color:focus-visible, .cfg-wheel:focus-visible { outline: 2px solid var(--cfg-accent); outline-offset: 2px; }
+button.cfg-color:not(.s-btn):not(.s-var):not(.s-sw):disabled, button.cfg-wheel:not(.s-btn):not(.s-var):not(.s-sw):disabled { cursor: not-allowed; opacity: .45; background: var(--bg2, #f3f3f5); }
+.cfg-trim small, .cfg-color small, .cfg-wheel small { color: var(--mute, #666971); font-size: 11px; line-height: 1.5; }
+
+.cfg-trim-name { font-size: 17px; font-weight: 800; letter-spacing: -.01em; }
+.cfg-trim strong { margin-top: 6px; font-family: var(--ct-mono, monospace); font-size: 16px; font-variant-numeric: tabular-nums; }
+.cfg-trim-specs { color: var(--ink2, #43454c); font-size: 11px; }
+
+.cfg-color { grid-template-columns: 28px minmax(0, 1fr); align-items: center; column-gap: 10px; padding: 12px 14px; }
+.cfg-color i { grid-row: span 2; width: 28px; height: 28px; border-radius: 50%; background: var(--swatch); box-shadow: inset 0 0 0 1px #0002, 0 2px 6px -2px #0004; }
+.cfg-color span { font-size: 13px; font-weight: 700; }
+
+.cfg-wheel b { font-family: var(--ct-mono, monospace); font-size: 28px; line-height: 1; letter-spacing: -.04em; }
+.cfg-wheel b small { font-size: 16px; color: inherit; }
+.cfg-wheel span { font-size: 12px; font-weight: 700; }
+
+/* Compare table */
+.cfg-compare-wrap { overflow-x: auto; border: 1px solid var(--cfg-hair); border-radius: 16px; }
+.cfg-compare { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 12px; }
+.cfg-compare th, .cfg-compare td { padding: 11px 14px; border-bottom: 1px solid var(--cfg-hair); text-align: left; vertical-align: top; }
+.cfg-compare tbody tr:last-child th, .cfg-compare tbody tr:last-child td { border-bottom: 0; }
+.cfg-compare tbody th { width: 22%; color: var(--mute, #666971); font-weight: 600; }
+.cfg-compare thead th button:not(.s-btn):not(.s-var):not(.s-sw) { padding: 0; border: 0; background: none; color: inherit; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
+.cfg-compare .is-active { background: var(--cfg-soft); }
+.cfg-compare thead th.is-active { box-shadow: inset 0 3px 0 var(--cfg-accent); }
+.cfg-compare ul { display: grid; gap: 4px; margin: 0; padding-left: 16px; }
+
+/* Summary card */
+.cfg-summary .cfg-lines { display: grid; gap: 8px; margin: 0; padding: 14px 0; border-top: 1px solid var(--cfg-hair); border-bottom: 1px solid var(--cfg-hair); transition: opacity .15s; }
+.cfg-summary .cfg-lines.is-loading { opacity: .55; }
+.cfg-summary .cfg-lines div { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; }
+.cfg-summary .cfg-lines dt { color: var(--ink2, #43454c); }
+.cfg-summary .cfg-lines dd { margin: 0; font-family: var(--ct-mono, monospace); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cfg-total { display: grid; gap: 2px; }
+.cfg-total span, .cfg-eta span { color: var(--mute, #666971); font-size: 11px; font-weight: 700; }
+.cfg-total strong { font-family: var(--ct-mono, monospace); font-size: 30px; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.cfg-total small, .cfg-eta small { color: var(--mute, #666971); font-size: 10.5px; line-height: 1.6; }
+.cfg-eta { display: grid; gap: 3px; padding: 12px 14px; border-radius: 12px; background: var(--bg2, #f3f3f5); }
+.cfg-eta strong { font-size: 15px; }
+.cfg-quote-error { color: var(--bad, #b3121f); font-size: 11px; }
+.cfg-finance { border-top: 1px solid var(--cfg-hair); padding-top: 12px; }
+.cfg-finance summary { cursor: pointer; font-size: 12px; font-weight: 800; }
+.cfg-finance[open] summary { margin-bottom: 12px; }
+
+@media (max-width: 720px) {
+  .cfg-trims { grid-template-columns: minmax(0, 1fr); }
+  .cfg-step > header .catalog-results-count { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cfg-trim, .cfg-color, .cfg-wheel { transition: none; }
+  .cfg-trim:hover:not(:disabled), .cfg-color:hover:not(:disabled), .cfg-wheel:hover:not(:disabled) { transform: none; }
+}

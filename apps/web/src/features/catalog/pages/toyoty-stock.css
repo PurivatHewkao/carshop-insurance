@@ -1,0 +1,88 @@
+/* สต็อกรถ TOYOTY (ToyotyStockPage.jsx). Builds on the admin / stock styles in catalog.css.
+   Buttons use :not(.s-btn)... like catalog.css to win over the global button reset in showroom.css. */
+.tys-page { display: grid; gap: 18px; }
+.tys-page .catalog-admin-panel-head { flex-wrap: wrap; }
+.tys-muted { color: var(--mute, #777); font-size: 11px; }
+.tys-table-wrap { overflow-x: auto; }
+
+/* Model × trim matrix */
+.tys-matrix { width: 100%; min-width: 760px; border-collapse: separate; border-spacing: 0 8px; font-size: 12px; }
+.tys-matrix thead th { padding: 0 10px 4px; color: var(--mute, #777); font-size: 11px; font-weight: 700; text-align: left; }
+.tys-matrix tbody th, .tys-matrix tbody td { padding: 0 6px; vertical-align: middle; text-align: left; font-weight: 400; }
+.tys-matrix tbody th { width: 24%; }
+button.tys-cell:not(.s-btn):not(.s-var):not(.s-sw) {
+  display: grid; gap: 2px; width: 100%; min-height: 96px; padding: 12px 14px; border: 1px solid var(--line, #e1e1e5);
+  border-radius: 12px; background: var(--card, #fff); color: var(--ink, #14151a); font: inherit; text-align: left; cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+}
+.tys-cell:hover { border-color: var(--line2, #cbccd2); }
+button.tys-cell.is-active:not(.s-btn):not(.s-var):not(.s-sw) { border-color: var(--red, #eb0a1e); background: var(--red-soft, #fff1f3); box-shadow: 0 0 0 3px color-mix(in srgb, var(--red, #eb0a1e) 14%, transparent); }
+.tys-cell:focus-visible { outline: 2px solid var(--edit, #2563eb); outline-offset: 2px; }
+.tys-cell b, .tys-total b { font-size: 24px; line-height: 1.1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.tys-cell span { color: var(--ink2, #43454c); font-size: 10px; font-weight: 700; }
+.tys-cell small, .tys-total small { color: var(--mute, #777); font-size: 10px; line-height: 1.5; }
+.tys-cell em { color: var(--mute, #777); font-size: 10px; font-style: normal; font-variant-numeric: tabular-nums; }
+.tys-total { display: grid; gap: 2px; padding: 0 8px; }
+.tys-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 6px; color: var(--mute, #777); font-size: 11px; }
+.tys-legend b { color: var(--ink2, #43454c); }
+
+/* Production queue */
+.tys-queue { display: grid; gap: 12px; }
+.tys-queue-row { display: grid; grid-template-columns: minmax(170px, 220px) minmax(0, 1fr); align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line, #e1e1e5); }
+.tys-queue-row:last-child { border-bottom: 0; }
+.tys-queue-name { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.tys-queue-name strong { flex: 1 0 100%; font-size: 14px; }
+.tys-queue-name label { display: inline-flex; align-items: center; gap: 6px; color: var(--mute, #777); font-size: 10px; }
+.tys-queue-name input { width: 64px; min-height: 32px; padding: 4px 8px; border: 1px solid var(--line2, #ccc); border-radius: 8px; background: var(--bg, #fff); color: var(--ink, #14151a); font: inherit; font-size: 12px; }
+.tys-weeks { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.tys-weeks li { display: grid; gap: 3px; min-width: 0; }
+.tys-weeks b { font-size: 12px; font-variant-numeric: tabular-nums; }
+.tys-weeks small { color: var(--mute, #777); font-size: 10px; }
+.tys-bar { position: relative; height: 8px; overflow: hidden; border-radius: 999px; background: var(--bg2, #f3f3f5); }
+.tys-bar i { position: absolute; inset: 0 auto 0 0; width: var(--fill); border-radius: inherit; background: var(--good, #0f7557); }
+.tys-weeks li.is-full .tys-bar i { background: var(--red, #eb0a1e); }
+.tys-weeks li.is-full b { color: var(--bad, #b3121f); }
+
+/* Ordered cars */
+.tys-units td { vertical-align: middle; white-space: normal; }
+.tys-units td:nth-child(2), .tys-units td:nth-child(3) { white-space: nowrap; }
+.tys-units tr.is-cancelled td { opacity: .6; }
+.tys-unit-car { display: flex; align-items: center; gap: 10px; min-width: 190px; }
+.tys-unit-car div { display: grid; gap: 2px; }
+.tys-unit-car small { color: var(--mute, #777); font-size: 10px; }
+.tys-swatch { flex: 0 0 20px; width: 20px; height: 20px; border-radius: 50%; background: var(--swatch); box-shadow: inset 0 0 0 1px #0002; }
+.tys-vin { font-size: 11px; letter-spacing: .04em; white-space: nowrap; }
+.tys-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tys-status { display: grid; gap: 6px; }
+.tys-chip { width: fit-content; padding: 4px 9px; border-radius: 999px; background: var(--bg2, #f3f3f5); color: var(--ink2, #43454c); font-size: 10px; font-weight: 800; white-space: nowrap; }
+.tys-chip.step-scheduled, .tys-chip.step-in_production, .tys-chip.step-in_transit { background: var(--info-bg, #e3edfb); color: var(--info, #1d5bbf); }
+.tys-chip.step-ready { background: var(--good-bg, #e2f3eb); color: var(--good, #0f7557); }
+.tys-chip.step-delivered { background: var(--ink, #14151a); color: var(--bg, #fff); }
+.tys-chip.step-cancelled { background: var(--bad-bg, #fce6e8); color: var(--bad, #b3121f); }
+.tys-steps { display: inline-flex; gap: 3px; }
+.tys-steps i { width: 14px; height: 4px; border-radius: 2px; background: var(--line, #e1e1e5); }
+.tys-steps i.is-done { background: var(--good, #0f7557); }
+.tys-steps.is-cancelled i.is-done { background: var(--bad, #b3121f); }
+.tys-eta { display: grid; gap: 2px; min-width: 140px; font-size: 11px; }
+.tys-eta small { color: var(--mute, #777); font-size: 10px; }
+.tys-late { width: fit-content; padding: 2px 7px; border-radius: 6px; background: var(--warn-bg, #fbefd6); color: var(--warn, #8a4f00); font-size: 10px; }
+.tys-order { padding: 3px 8px; border-radius: 6px; background: var(--bg2, #f3f3f5); font-size: 10px; font-weight: 700; }
+.tys-actions { display: grid; justify-items: stretch; gap: 6px; width: 190px; }
+.tys-actions > span.tys-muted { justify-self: start; }
+button.tys-btn:not(.s-btn):not(.s-var):not(.s-sw) {
+  min-height: 32px; padding: 0 12px; border: 1px solid var(--line2, #ccc); border-radius: 8px; background: var(--card, #fff);
+  color: var(--ink, #14151a); font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+button.tys-btn.primary:not(.s-btn):not(.s-var):not(.s-sw) { border-color: var(--ink, #14151a); background: var(--ink, #14151a); color: var(--bg, #fff); }
+button.tys-btn.danger:not(.s-btn):not(.s-var):not(.s-sw) { border-color: var(--bad, #b3121f); background: var(--bad, #b3121f); color: #fff; }
+.tys-btn:disabled { cursor: not-allowed; opacity: .5; }
+.tys-btn:focus-visible, .tys-week select:focus-visible, .tys-vin-input:focus-visible { outline: 2px solid var(--edit, #2563eb); outline-offset: 1px; }
+.tys-vin-input { width: 100%; min-height: 32px; padding: 0 8px; border: 1px solid var(--line2, #ccc); border-radius: 8px; background: var(--bg, #fff); color: var(--ink, #14151a); font: inherit; font-size: 11px; letter-spacing: .03em; }
+.tys-vin-input.is-invalid { border-color: var(--bad, #b3121f); }
+.tys-week { display: grid; }
+.tys-week select { width: 100%; min-height: 32px; padding: 0 8px; border: 1px solid var(--line2, #ccc); border-radius: 8px; background: var(--bg, #fff); color: var(--ink, #14151a); font: inherit; font-size: 11px; }
+
+@media (max-width: 960px) {
+  .tys-queue-row { grid-template-columns: minmax(0, 1fr); }
+  .tys-page .catalog-stock-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

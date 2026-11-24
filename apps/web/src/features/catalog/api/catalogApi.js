@@ -102,6 +102,144 @@ export async function removeCarRecord(id) {
   await catalogClient.delete('cars/' + encodeURIComponent(id));
 }
 
+// ---- TOYOTY configurator (price is always worked out by the catalog service) ----
+
+/** { model, trims: [{ code, name, price, colors, wheels, estimatedReady, ... }] } */
+export async function fetchConfigurator(ref, signal) {
+  const { data } = await catalogClient.get(
+    'cars/' + encodeURIComponent(ref) + '/configurator',
+    { signal },
+  );
+  return { ...data.data, model: normalizeCar(data.data.model) };
+}
+
+/** selection: { modelSlug, trim, colorId, wheelId } → { lines, total, estimatedReady, label, ... } */
+export async function fetchQuote(selection, signal) {
+  const { data } = await catalogClient.post('cars/quote', selection, {
+    signal,
+  });
+  return data.data;
+}
+
+// ---- Configurator admin: trims, colours, wheels (admin / stock) ----------------
+
+/** Every trim of a model incl. ones off sale, with the colours / wheels each may use. */
+export async function fetchTrims(modelRef, signal) {
+  const { data } = await catalogClient.get(
+    'cars/' + encodeURIComponent(modelRef) + '/trims',
+    { signal },
+  );
+  return data.data;
+}
+
+export async function createTrimRecord(modelRef, body) {
+  const { data } = await catalogClient.post(
+    'cars/' + encodeURIComponent(modelRef) + '/trims',
+    body,
+  );
+  return data.data;
+}
+
+export async function updateTrimRecord(id, body) {
+  const { data } = await catalogClient.patch(
+    'trims/' + encodeURIComponent(id),
+    body,
+  );
+  return data.data;
+}
+
+/** colors: [{ colorId, imageUrl? }] — replaces the colours of the trim */
+export async function saveTrimColors(id, colors) {
+  const { data } = await catalogClient.put(
+    'trims/' + encodeURIComponent(id) + '/colors',
+    { colors },
+  );
+  return data.data;
+}
+
+/** wheels: [{ wheelId, priceExtra }] — replaces the wheels; defaultWheelId must be one of them */
+export async function saveTrimWheels(id, wheels, defaultWheelId) {
+  const { data } = await catalogClient.put(
+    'trims/' + encodeURIComponent(id) + '/wheels',
+    defaultWheelId ? { wheels, defaultWheelId } : { wheels },
+  );
+  return data.data;
+}
+
+/** { colors, wheels } — includeInactive for the admin page */
+export async function fetchOptions(signal, { includeInactive = true } = {}) {
+  const { data } = await catalogClient.get('options', {
+    params: includeInactive ? { includeInactive: true } : {},
+    signal,
+  });
+  return data.data;
+}
+
+export async function createColorOption(body) {
+  const { data } = await catalogClient.post('options/colors', body);
+  return data.data;
+}
+
+export async function updateColorOption(id, body) {
+  const { data } = await catalogClient.patch(
+    'options/colors/' + encodeURIComponent(id),
+    body,
+  );
+  return data.data;
+}
+
+export async function createWheelOption(body) {
+  const { data } = await catalogClient.post('options/wheels', body);
+  return data.data;
+}
+
+export async function updateWheelOption(id, body) {
+  const { data } = await catalogClient.patch(
+    'options/wheels/' + encodeURIComponent(id),
+    body,
+  );
+  return data.data;
+}
+
+// ---- Stock of made-to-order cars (staff) -------------------------------------
+
+/** Model × trim counts + production queue of the models on sale. */
+export async function fetchInventory(signal) {
+  const { data } = await catalogClient.get('cars/inventory', { signal });
+  return data.data;
+}
+
+/** params: { model, trim, productionStatus, state, q, page, pageSize } */
+export async function fetchUnits(params, signal) {
+  const { data } = await catalogClient.get('cars/units', { params, signal });
+  return data;
+}
+
+/** body: { status: next step } or { buildWeek: 'YYYY-MM-DD' } (+ vin, date) */
+export async function saveUnitProduction(id, body) {
+  const { data } = await catalogClient.patch(
+    'cars/' + encodeURIComponent(id) + '/production',
+    body,
+  );
+  return data.data;
+}
+
+export async function releaseUnit(id) {
+  const { data } = await catalogClient.post(
+    'cars/units/' + encodeURIComponent(id) + '/release',
+  );
+  return data.data;
+}
+
+/** body: { capacity, weekStart? } — weekStart left out = default for every week */
+export async function saveQueueCapacity(modelRef, body) {
+  const { data } = await catalogClient.put(
+    'cars/production-slots/' + encodeURIComponent(modelRef),
+    body,
+  );
+  return data.data;
+}
+
 // ---- Covers (which car is on the home / catalog cover) ---------------------
 
 /** { home: { carId, imageUrl }, catalog: { carId, imageUrl } } — null means automatic / the car's own photo. */
@@ -275,4 +413,46 @@ export function useCar(ref) {
   const load = useCallback((signal) => fetchCar(ref, signal), [ref]);
   const { data, loading, error, notFound } = useLoader(load, NO_CAR, ref);
   return { car: data, loading, error, notFound };
+}
+
+const NO_CONFIGURATOR = null;
+
+/** Trims, colours and wheels of one configurable model. */
+export function useConfigurator(ref) {
+  const load = useCallback((signal) => fetchConfigurator(ref, signal), [ref]);
+  const { data, loading, error } = useLoader(load, NO_CONFIGURATOR, ref);
+  return { configurator: data, loading, error };
+}
+
+const NO_QUOTE = { key: '', quote: null, error: '' };
+
+/** Asks the catalog for the price of a selection, 200 ms after it stops changing. */
+export function useQuote(selection) {
+  const key = selection ? JSON.stringify(selection) : '';
+  const [state, setState] = useState(NO_QUOTE);
+  useEffect(() => {
+    if (!key) return undefined;
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      fetchQuote(JSON.parse(key), controller.signal).then(
+        (quote) => setState({ key, quote, error: '' }),
+        (error) => {
+          if (!controller.signal.aborted)
+            setState({ key, quote: null, error: apiErrorMessage(error) });
+        },
+      );
+    }, 200);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [key]);
+  const current = state.key === key;
+  return {
+    quote: current ? state.quote : null,
+    // Keep showing the last price while the next one loads.
+    lastQuote: state.quote,
+    error: current ? state.error : '',
+    loading: Boolean(key) && !current,
+  };
 }

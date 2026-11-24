@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Action } from '../../../components/common/Showroom.jsx';
 import CarPhoto from '../components/CarPhoto.jsx';
+import CarConfigurator from '../components/CarConfigurator.jsx';
 import {
   CATEGORY_LABELS,
   formatBaht,
@@ -30,8 +31,13 @@ export default function CarDetailPage() {
     return <div className="page-content"><div className="catalog-empty-state"><h1>ไม่พบรุ่นรถที่เลือก</h1><p>รุ่นรถอาจถูกนำออกจากรายการหรือไม่มีอยู่ในข้อมูลตัวอย่าง</p><Link className="s-btn pri" to="/catalog">กลับไปดูรถทั้งหมด</Link></div></div>;
   }
 
-  const status = stockStatus(car.stock);
-  const outOfStock = Number(car.stock) <= 0;
+  // TOYOTY models with trims: trim → colour → wheel configurator, made to order.
+  if (car.configurable) return <CarConfigurator car={car} promotions={promotions} />;
+
+  // Old models (hidden from the shop) keep their original page so old links still open.
+  const discontinued = car.active === false;
+  const status = discontinued ? { label: 'เลิกจำหน่าย', tone: 'out' } : stockStatus(car.stock);
+  const outOfStock = discontinued || Number(car.stock) <= 0;
   const colorOptions = getCarColorOptions(car);
   const activeColor = colorOptions.find((option) => option.name === selectedColor)
     || colorOptions.find((option) => option.value === car.color)
@@ -53,6 +59,7 @@ export default function CarDetailPage() {
   return (
     <div className="page-content catalog-page catalog-detail-page">
       <p className="catalog-breadcrumb"><Link to="/catalog">รถทั้งหมด</Link><span>/</span>{car.brand}<span>/</span><strong>{car.name}</strong></p>
+      {discontinued && <div className="catalog-admin-notice" role="status"><span>!</span><p>รุ่นนี้เลิกจำหน่ายแล้ว หน้านี้เก็บไว้ให้ดูข้อมูลเดิม ดูรถรุ่นใหม่ของ TOYOTY ได้ที่ <Link to="/catalog">รถทั้งหมด</Link></p></div>}
 
       <section className="catalog-model-hero">
         <CarPhoto key={`${car.id}-${photoIndex}`} car={selectedImageCar} className="catalog-model-photo" imageOnly />
@@ -101,7 +108,7 @@ export default function CarDetailPage() {
           <div className="catalog-color-options"><span>เลือกสีตัวถัง</span><div>{colorOptions.map((color) => <button key={color.name} type="button" title={color.name} aria-label={`เลือกสี${color.name}`} aria-pressed={activeColor?.name === color.name} className={activeColor?.name === color.name ? 'is-active' : ''} style={{ '--swatch': color.value || color.hex || color.color }} onClick={() => setSelectedColor(color.name)} />)}</div><strong>{activeColor?.name || 'สีมาตรฐาน'}</strong></div>
           {outOfStock ? (
             <div className="catalog-detail-actions">
-              <button type="button" className="s-btn catalog-soldout-btn" disabled>หมดสต็อก ไม่สามารถสั่งจองได้</button>
+              <button type="button" className="s-btn catalog-soldout-btn" disabled>{discontinued ? 'เลิกจำหน่ายแล้ว' : 'หมดสต็อก ไม่สามารถสั่งจองได้'}</button>
               <Link className="catalog-soldout-link" to="/catalog">ดูรุ่นอื่นที่พร้อมจำหน่าย</Link>
             </div>
           ) : (

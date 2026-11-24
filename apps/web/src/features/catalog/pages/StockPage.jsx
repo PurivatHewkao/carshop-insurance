@@ -8,7 +8,7 @@ import {
   fetchStockSummary,
   saveCarStock,
 } from '../api/catalogApi.js';
-import { CATEGORY_LABELS, formatBaht, stockStatus } from '../data/catalogData.js';
+import { CAR_TYPES, CATEGORY_LABELS, formatBaht, stockStatus } from '../data/catalogData.js';
 import './catalog.css';
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20];
@@ -103,7 +103,7 @@ export default function StockPage() {
     <div className="page-content catalog-admin-page catalog-stock-page">
       <header className="catalog-admin-heading">
         <div><p className="catalog-eyebrow">INVENTORY CONTROL</p><h1>สต็อกรถยนต์</h1><p>ตรวจจำนวนรถ ปรับยอดสต็อก และดูรุ่นที่ใกล้หมดสต็อก</p></div>
-        <div className="catalog-admin-nav"><Link to="/admin/cars">จัดการรถ</Link><Link className="is-active" to="/admin/stock">สต็อกสินค้า</Link><Link to="/admin/promotions">โปรโมชัน</Link><Link to="/catalog">ดูหน้าร้าน ↗</Link></div>
+        <div className="catalog-admin-nav"><Link to="/admin/cars">จัดการรถ</Link><Link to="/admin/cars/options">รุ่นย่อย / สี / ล้อ</Link><Link className="is-active" to="/admin/stock">สต็อกสินค้า</Link><Link to="/admin/stock/toyoty">สต็อก TOYOTY</Link><Link to="/admin/promotions">โปรโมชัน</Link><Link to="/catalog">ดูหน้าร้าน ↗</Link></div>
       </header>
       {notice && <div className="catalog-form-feedback" role="status">{notice}<button type="button" onClick={() => setNotice('')} aria-label="ปิดข้อความ">×</button></div>}
       {result.error && <div className="catalog-form-feedback" role="alert">{result.error}<button type="button" onClick={reload} aria-label="ลองโหลดใหม่">↻</button></div>}
@@ -119,7 +119,7 @@ export default function StockPage() {
         <div className="catalog-admin-panel-head"><div><p className="catalog-eyebrow">INVENTORY OVERVIEW</p><h2>รายการจำนวนรถ</h2></div><span className="catalog-number-tag">{result.total} รุ่นที่แสดง</span></div>
         <div className="catalog-stock-filters">
           <label className="catalog-search-field"><span aria-hidden="true">⌕</span><span className="sr-only">ค้นหารุ่นรถ</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ค้นหายี่ห้อหรือรุ่นรถ..." /></label>
-          <label><span className="sr-only">ประเภท</span><select value={category} onChange={(event) => { setCategory(event.target.value); setPage(1); }}><option value="">ทุกประเภทรถ</option>{Object.entries(CATEGORY_LABELS).map(([type, label]) => <option key={type} value={type}>{label}</option>)}</select></label>
+          <label><span className="sr-only">ประเภท</span><select value={category} onChange={(event) => { setCategory(event.target.value); setPage(1); }}><option value="">ทุกประเภทรถ</option>{CAR_TYPES.map((type) => <option key={type} value={type}>{CATEGORY_LABELS[type]}</option>)}</select></label>
           <label><span className="sr-only">สถานะสต็อก</span><select value={availability} onChange={(event) => { setAvailability(event.target.value); setPage(1); }}><option value="all">ทุกสถานะ</option><option value="available">พร้อมจำหน่าย (&gt; 2)</option><option value="low">เหลือน้อย (1–2)</option><option value="out">หมดสต็อก</option></select></label>
         </div>
         <div className="catalog-stock-table-wrap"><table className="catalog-stock-table"><thead><tr><th>รถยนต์</th><th>ราคาเริ่มต้น</th><th>สถานะ</th><th>จำนวนคงเหลือ</th><th>ปรับยอด</th></tr></thead><tbody>
