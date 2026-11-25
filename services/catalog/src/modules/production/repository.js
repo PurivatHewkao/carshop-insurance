@@ -254,7 +254,8 @@ export async function markMadeToOrder(connection, carId) {
 export async function scheduleCar(carId, requestedTrim) {
   return withTransaction(async (db) => {
     const car = await lockCar(db, carId);
-    if (car.production_status !== 'WAITING') {
+    // QUOTED = a car the configurator (07, กร) created for an order: also waiting for a week.
+    if (!['WAITING', 'QUOTED'].includes(car.production_status)) {
       throw httpError(
         409,
         'NOT_WAITING',

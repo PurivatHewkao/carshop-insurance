@@ -22,6 +22,25 @@ export async function findOrder(connection, orderId) {
   return rows[0] || null;
 }
 
+/**
+ * Down payment + installment terms the seller put on the order (Sales
+ * database/04_order_configuration.sql). Null when the columns are not there yet,
+ * which makes the order a cash order.
+ */
+export async function findOrderPlan(connection, orderId) {
+  try {
+    const [rows] = await connection.query(
+      `SELECT down_payment, down_payment_percent, interest_rate, installment_count, installment_years
+       FROM orders WHERE id = ?`,
+      [orderId],
+    );
+    return rows[0] || null;
+  } catch (error) {
+    if (error.code === 'ER_BAD_FIELD_ERROR') return null;
+    throw error;
+  }
+}
+
 /** confirmed -> paid when confirmed payments cover total_amount. */
 export async function markOrderPaid(connection, orderId) {
   await connection.query(
@@ -173,7 +192,7 @@ export async function listOrderOverview(connection, { scope, status, paging }) {
        o.down_payment, o.down_payment_percent, o.interest_rate, o.installment_count, o.installment_years, ${production}
        o.customer_id, TRIM(CONCAT(c.first_name, ' ', c.last_name)) AS customer_name,
        o.seller_id, TRIM(CONCAT(e.first_name, ' ', e.last_name)) AS seller_name,
-       m.brand, m.model_name, car.id AS car_id, car.color, car.manufacture_year,
+       m.brand, m.model_name, car.id AS car_id, car.color, car.manufacture_year, car.status AS car_status,
        (SELECT COALESCE(SUM(p.amount), 0) FROM payments p
          WHERE p.order_id = o.id AND p.status IN ('SUCCESS','REFUNDED')) AS paid,
        (SELECT COALESCE(SUM(p.amount), 0) FROM payments p

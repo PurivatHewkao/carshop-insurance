@@ -182,6 +182,53 @@ after(async () => {
   await admin?.end();
 });
 
+describe('migration', () => {
+  test('09 after the configurator columns of 07: one ENUM with every status + production_note', async () => {
+    const db = TEST_DB.replace(/_test$/, '_compat_test');
+    await admin.query('DROP DATABASE IF EXISTS `' + db + '`');
+    await admin.query('CREATE DATABASE `' + db + '`');
+    await admin.query('USE `' + db + '`');
+    try {
+      // What 07_toyoty_configurator.sql leaves on cars (only the columns 09 cares about).
+      await admin.query(
+        `CREATE TABLE car_models (id CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL PRIMARY KEY);
+         CREATE TABLE cars (
+           id CHAR(36) NOT NULL PRIMARY KEY,
+           car_model_id CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+           production_status ENUM('QUOTED','SCHEDULED','IN_PRODUCTION','IN_TRANSIT','READY','DELIVERED') NULL,
+           build_week DATE NULL, eta_from DATE NULL, eta_to DATE NULL,
+           first_eta_to DATE NULL, ready_date DATE NULL);
+         INSERT INTO car_models VALUES ('m1');
+         INSERT INTO cars (id, car_model_id, production_status) VALUES ('c1', 'm1', 'QUOTED');`,
+      );
+      const migration = await readFile(MIGRATION, 'utf8');
+      await admin.query(migration);
+      await admin.query(migration);
+      const [columns] = await admin.query(
+        `SELECT COLUMN_NAME AS name, COLUMN_TYPE AS type FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'cars'
+           AND COLUMN_NAME IN ('production_status', 'production_note') ORDER BY COLUMN_NAME`,
+        [db],
+      );
+      assert.deepEqual(
+        columns.map((c) => c.name),
+        ['production_note', 'production_status'],
+      );
+      assert.equal(
+        columns[1].type,
+        "enum('QUOTED','WAITING','SCHEDULED','IN_PRODUCTION','IN_TRANSIT','READY','DELIVERED','CANCELLED')",
+      );
+      const [[car]] = await admin.query(
+        "SELECT production_status FROM cars WHERE id = 'c1'",
+      );
+      assert.equal(car.production_status, 'QUOTED'); // existing rows kept
+    } finally {
+      await admin.query('DROP DATABASE IF EXISTS `' + db + '`');
+      await admin.query('USE `' + TEST_DB + '`');
+    }
+  });
+});
+
 describe('estimate', () => {
   test('GET /eta: earliest free week after the parts lead time, public', async () => {
     const { addDays, mondayOnOrAfter, todayUtc, PARTS_DAYS } = helpers;

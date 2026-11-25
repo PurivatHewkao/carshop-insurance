@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS production_capacity (
 SET @ddl = (
   SELECT IF(COUNT(*) = 0,
     "ALTER TABLE cars
-       ADD COLUMN production_status ENUM('WAITING','SCHEDULED','IN_PRODUCTION','IN_TRANSIT','READY','DELIVERED','CANCELLED') NULL,
+       ADD COLUMN production_status ENUM('QUOTED','WAITING','SCHEDULED','IN_PRODUCTION','IN_TRANSIT','READY','DELIVERED','CANCELLED') NULL,
        ADD COLUMN build_week DATE NULL,
        ADD COLUMN eta_from DATE NULL,
        ADD COLUMN eta_to DATE NULL,
@@ -35,6 +35,42 @@ SET @ddl = (
     'SELECT 1')
   FROM information_schema.COLUMNS
   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cars' AND COLUMN_NAME = 'production_status'
+);
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Catalog 07_toyoty_configurator.sql (กร) also adds cars.production_status, with
+-- QUOTED and without WAITING/CANCELLED, and has no production_note. Whichever file
+-- runs first, end with the same columns: one ENUM that has every value both use.
+SET @ddl = (
+  SELECT IF(COUNT(*) = 1 AND MAX(COLUMN_TYPE) <> "enum('QUOTED','WAITING','SCHEDULED','IN_PRODUCTION','IN_TRANSIT','READY','DELIVERED','CANCELLED')",
+    "ALTER TABLE cars MODIFY COLUMN production_status ENUM('QUOTED','WAITING','SCHEDULED','IN_PRODUCTION','IN_TRANSIT','READY','DELIVERED','CANCELLED') NULL",
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cars' AND COLUMN_NAME = 'production_status'
+);
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(*) = 0,
+    'ALTER TABLE cars ADD COLUMN production_note VARCHAR(255) NULL',
+    'SELECT 1')
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cars' AND COLUMN_NAME = 'production_note'
+);
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @ddl = (
+  SELECT IF(COUNT(*) = 0,
+    'ALTER TABLE cars ADD INDEX idx_cars_production_week (car_model_id, build_week)',
+    'SELECT 1')
+  FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cars' AND INDEX_NAME = 'idx_cars_production_week'
 );
 PREPARE stmt FROM @ddl;
 EXECUTE stmt;

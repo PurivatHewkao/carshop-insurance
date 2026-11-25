@@ -3,6 +3,7 @@ import { query } from '../../db/transaction.js';
 import { listOrderOverview, productionInfo } from '../../clients/orders.js';
 import { orderScope } from '../../middleware/auth.js';
 import { openForPayment } from '../payments/balance.js';
+import { buildFlow, flowToApi, paymentsByOrder } from '../payments/flow.js';
 import { formatMoney, toSatang } from '../../utils/money.js';
 import { readEnum, readPaging } from '../../utils/validate.js';
 
@@ -18,8 +19,9 @@ const ORDER_STATUSES = [
 ];
 const router = Router();
 
-export function overviewToApi(row) {
+export function overviewToApi(row, payments = []) {
   const total = toSatang(row.total_amount);
+  const production = productionInfo(row);
   const paid = toSatang(row.paid);
   const pending = toSatang(row.pending);
   const refunded = toSatang(row.refunded);
@@ -54,7 +56,18 @@ export function overviewToApi(row) {
     installmentYears:
       row.installment_years == null ? null : Number(row.installment_years),
     // Made-to-order cars only (null = stock car): status + delivery window.
-    production: productionInfo(row),
+    production,
+    // Where the order is in the purchase steps (see payments/flow.js).
+    flow: flowToApi(
+      buildFlow({
+        status: row.status,
+        total_amount: row.total_amount,
+        plan: row,
+        production,
+        carStatus: row.car_status,
+        payments,
+      }),
+    ),
     totalAmount: formatMoney(total),
     paidAmount: formatMoney(paid),
     pendingAmount: formatMoney(pending),
@@ -77,8 +90,12 @@ router.get('/order-balances', async (req, res) => {
     { query },
     { scope: orderScope(req.actor, 'o.id'), status, paging },
   );
+  const payments = await paymentsByOrder(
+    { query },
+    rows.map((row) => row.id),
+  );
   res.set('Cache-Control', 'no-store').json({
-    data: rows.map(overviewToApi),
+    data: rows.map((row) => overviewToApi(row, payments.get(row.id))),
     meta: { page: paging.page, limit: paging.limit, total },
   });
 });

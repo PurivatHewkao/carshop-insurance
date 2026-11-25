@@ -1,4 +1,8 @@
 import { expect, test } from '@playwright/test';
+import {
+  buildFlow,
+  flowToApi,
+} from '../../../services/payment/src/modules/payments/flow.js';
 
 const makeOrder = (overrides = {}) => ({
   orderId: '11111111-1111-4111-8111-111111111111',
@@ -49,7 +53,29 @@ async function mockApi(context, state, role = 'admin') {
       state.pages.push(page);
       const start = (page - 1) * 100;
       return respond({
-        data: state.orders.slice(start, start + 100),
+        data: state.orders.slice(start, start + 100).map((order) => ({
+          ...order,
+          flow: flowToApi(
+            buildFlow({
+              status: order.orderStatus,
+              total_amount: order.totalAmount,
+              plan: {
+                down_payment: order.downPayment,
+                installment_count: order.installmentCount,
+              },
+              production: order.production,
+              carStatus:
+                order.orderStatus === 'COMPLETED' ? 'SOLD' : 'RESERVED',
+              payments: state.flowPayments ?? [
+                {
+                  payment_type: 'BALANCE',
+                  status: 'SUCCESS',
+                  amount: order.paidAmount,
+                },
+              ],
+            }),
+          ),
+        })),
         meta: { page, limit: 100, total: state.orders.length },
       });
     }
@@ -193,4 +219,61 @@ test('customer cannot access the admin delivery workspace', async ({
     page.getByRole('heading', { name: 'ไม่มีสิทธิ์เข้าถึงหน้านี้' }),
   ).toBeVisible();
   expect(state.pages).toHaveLength(0);
+});
+
+test('finance purchase steps and fixed down payment remain available alongside delivery status', async ({
+  context,
+  page,
+}) => {
+  const state = {
+    orders: [
+      makeOrder({
+        orderStatus: 'CONFIRMED',
+        installmentCount: 60,
+        downPayment: '200000.00',
+        paidAmount: '20000.00',
+        outstandingAmount: '980000.00',
+      }),
+    ],
+    confirmations: [],
+    pages: [],
+    flowPayments: [
+      {
+        payment_type: 'BOOKING_DEPOSIT',
+        status: 'SUCCESS',
+        amount: '20000.00',
+      },
+    ],
+  };
+  await mockApi(context, state, 'customer');
+  await page.goto('/customer/transactions');
+  await expect(
+    page.getByRole('list', { name: 'ขั้นตอนการซื้อ' }).getByRole('listitem'),
+  ).toHaveCount(4);
+  await expect(
+    page.getByRole('button', { name: 'ดาวน์โหลดใบจอง', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText('รอชำระเงินครบก่อนส่งมอบ', { exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole('button', {
+      name: 'ไฟแนนซ์อนุมัติแล้ว — ชำระเงินดาวน์',
+      exact: true,
+    })
+    .click();
+  const dialog = page.getByRole('dialog');
+  await expect(
+    dialog.getByRole('heading', {
+      name: 'ชำระเงินดาวน์ ORD-11111111',
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(dialog.locator('.pay-fixed')).toContainText('180,000');
+  await expect(
+    dialog.getByRole('textbox', {
+      name: 'บริษัทไฟแนนซ์ที่อนุมัติสินเชื่อ *',
+      exact: true,
+    }),
+  ).toBeVisible();
 });

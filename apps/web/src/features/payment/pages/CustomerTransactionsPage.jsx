@@ -1,7 +1,12 @@
 import { useState } from 'react';
-import { createPayment, requestRefund } from '../api/paymentApi.js';
+import {
+  createPayment,
+  downloadBookingPdf,
+  requestRefund,
+} from '../api/paymentApi.js';
 import {
   Dialog,
+  FlowSteps,
   FormMessage,
   InvoiceDialog,
   Kpis,
@@ -17,10 +22,11 @@ import DeliveryStatus from '../components/DeliveryStatus.jsx';
 import { useAction, usePaymentData } from '../hooks/usePaymentData.js';
 import {
   activeInvoice,
-  canBook,
   canPay,
   carLabel,
-  invoiceStatus,
+  customerNextPayment,
+  flowWaitingText,
+  inProgress,
   netPaid,
   openRefund,
   orderOf,
@@ -35,7 +41,6 @@ import {
   paymentMethods,
   paymentTypes,
   satangInput,
-  thDate,
   thDateTime,
   toSatang,
 } from '../utils/format.js';
@@ -44,7 +49,7 @@ import {
 export default function CustomerTransactionsPage() {
   const { data, error, loading, reload } = usePaymentData({ refreshMs: 30000 });
   const [dialog, setDialog] = useState(null);
-  const [message, , setMessage] = useAction();
+  const [message, run, setMessage] = useAction();
 
   function done(text) {
     setDialog(null);
@@ -72,10 +77,8 @@ export default function CustomerTransactionsPage() {
     );
 
   const toPay = data.orders.filter(canPay);
-  const waiting = data.orders.filter((o) => o.orderStatus === 'PENDING');
-  // ออเดอร์รออนุมัติที่ยังไม่วางเงินจอง: วางเงินจองได้เลย (ไม่ต้องรอผู้จัดการ)
-  const bookable = waiting.filter(canBook);
-  const bills = [...bookable, ...toPay];
+  // ทุกออเดอร์ที่ยังไม่ได้รับรถ: รออนุมัติ → จอง → ยื่นไฟแนนซ์ → ดาวน์ → รับรถ
+  const bills = data.orders.filter(inProgress);
   const history = [
     ...data.payments.map((p) => ({
       kind: 'payment',
@@ -111,21 +114,21 @@ export default function CustomerTransactionsPage() {
 
       <section>
         <div className="s-sec-h">
-          <h2>ออเดอร์ที่ต้องชำระ</h2>
+          <h2>ออเดอร์ที่กำลังดำเนินการ</h2>
           <span className="cnt">{bills.length} รายการ</span>
         </div>
         {bills.length === 0 ? (
-          <p className="empty-state">
-            ไม่มียอดค้างชำระ
-            {waiting.length > 0 &&
-              ` · มี ${waiting.length} ออเดอร์รอผู้จัดการอนุมัติ (วางเงินจองแล้ว)`}
-          </p>
+          <p className="empty-state">ไม่มีออเดอร์ที่ต้องดำเนินการ</p>
         ) : (
           <div className="pay-bills">
             {bills.map((order) => {
               const invoice = activeInvoice(data, order.orderId);
-              const pending = toSatang(order.pendingAmount);
-              const booking = order.orderStatus === 'PENDING';
+              const flow = order.flow;
+              const next = customerNextPayment(order);
+              const due =
+                next === 'DOWN_PAYMENT'
+                  ? toSatang(flow.downPayment.dueAmount)
+                  : outstanding(order);
               return (
                 <article className="s-card pay-bill" key={order.orderId}>
                   <div className="top">
@@ -134,6 +137,8 @@ export default function CustomerTransactionsPage() {
                       <span className="pay-sub">
                         {order.orderNumber}
                         {invoice && ' · ' + invoice.invoiceNumber}
+                        {' · '}
+                        {flow.plan === 'FINANCE' ? 'ซื้อผ่อน' : 'ซื้อเงินสด'}
                       </span>
                       {order.car.configuration && (
                         <span className="pay-sub">
@@ -151,40 +156,60 @@ export default function CustomerTransactionsPage() {
                         </span>
                       )}
                     </div>
-                    {invoice ? (
-                      <StatusPill
-                        kind="invoice"
-                        status={invoiceStatus(invoice)}
-                      />
-                    ) : (
-                      <StatusPill kind="order" status={order.orderStatus} />
-                    )}
+                    <StatusPill kind="order" status={order.orderStatus} />
                   </div>
-                  <span className="amt">{baht(outstanding(order))}</span>
-                  <span className="small">
-                    {booking
-                      ? 'รอผู้จัดการอนุมัติ · วางเงินจองได้ก่อน (ไม่อนุมัติคืนเต็มจำนวน)'
-                      : invoice?.dueDate
-                        ? 'ครบกำหนด ' + thDate(invoice.dueDate)
-                        : 'ราคาสุทธิ ' + money(order.totalAmount)}
-                    {pending > 0 && ` · รอตรวจสอบ ${baht(pending)}`}
-                  </span>
+                  <FlowSteps flow={flow} />
+                  {next && (
+                    <>
+                      <span className="amt">{baht(due)}</span>
+                      <span className="small">
+                        {next === 'BOOKING_DEPOSIT'
+                          ? `ขั้นที่ 1: ชำระเงินจอง ไม่เกิน ${baht(DEPOSIT_LIMIT_SATANG)} (หักเป็นส่วนหนึ่งของเงินดาวน์)`
+                          : next === 'DOWN_PAYMENT'
+                            ? `เงินดาวน์ ${money(flow.downPayment.agreedAmount)} หักเงินจอง ${money(flow.downPayment.depositDeducted)} · ชำระเต็มจำนวนครั้งเดียว`
+                            : 'ราคาสุทธิ ' + money(order.totalAmount)}
+                      </span>
+                    </>
+                  )}
+                  <span className="pay-wait">{flowWaitingText(order)}</span>
                   <div className="s-btns">
-                    <button
-                      className="s-btn pri"
-                      onClick={() => {
-                        setMessage(null);
-                        setDialog({ type: 'pay', order });
-                      }}
-                    >
-                      {booking ? 'วางเงินจอง' : 'ชำระเงิน'}
-                    </button>
-                    <button
-                      className="s-act"
-                      onClick={() => setDialog({ type: 'loan', order })}
-                    >
-                      คำนวณค่างวดผ่อน
-                    </button>
+                    {next && (
+                      <button
+                        className="s-btn pri"
+                        onClick={() => {
+                          setMessage(null);
+                          setDialog({ type: 'pay', order, paymentType: next });
+                        }}
+                      >
+                        {next === 'BOOKING_DEPOSIT'
+                          ? 'ชำระเงินจอง'
+                          : next === 'DOWN_PAYMENT'
+                            ? 'ไฟแนนซ์อนุมัติแล้ว — ชำระเงินดาวน์'
+                            : 'ชำระเงิน'}
+                      </button>
+                    )}
+                    {flow.bookingDocumentAvailable && (
+                      <button
+                        className={
+                          flow.plan === 'FINANCE' && flow.currentStep === 2
+                            ? 's-btn'
+                            : 's-act'
+                        }
+                        onClick={() =>
+                          run(() => downloadBookingPdf(order), null)
+                        }
+                      >
+                        ดาวน์โหลดใบจอง
+                      </button>
+                    )}
+                    {flow.plan === 'FINANCE' && (
+                      <button
+                        className="s-act"
+                        onClick={() => setDialog({ type: 'loan', order })}
+                      >
+                        คำนวณค่างวดผ่อน
+                      </button>
+                    )}
                     {invoice && (
                       <button
                         className="s-act"
@@ -363,6 +388,7 @@ export default function CustomerTransactionsPage() {
       {dialog?.type === 'pay' && (
         <PayDialog
           order={dialog.order}
+          paymentType={dialog.paymentType}
           onClose={() => setDialog(null)}
           onDone={done}
         />
@@ -398,18 +424,14 @@ export default function CustomerTransactionsPage() {
   );
 }
 
-function PayDialog({ order, onClose, onDone }) {
+// ชนิดยอดมาจากขั้นตอนปัจจุบัน (customerNextPayment): ลูกค้าไม่ต้องเลือกเอง
+function PayDialog({ order, paymentType: type, onClose, onDone }) {
+  const flow = order.flow;
   const remaining = outstanding(order);
-  // รอผู้จัดการอนุมัติ → จ่ายได้เฉพาะเงินจอง
-  const awaitingApproval = order.orderStatus === 'PENDING';
+  const isDown = type === 'DOWN_PAYMENT';
+  // เงินดาวน์ = ยอดตายตัว (ดาวน์ตามสัญญา − เงินจอง) ต้องจ่ายครบในครั้งเดียว
+  const fixedAmount = isDown ? toSatang(flow.downPayment.dueAmount) : null;
   const [method, setMethod] = useState('BANK_TRANSFER');
-  // ยังไม่เคยจ่ายเลย → ก้อนแรกมักเป็นเงินจอง
-  const [type, setType] = useState(
-    awaitingApproval || netPaid(order) === 0 ? 'BOOKING_DEPOSIT' : 'BALANCE',
-  );
-  const typeOptions = awaitingApproval
-    ? ['BOOKING_DEPOSIT']
-    : ['BOOKING_DEPOSIT', 'DOWN_PAYMENT', 'BALANCE'];
   let maxAmount = remaining;
   if (method === 'CREDIT_CARD')
     maxAmount = Math.min(maxAmount, CARD_LIMIT_SATANG);
@@ -418,6 +440,8 @@ function PayDialog({ order, onClose, onDone }) {
   // เงินจองที่โชว์รูมทั่วไปเรียก ~20,000 บาท
   const suggested =
     type === 'BOOKING_DEPOSIT' ? Math.min(maxAmount, 20000 * 100) : maxAmount;
+  const cardTooSmall =
+    isDown && method === 'CREDIT_CARD' && fixedAmount > CARD_LIMIT_SATANG;
   // หนึ่ง dialog = หนึ่ง Idempotency-Key กดซ้ำไม่เกิดรายการซ้ำ
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const [message, run, , busy] = useAction();
@@ -429,9 +453,14 @@ function PayDialog({ order, onClose, onDone }) {
       createPayment(
         order.orderId,
         {
-          amount: String(form.get('amount')),
+          amount: isDown
+            ? satangInput(fixedAmount)
+            : String(form.get('amount')),
           paymentMethod: method,
           paymentType: type,
+          ...(isDown
+            ? { financeCompany: String(form.get('financeCompany')) }
+            : {}),
           ...(method === 'BANK_TRANSFER'
             ? { transactionReference: String(form.get('reference')) }
             : {}),
@@ -442,51 +471,46 @@ function PayDialog({ order, onClose, onDone }) {
     if (created)
       onDone(
         created.status === 'SUCCESS'
-          ? `ชำระเงิน ${money(created.amount)} สำเร็จ (${created.transactionReference}) — ระบบจำลองอนุมัติบัตรทันที`
-          : `แจ้งโอน ${money(created.amount)} แล้ว (${created.transactionReference}) รอฝ่ายการเงินตรวจสอบยอด`,
+          ? `ชำระ${paymentTypes[type]} ${money(created.amount)} สำเร็จ (${created.transactionReference}) — ระบบจำลองอนุมัติบัตรทันที`
+          : `แจ้งโอน${paymentTypes[type]} ${money(created.amount)} แล้ว (${created.transactionReference}) รอฝ่ายการเงินตรวจสอบยอด`,
       );
   }
 
   return (
     <Dialog
-      title={
-        (awaitingApproval ? 'วางเงินจอง ' : 'ชำระเงิน ') + order.orderNumber
-      }
+      title={'ชำระ' + paymentTypes[type] + ' ' + order.orderNumber}
       onClose={onClose}
     >
       <p className="small">
-        {carLabel(order)} · ยอดคงค้าง {baht(remaining)}
-        {awaitingApproval &&
-          ' · ออเดอร์รอผู้จัดการอนุมัติ ถ้าไม่อนุมัติจะคืนเงินจองเต็มจำนวน'}
+        {carLabel(order)} · ราคาสุทธิ {money(order.totalAmount)}
+        {type === 'BOOKING_DEPOSIT' &&
+          flow.plan === 'FINANCE' &&
+          ' · จ่ายแล้วดาวน์โหลดใบจองไปยื่นไฟแนนซ์ได้ทันที'}
       </p>
       <form className="s-form" onSubmit={submit}>
-        <fieldset className="s-fld wide pay-methods">
-          <legend className="lb">ชำระเป็น *</legend>
-          {typeOptions.map((key) => (
-            <label key={key}>
-              <input
-                type="radio"
-                name="type"
-                value={key}
-                checked={type === key}
-                onChange={() => setType(key)}
-              />
-              <span>
-                {paymentTypes[key]}
-                <small>
-                  {
-                    {
-                      BOOKING_DEPOSIT: `วางเงินจองเพื่อยืนยันการซื้อ ไม่เกิน ${baht(DEPOSIT_LIMIT_SATANG)} (ต้องเป็นยอดแรกของออเดอร์)`,
-                      DOWN_PAYMENT:
-                        'ซื้อแบบผ่อน: จ่ายเงินดาวน์ ส่วนที่เหลือไฟแนนซ์จะโอนให้โชว์รูม',
-                      BALANCE: 'ซื้อเงินสด: ชำระส่วนที่เหลือ',
-                    }[key]
-                  }
-                </small>
-              </span>
-            </label>
-          ))}
-        </fieldset>
+        {isDown && (
+          <div className="s-fld wide">
+            <span className="lb">ยอดเงินดาวน์ที่ต้องชำระ (เต็มจำนวน)</span>
+            <span className="pay-fixed">{baht(fixedAmount)}</span>
+            <span className="pay-sub">
+              ดาวน์ตามสัญญา {money(flow.downPayment.agreedAmount)} − เงินจอง{' '}
+              {money(flow.downPayment.depositDeducted)} · ยอดจัดไฟแนนซ์{' '}
+              {money(flow.finance.amount)} บริษัทไฟแนนซ์จะโอนให้ศูนย์เอง
+            </span>
+          </div>
+        )}
+        {isDown && (
+          <label className="s-fld wide">
+            <span>บริษัทไฟแนนซ์ที่อนุมัติสินเชื่อ *</span>
+            <input
+              className="s-in"
+              name="financeCompany"
+              placeholder="เช่น โตโยตี้ ลีสซิ่ง"
+              maxLength={150}
+              required
+            />
+          </label>
+        )}
         <fieldset className="s-fld wide pay-methods">
           <legend className="lb">ช่องทางชำระ *</legend>
           {['BANK_TRANSFER', 'CREDIT_CARD'].map((key) => (
@@ -515,20 +539,28 @@ function PayDialog({ order, onClose, onDone }) {
             มอเตอร์
           </div>
         )}
-        <label className="s-fld">
-          <span>จำนวนเงิน (บาท) *</span>
-          <input
-            key={method + type}
-            className="s-in"
-            name="amount"
-            type="number"
-            min="0.01"
-            step="0.01"
-            max={satangInput(maxAmount)}
-            defaultValue={satangInput(suggested)}
-            required
-          />
-        </label>
+        {cardTooSmall && (
+          <p className="s-fld wide small pay-error">
+            เงินดาวน์เกินวงเงินบัตร {baht(CARD_LIMIT_SATANG)} ต่อออเดอร์
+            กรุณาเลือกโอนเงิน
+          </p>
+        )}
+        {!isDown && (
+          <label className="s-fld">
+            <span>จำนวนเงิน (บาท) *</span>
+            <input
+              key={method}
+              className="s-in"
+              name="amount"
+              type="number"
+              min="0.01"
+              step="0.01"
+              max={satangInput(maxAmount)}
+              defaultValue={satangInput(suggested)}
+              required
+            />
+          </label>
+        )}
         {method === 'BANK_TRANSFER' && (
           <label className="s-fld">
             <span>เลขอ้างอิงการโอน *</span>
@@ -548,7 +580,11 @@ function PayDialog({ order, onClose, onDone }) {
           </p>
         )}
         <div className="s-form-f">
-          <button className="s-btn pri" type="submit" disabled={busy}>
+          <button
+            className="s-btn pri"
+            type="submit"
+            disabled={busy || cardTooSmall}
+          >
             {method === 'CREDIT_CARD' ? 'ชำระด้วยบัตร (จำลอง)' : 'แจ้งโอนเงิน'}
           </button>
         </div>
