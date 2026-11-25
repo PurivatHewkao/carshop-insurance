@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "dev": "vite --port 5173 --strictPort",
     "build": "vite build",
+    "test:delivery": "playwright test --config playwright.delivery.config.js",
     "preview": "vite preview --port 5173 --strictPort"
   },
   "dependencies": {

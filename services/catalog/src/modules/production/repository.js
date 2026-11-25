@@ -3,6 +3,7 @@
 // A car is made-to-order when cars.production_status IS NOT NULL.
 import { getMysqlPool } from '../../config/mysql.js';
 import { httpError } from '../../utils/httpError.js';
+import { completeDelivery } from './delivery.js';
 
 export const TRIMS = ['ECO', 'BALANCED', 'HIGH_PERFORMANCE'];
 // Days to collect the parts of a trim before the car can enter a build week.
@@ -359,7 +360,7 @@ export const ACTIONS = [
  *   START {vin}            SCHEDULED -> IN_PRODUCTION, the real VIN replaces the placeholder
  *   SHIP {arrivalDate}     IN_PRODUCTION -> IN_TRANSIT, the window becomes one day
  *   ARRIVE                 IN_TRANSIT -> READY (ready_date = today)
- *   DELIVER                READY -> DELIVERED
+ *   DELIVER                paid order -> COMPLETED, car -> SOLD (READY -> DELIVERED)
  */
 export async function changeProduction(carId, body) {
   const action = body.action;
@@ -372,6 +373,16 @@ export async function changeProduction(carId, body) {
   }
   const note = readNote(body.note);
   return withTransaction(async (db) => {
+    if (action === 'DELIVER') {
+      await completeDelivery(db, carId, body.orderId);
+      if (note !== undefined) {
+        await db.query('UPDATE cars SET production_note = ? WHERE id = ?', [
+          note,
+          carId,
+        ]);
+      }
+      return productionToApi(await readCar(db, carId));
+    }
     const car = await lockCar(db, carId);
     const set = {};
     if (action === 'QUEUE') {
@@ -454,9 +465,6 @@ export async function changeProduction(carId, body) {
         production_status: 'READY',
         ready_date: todayUtc(),
       });
-    } else {
-      requireStatus(car, ['READY'], action);
-      set.production_status = 'DELIVERED';
     }
     if (note !== undefined) set.production_note = note;
     const columns = Object.keys(set);

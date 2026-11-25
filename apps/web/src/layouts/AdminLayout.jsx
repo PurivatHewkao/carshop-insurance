@@ -4,6 +4,7 @@ import { reportLinks } from '../features/reporting/components/reportLinks.js';
 const links = [
   ...pageMenu('admin'),
   ['/admin/finance', 'จัดการการเงิน'],
+  ['/admin/deliveries', 'ยืนยันส่งมอบรถ'],
   ...reportLinks('/admin'),
   ['/system-status', 'สถานะระบบ'],
 ];

@@ -52,6 +52,15 @@ async function setupDatabase() {
   const migration = await readFile(MIGRATION, 'utf8');
   await admin.query(migration);
   await admin.query(migration); // must be safe to run twice
+  await admin.query(
+    await readFile(
+      path.join(
+        here,
+        '../../payment/database/migrations/001_refunds_and_idempotency.sql',
+      ),
+      'utf8',
+    ),
+  );
 }
 
 const ACTORS = {
@@ -380,9 +389,30 @@ describe('lifecycle', () => {
     assert.equal(res.body.data.status, 'READY');
     assert.equal(res.body.data.readyDate, todayUtc());
 
+    // A deposit alone is not enough to hand over the car.
+    res = await patch({ action: 'DELIVER' }, 'seller');
+    assert.equal(res.status, 409);
+    assert.equal(res.body.error.code, 'DELIVERY_NOT_PAID');
+    await admin.query("UPDATE orders SET status = 'PAID' WHERE id = ?", [
+      car.orderId,
+    ]);
+    await admin.query(
+      "INSERT INTO payments (id, order_id, amount, payment_method, status) VALUES (?, ?, 2160000, 'BANK_TRANSFER', 'SUCCESS')",
+      [randomUUID(), car.orderId],
+    );
     res = await patch({ action: 'DELIVER' }, 'seller');
     assert.equal(res.status, 200, JSON.stringify(res.body));
     assert.equal(res.body.data.status, 'DELIVERED');
+    const [[completed]] = await admin.query(
+      'SELECT status FROM orders WHERE id = ?',
+      [car.orderId],
+    );
+    const [[sold]] = await admin.query('SELECT status FROM cars WHERE id = ?', [
+      car.carId,
+    ]);
+    assert.equal(completed.status, 'COMPLETED');
+    assert.equal(sold.status, 'SOLD');
+    assert.equal((await patch({ action: 'DELIVER' }, 'admin')).status, 200);
 
     // Public read for the order page.
     res = await api('GET', '/cars/' + car.carId, { as: null });
@@ -392,6 +422,31 @@ describe('lifecycle', () => {
         .status,
       400,
     );
+  });
+
+  test('admin can deliver a fully paid stock car; customers cannot confirm delivery', async () => {
+    const car = await makeCar({ production: null, order: 'PAID', paid: false });
+    await admin.query(
+      "INSERT INTO payments (id, order_id, amount, payment_method, status) VALUES (?, ?, 2210000, 'BANK_TRANSFER', 'SUCCESS')",
+      [randomUUID(), car.orderId],
+    );
+    const options = { body: { action: 'DELIVER', orderId: car.orderId } };
+    assert.equal(
+      (await api('PATCH', '/cars/' + car.carId, { ...options, as: 'customer' }))
+        .status,
+      403,
+    );
+    const result = await api('PATCH', '/cars/' + car.carId, {
+      ...options,
+      as: 'admin',
+    });
+    assert.equal(result.status, 200, JSON.stringify(result.body));
+    assert.equal(result.body.data.status, null); // stock stays outside the production queue
+    const [[order]] = await admin.query(
+      'SELECT status FROM orders WHERE id = ?',
+      [car.orderId],
+    );
+    assert.equal(order.status, 'COMPLETED');
   });
 
   test('queue and weekly load for staff', async () => {

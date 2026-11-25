@@ -173,7 +173,7 @@ export async function listOrderOverview(connection, { scope, status, paging }) {
        o.down_payment, o.down_payment_percent, o.interest_rate, o.installment_count, o.installment_years, ${production}
        o.customer_id, TRIM(CONCAT(c.first_name, ' ', c.last_name)) AS customer_name,
        o.seller_id, TRIM(CONCAT(e.first_name, ' ', e.last_name)) AS seller_name,
-       m.brand, m.model_name, car.color, car.manufacture_year,
+       m.brand, m.model_name, car.id AS car_id, car.color, car.manufacture_year,
        (SELECT COALESCE(SUM(p.amount), 0) FROM payments p
          WHERE p.order_id = o.id AND p.status IN ('SUCCESS','REFUNDED')) AS paid,
        (SELECT COALESCE(SUM(p.amount), 0) FROM payments p

@@ -24,6 +24,8 @@ WAITING → SCHEDULED → IN_PRODUCTION → IN_TRANSIT → READY → DELIVERED  
 - ช่วงรับรถ = สัปดาห์ผลิต + 7 ถึง + 14 วัน; ตอน `SHIP` เหลือวันเดียว (วันที่รถถึงศูนย์)
 - `first_eta_to` = คำสัญญาแรก; `delayDays` = `eta_to - first_eta_to`
 - trim อ่านจาก `cars.trim_id → car_trims.code` (ของกร) ถ้ายังไม่มีตาราง ใช้ `trim` ใน body ของ schedule หรือค่าเริ่ม BALANCED
+- ยืนยัน `DELIVER` ได้เมื่อออเดอร์ `PAID`, ยอดชำระสุทธิหลังหักเงินคืนครบ และรถ `RESERVED` ที่ `READY` (หรือรถสต็อกที่ไม่มี production status) ระบบอัปเดตออเดอร์เป็น `COMPLETED`, รถเป็น `SOLD` และรถสั่งผลิตเป็น `DELIVERED` ใน transaction เดียวกัน เรียกซ้ำได้โดยไม่เปลี่ยนสถานะซ้ำ
+- หน้า admin `/admin/deliveries` ส่ง `orderId` คู่กับคำสั่งเพื่อป้องกันการยืนยันจากข้อมูลเก่า ลูกค้าเห็นสถานะใน `/customer/transactions` ต้องมีตาราง `refunds` จาก Payment migration 001 ที่ระบบการเงินใช้อยู่แล้ว
 
 ฝั่ง Payment ที่ผูกกับคิวนี้ (`services/payment/src/clients/orders.js`)
 

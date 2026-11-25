@@ -23,14 +23,35 @@ async function send(method, url, body, idempotencyKey) {
   return data.data;
 }
 
+// Delivery work must include older orders beyond the first 100 records.
+async function allOrderBalances(signal) {
+  const orders = [];
+  for (let page = 1; ; page += 1) {
+    const { data } = await paymentClient.get('order-balances', {
+      params: { ...LIST, page },
+      signal,
+    });
+    orders.push(...data.data);
+    if (
+      !data.meta ||
+      orders.length >= data.meta.total ||
+      data.data.length === 0
+    )
+      return orders;
+  }
+}
+
 /** โหลดทุกอย่างที่หน้าการเงินใช้ในครั้งเดียว */
-export async function loadFinanceData(signal, { requests = false } = {}) {
+export async function loadFinanceData(
+  signal,
+  { requests = false, ordersOnly = false } = {},
+) {
   const [orders, payments, invoices, refunds, financeRequests] =
     await Promise.all([
-      get('order-balances', {}, signal),
-      get('payments', {}, signal),
-      get('invoices', {}, signal),
-      get('refunds', {}, signal),
+      ordersOnly ? allOrderBalances(signal) : get('order-balances', {}, signal),
+      ordersOnly ? [] : get('payments', {}, signal),
+      ordersOnly ? [] : get('invoices', {}, signal),
+      ordersOnly ? [] : get('refunds', {}, signal),
       requests ? get('finance-requests', {}, signal) : [],
     ]);
   // loadedAt: เวลาที่โหลด ใช้คิด "30 วันล่าสุด" โดยไม่เรียก Date.now() ระหว่าง render

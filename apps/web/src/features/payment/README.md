@@ -11,6 +11,7 @@
 | `/seller/finance`        | seller           | ดูการชำระของลูกค้าที่ตัวเองขาย ออกใบแจ้งหนี้ ส่งเรื่องถึงการเงิน                                                                   |
 | `/manager/invoices`      | manager          | ออก/ยกเลิกใบแจ้งหนี้ ดูยอดทุกออเดอร์                                                                                               |
 | `/admin/finance`         | admin            | ตรวจยอดโอน อนุมัติคืนเงิน รับเงินสด ใบแจ้งหนี้ ประวัติ ตอบเรื่องจากฝ่ายขาย                                                         |
+| `/admin/deliveries`      | admin            | ยืนยันส่งมอบรถที่ชำระครบและพร้อมส่งมอบ ดูรายการที่ส่งมอบแล้ว สถานะเชื่อมกับ `/customer/transactions` |
 | `/finance`               | finance (+admin) | หน้าเดียวกับ `/admin/finance` ในพื้นที่ทำงานของฝ่ายการเงิน (`layouts/FinanceLayout.jsx`); login ด้วย role finance แล้วมาหน้านี้เลย |
 
 backend กรองข้อมูลตาม role ของผู้ login เอง หน้าเว็บไม่ต้องกรอง
@@ -27,6 +28,8 @@ backend กรองข้อมูลตาม role ของผู้ login �
 
 จาก root: `npm run dev` (หรืออย่างน้อย `dev:web`, `dev:identity`, `dev:sales`, `dev:payment`) แล้ว login ด้วยบัญชีของ role นั้น
 ตั้งค่า payment ตาม `services/payment/README.md` ก่อน (`.env` + `npm run db:migrate`)
+
+ทดสอบขั้นตอนส่งมอบ: รัน `npm run build` จาก root แล้ว `npm --prefix apps/web run test:delivery` ใช้ API จำลองทั้งหมด ไม่ติดต่อฐานข้อมูลจริง (Windows ใช้ Edge; ตั้ง `PW_BROWSER_CHANNEL` เพื่อเลือกเบราว์เซอร์อื่น)
 
 ## ประสาน
 

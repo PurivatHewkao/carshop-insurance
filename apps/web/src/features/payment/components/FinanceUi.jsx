@@ -126,7 +126,10 @@ export function Dialog({ title, onClose, children }) {
   return (
     <dialog
       ref={ref}
-      onCancel={onClose}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
       className="s-card order-modal pay-dialog"
       aria-label={title}
     >

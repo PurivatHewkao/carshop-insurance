@@ -13,6 +13,7 @@ import {
   StatusPill,
 } from '../components/FinanceUi.jsx';
 import InstallmentCalculator from '../components/InstallmentCalculator.jsx';
+import DeliveryStatus from '../components/DeliveryStatus.jsx';
 import { useAction, usePaymentData } from '../hooks/usePaymentData.js';
 import {
   activeInvoice,
@@ -41,7 +42,7 @@ import {
 
 // backend ส่งเฉพาะออเดอร์ของลูกค้าที่ login อยู่
 export default function CustomerTransactionsPage() {
-  const { data, error, loading, reload } = usePaymentData();
+  const { data, error, loading, reload } = usePaymentData({ refreshMs: 30000 });
   const [dialog, setDialog] = useState(null);
   const [message, , setMessage] = useAction();
 
@@ -55,8 +56,12 @@ export default function CustomerTransactionsPage() {
     <PageHeader
       crumb="บัญชีลูกค้า / ประวัติธุรกรรม"
       title="ประวัติธุรกรรม"
-      sub="ดูยอดที่ต้องชำระ ชำระเงิน ขอคืนเงิน และย้อนดูการชำระทั้งหมดของคุณ"
-    />
+      sub="ดูยอดที่ต้องชำระ ชำระเงิน ขอคืนเงิน และติดตามสถานะส่งมอบรถของคุณ"
+    >
+      <button type="button" className="s-btn" onClick={reload}>
+        รีเฟรชข้อมูล
+      </button>
+    </PageHeader>
   );
   if (!data)
     return (
@@ -130,8 +135,21 @@ export default function CustomerTransactionsPage() {
                         {order.orderNumber}
                         {invoice && ' · ' + invoice.invoiceNumber}
                       </span>
-                      {order.car.configuration && <span className="pay-sub">{order.car.configuration.trimName} · {order.car.configuration.colorName} · {order.car.configuration.wheelName}</span>}
-                      {order.installmentCount && <span className="pay-sub">ดาวน์ {order.downPaymentPercent}% ({money(order.downPayment)}) · ดอกเบี้ย {order.interestRate}% · {order.installmentCount} งวด / {order.installmentYears} ปี</span>}
+                      {order.car.configuration && (
+                        <span className="pay-sub">
+                          {order.car.configuration.trimName} ·{' '}
+                          {order.car.configuration.colorName} ·{' '}
+                          {order.car.configuration.wheelName}
+                        </span>
+                      )}
+                      {order.installmentCount && (
+                        <span className="pay-sub">
+                          ดาวน์ {order.downPaymentPercent}% (
+                          {money(order.downPayment)}) · ดอกเบี้ย{' '}
+                          {order.interestRate}% · {order.installmentCount} งวด /{' '}
+                          {order.installmentYears} ปี
+                        </span>
+                      )}
                     </div>
                     {invoice ? (
                       <StatusPill
@@ -201,6 +219,7 @@ export default function CustomerTransactionsPage() {
                 </th>
                 <th scope="col">ความคืบหน้า</th>
                 <th scope="col">สถานะ</th>
+                <th scope="col">การส่งมอบรถ</th>
                 <th scope="col">เอกสาร</th>
               </tr>
             </thead>
@@ -221,6 +240,9 @@ export default function CustomerTransactionsPage() {
                     </td>
                     <td>
                       <StatusPill kind="order" status={o.orderStatus} />
+                    </td>
+                    <td>
+                      <DeliveryStatus order={o} />
                     </td>
                     <td>
                       {invoice ? (
@@ -351,7 +373,8 @@ export default function CustomerTransactionsPage() {
           onClose={() => setDialog(null)}
         >
           <p className="small">
-            {carLabel(dialog.order)} · ราคาสุทธิ {money(dialog.order.totalAmount)}
+            {carLabel(dialog.order)} · ราคาสุทธิ{' '}
+            {money(dialog.order.totalAmount)}
           </p>
           <InstallmentCalculator price={dialog.order.totalAmount} />
         </Dialog>
@@ -426,7 +449,9 @@ function PayDialog({ order, onClose, onDone }) {
 
   return (
     <Dialog
-      title={(awaitingApproval ? 'วางเงินจอง ' : 'ชำระเงิน ') + order.orderNumber}
+      title={
+        (awaitingApproval ? 'วางเงินจอง ' : 'ชำระเงิน ') + order.orderNumber
+      }
       onClose={onClose}
     >
       <p className="small">
@@ -518,7 +543,8 @@ function PayDialog({ order, onClose, onDone }) {
         )}
         {type === 'DOWN_PAYMENT' && (
           <p className="s-fld wide small">
-            ยอดจัดไฟแนนซ์ไม่ต้องจ่ายเอง ฝ่ายการเงินจะบันทึกให้เมื่อบริษัทไฟแนนซ์โอนเงินเข้าโชว์รูม
+            ยอดจัดไฟแนนซ์ไม่ต้องจ่ายเอง
+            ฝ่ายการเงินจะบันทึกให้เมื่อบริษัทไฟแนนซ์โอนเงินเข้าโชว์รูม
           </p>
         )}
         <div className="s-form-f">

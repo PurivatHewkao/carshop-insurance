@@ -132,6 +132,8 @@ router.patch(
   async (req, res) => {
     const carId = requireUuid(req.params.carId, 'carId');
     const body = req.body && typeof req.body === 'object' ? req.body : {};
+    if (body.orderId !== undefined)
+      body.orderId = requireUuid(body.orderId, 'orderId');
     if (req.user.role === 'seller' && body.action !== 'DELIVER') {
       throw httpError(403, 'FORBIDDEN', 'Sellers can only record the delivery');
     }
