@@ -18,6 +18,7 @@ import {
   requireBody,
 } from '../../utils/validate.js';
 import { balanceToApi, orderBalance } from './balance.js';
+import { flowToApi, loadFlow } from './flow.js';
 import {
   assertOrderAccess,
   FINANCE,
@@ -129,6 +130,84 @@ async function assertPaymentPlan(
   }
 }
 
+/**
+ * Step order of the purchase flow (payments/flow.js). A hire-purchase order:
+ * deposit first → down payment in full, once → finance loan / rest.
+ * A cash order may not pay DOWN_PAYMENT (there is no loan to put it against).
+ */
+function assertFlowStep(flow, { paymentType, amount }) {
+  if (flow.plan === 'CASH') {
+    if (paymentType === 'DOWN_PAYMENT') {
+      throw httpError(
+        422,
+        'DOWN_PAYMENT_NOT_IN_PLAN',
+        'This order is paid in cash: use BALANCE instead of DOWN_PAYMENT',
+        [{ field: 'paymentType', issue: 'not_in_plan' }],
+      );
+    }
+    return;
+  }
+  if (paymentType === 'BOOKING_DEPOSIT') return; // first-payment rules: assertPaymentPlan
+  if (flow.depositStatus !== 'PAID') {
+    throw httpError(
+      409,
+      flow.depositStatus === 'PENDING'
+        ? 'BOOKING_DEPOSIT_NOT_CONFIRMED'
+        : 'BOOKING_DEPOSIT_REQUIRED',
+      flow.depositStatus === 'PENDING'
+        ? 'Finance has not confirmed the booking deposit yet'
+        : 'Pay the booking deposit first (step 1)',
+    );
+  }
+  if (paymentType === 'DOWN_PAYMENT') {
+    if (flow.downStatus === 'NOT_REQUIRED') {
+      throw httpError(
+        409,
+        'DOWN_PAYMENT_NOT_REQUIRED',
+        'The booking deposit already covers the down payment of this order',
+      );
+    }
+    if (flow.downStatus === 'PAID' || flow.downStatus === 'PENDING') {
+      throw httpError(
+        409,
+        'DOWN_PAYMENT_EXISTS',
+        'The down payment of this order was already paid',
+      );
+    }
+    if (amount !== flow.downDue) {
+      throw httpError(
+        422,
+        'DOWN_PAYMENT_MUST_BE_FULL',
+        'The down payment is paid in full in one payment: ' +
+          formatMoney(flow.downDue) +
+          ' (agreed ' +
+          formatMoney(flow.agreedDown) +
+          ' minus the booking deposit ' +
+          formatMoney(flow.deposit) +
+          ')',
+        [
+          {
+            field: 'amount',
+            issue: 'must_equal',
+            expected: formatMoney(flow.downDue),
+          },
+        ],
+      );
+    }
+    return;
+  }
+  // FINANCE_DISBURSEMENT / BALANCE come after the customer paid the down payment.
+  if (!['PAID', 'NOT_REQUIRED'].includes(flow.downStatus)) {
+    throw httpError(
+      409,
+      'DOWN_PAYMENT_REQUIRED',
+      flow.downStatus === 'PENDING'
+        ? 'Finance has not confirmed the down payment yet'
+        : 'The customer pays the down payment first (step 3)',
+    );
+  }
+}
+
 export async function lockPayment(connection, paymentId) {
   const [rows] = await connection.query(
     'SELECT ' + COLUMNS + ' FROM payments WHERE id = ? FOR UPDATE',
@@ -213,8 +292,10 @@ export async function createPayment(actor, orderId, rawBody, idempotencyKey) {
       [{ field: 'transactionReference', issue: 'required' }],
     );
   }
+  // FINANCE: the company that sent the loan. DOWN_PAYMENT: the company that approved
+  // the customer's loan (step 3 of the purchase flow), printed on the receipt.
   const financeCompany =
-    paymentMethod === 'FINANCE'
+    paymentMethod === 'FINANCE' || paymentType === 'DOWN_PAYMENT'
       ? readText(body, 'financeCompany', { max: 150, required: true }).trim()
       : null;
   // userId in the hash: the same key from another user is a mismatch (422), not a replay.
@@ -239,23 +320,22 @@ export async function createPayment(actor, orderId, rawBody, idempotencyKey) {
 
     const order = await lockOrder(connection, orderId);
     assertOrderAccess(actor, order, orderNotFound);
-    // Real showrooms take the booking deposit before the manager approves the deal;
-    // everything else waits for CONFIRMED. A rejected order gets its deposit refunded.
-    const awaitingApproval = order.status === 'PENDING';
-    if (
-      order.status !== 'CONFIRMED' &&
-      !(awaitingApproval && paymentType === 'BOOKING_DEPOSIT')
-    ) {
+    // Nothing is paid before the manager approves the order (step 1 starts after approval).
+    if (order.status !== 'CONFIRMED') {
       throw httpError(
         409,
         'ORDER_NOT_PAYABLE',
-        awaitingApproval
-          ? 'This order is waiting for approval: only the booking deposit can be paid now'
+        order.status === 'PENDING'
+          ? 'This order is waiting for the manager: the booking deposit can be paid after approval'
           : 'Payments are accepted only for CONFIRMED orders (current: ' +
               order.status +
               ')',
       );
     }
+    assertFlowStep(await loadFlow(connection, order), {
+      paymentType,
+      amount,
+    });
     // A made-to-order car is paid off (cash balance or finance loan) once it has arrived.
     if (paymentType === 'BALANCE' || paymentType === 'FINANCE_DISBURSEMENT') {
       const production = await findCarProduction(connection, order.car_id);
@@ -357,13 +437,7 @@ export async function reviewPayment(paymentId, rawBody) {
           ')',
       );
     }
-    const depositBeforeApproval =
-      order.status === 'PENDING' && payment.payment_type === 'BOOKING_DEPOSIT';
-    if (
-      status === 'SUCCESS' &&
-      !['CONFIRMED', 'PAID'].includes(order.status) &&
-      !depositBeforeApproval
-    ) {
+    if (status === 'SUCCESS' && !['CONFIRMED', 'PAID'].includes(order.status)) {
       throw httpError(
         409,
         'ORDER_NOT_PAYABLE',
@@ -410,6 +484,7 @@ export async function listOrderPayments(actor, orderId) {
   return {
     data: rows.map(paymentToApi),
     summary: balanceToApi(order, balance),
+    flow: flowToApi(await loadFlow(pool, order)),
   };
 }
 

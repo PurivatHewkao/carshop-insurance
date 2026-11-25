@@ -22,9 +22,9 @@ import {
 import { useAction, usePaymentData } from '../hooks/usePaymentData.js';
 import {
   activeInvoice,
-  canBook,
   canPay,
   carLabel,
+  flowWaitingText,
   invoiceStatus,
   needsRefund,
   netPaid,
@@ -32,6 +32,7 @@ import {
   orderOf,
   outstanding,
   refundableSatang,
+  staffPaymentOptions,
 } from '../utils/finance.js';
 import {
   baht,
@@ -85,8 +86,8 @@ export default function AdminFinancePage() {
   const refundRequests = data.refunds.filter((r) => r.status === 'REQUESTED');
   const openRequests = data.financeRequests.filter((r) => r.status === 'OPEN');
   const payable = data.orders.filter(canPay);
-  // ออเดอร์รออนุมัติที่ยังไม่มีเงินจอง → รับเงินจองที่โชว์รูมได้
-  const receivable = [...data.orders.filter(canBook), ...payable];
+  // รับเงินได้เฉพาะออเดอร์ที่ผู้จัดการอนุมัติแล้ว (ขั้นที่ 1 เริ่มหลังอนุมัติ)
+  const receivable = payable;
   // ผู้จัดการไม่อนุมัติ / ยกเลิก แต่ยังถือเงินลูกค้า (เช่นเงินจอง) → ต้องคืน
   const toReturn = data.orders.filter(needsRefund);
   const since = data.loadedAt - 30 * 864e5;
@@ -247,7 +248,7 @@ export default function AdminFinancePage() {
       {tab === 'orders' && (
         <section className="s-card flush">
           <div className="s-card-h">
-            <h2>ออเดอร์ที่ยังชำระไม่ครบ / รอเงินจอง</h2>
+            <h2>ออเดอร์ที่อนุมัติแล้ว ยังชำระไม่ครบ</h2>
           </div>
           <div className="s-tw">
             <table className="s-tbl">
@@ -274,8 +275,13 @@ export default function AdminFinancePage() {
                   <tr key={o.orderId}>
                     <td>
                       {customerOf(o.orderId)}
-                      {o.orderStatus === 'PENDING' && (
-                        <span className="pay-sub">รอผู้จัดการอนุมัติ</span>
+                      {o.flow && (
+                        <span className="pay-sub">
+                          {o.flow.currentStep
+                            ? `ขั้นที่ ${o.flow.currentStep}/${o.flow.steps.length} · `
+                            : ''}
+                          {flowWaitingText(o)}
+                        </span>
                       )}
                     </td>
                     <td className="num">{money(o.totalAmount)}</td>
@@ -290,9 +296,7 @@ export default function AdminFinancePage() {
                           setDialog({ type: 'cash', order: o });
                         }}
                       >
-                        {o.orderStatus === 'PENDING'
-                          ? 'รับเงินจอง'
-                          : 'รับเงิน / ไฟแนนซ์'}
+                        รับเงิน / ไฟแนนซ์
                       </button>
                     </td>
                   </tr>
@@ -639,19 +643,31 @@ function InvoicesTab({ data, customerOf, busy, onView, onCancel }) {
   );
 }
 
-// รับเงินที่โชว์รูม: เงินสด (จอง/ดาวน์/ชำระยอด) หรือยอดจัดที่บริษัทไฟแนนซ์โอนเข้ามา
+// รับเงินที่โชว์รูม ตามขั้นตอนของออเดอร์ (staffPaymentOptions):
+// ขั้น 1 เงินจอง · ขั้น 3 เงินดาวน์ (ยอดตายตัว + บริษัทไฟแนนซ์) · ขั้น 4 ยอดจัดที่ไฟแนนซ์โอนเข้ามา / ยอดที่เหลือ
 function CashDialog({ order, onClose, onDone }) {
   const remaining = outstanding(order);
-  // รอผู้จัดการอนุมัติ → รับได้เฉพาะเงินจองเป็นเงินสด
-  const awaitingApproval = order.orderStatus === 'PENDING';
-  const [method, setMethod] = useState('CASH');
-  const [type, setType] = useState(
-    awaitingApproval ? 'BOOKING_DEPOSIT' : 'BALANCE',
+  const options = staffPaymentOptions(order);
+  // ซื้อผ่อนขั้นที่ 4: ยอดที่เหลือคือยอดจัดที่ไฟแนนซ์โอนเข้ามา
+  const [method, setMethod] = useState(
+    !options.types.length ||
+      (options.finance && order.flow?.plan === 'FINANCE')
+      ? 'FINANCE'
+      : 'CASH',
   );
-  const maxAmount =
-    method === 'CASH' && type === 'BOOKING_DEPOSIT'
-      ? Math.min(remaining, DEPOSIT_LIMIT_SATANG)
-      : remaining;
+  const [type, setType] = useState(options.types[0] ?? 'BALANCE');
+  const isDown = method === 'CASH' && type === 'DOWN_PAYMENT';
+  const fixedAmount = isDown
+    ? toSatang(order.flow.downPayment.dueAmount)
+    : null;
+  let maxAmount = remaining;
+  if (method === 'CASH' && type === 'BOOKING_DEPOSIT')
+    maxAmount = Math.min(remaining, DEPOSIT_LIMIT_SATANG);
+  // ยอดจัดตามใบจอง (ซื้อผ่อน) เป็นค่าเริ่มต้นของยอดที่ไฟแนนซ์โอน
+  const suggested =
+    method === 'FINANCE' && order.flow?.finance
+      ? Math.min(maxAmount, toSatang(order.flow.finance.amount))
+      : maxAmount;
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const [message, run, , busy] = useAction();
   async function submit(event) {
@@ -667,9 +683,12 @@ function CashDialog({ order, onClose, onDone }) {
             transactionReference: String(form.get('contract')),
           }
         : {
-            amount: String(form.get('amount')),
+            amount: isDown
+              ? satangInput(fixedAmount)
+              : String(form.get('amount')),
             paymentMethod: 'CASH',
             paymentType: type,
+            ...(isDown ? { financeCompany: String(form.get('company')) } : {}),
           };
     const payment = await run(() =>
       createPayment(order.orderId, body, idempotencyKey),
@@ -679,55 +698,50 @@ function CashDialog({ order, onClose, onDone }) {
         `บันทึก${paymentTypes[payment.paymentType]} ${money(payment.amount)} (${payment.transactionReference}) ของ ${order.orderNumber} แล้ว`,
       );
   }
+  const nothing = !options.types.length && !options.finance;
   return (
     <Dialog title="บันทึกรับเงินที่โชว์รูม" onClose={onClose}>
       <p className="small">
         {order.customerName} · {order.orderNumber} · คงค้าง {baht(remaining)}
+        {order.flow && <> · {flowWaitingText(order)}</>}
       </p>
-      <form className="s-form" onSubmit={submit}>
-        <label className="s-fld">
-          <span>รับเงินจาก *</span>
-          <select
-            className="s-in"
-            value={method}
-            onChange={(e) => setMethod(e.target.value)}
-          >
-            <option value="CASH">ลูกค้าจ่ายเงินสด</option>
-            {!awaitingApproval && (
-              <option value="FINANCE">บริษัทไฟแนนซ์โอนยอดจัด</option>
-            )}
-          </select>
-        </label>
-        {method === 'CASH' ? (
+      {nothing ? (
+        <p className="empty-state">
+          ขั้นนี้ยังรับเงินไม่ได้ (รอตรวจยอดที่แจ้งโอนไว้ก่อน)
+        </p>
+      ) : (
+        <form className="s-form" onSubmit={submit}>
           <label className="s-fld">
-            <span>ชำระเป็น *</span>
+            <span>รับเงินจาก *</span>
             <select
               className="s-in"
-              value={type}
-              onChange={(e) => setType(e.target.value)}
+              value={method}
+              onChange={(e) => setMethod(e.target.value)}
             >
-              {(awaitingApproval
-                ? ['BOOKING_DEPOSIT']
-                : ['BOOKING_DEPOSIT', 'DOWN_PAYMENT', 'BALANCE']
-              ).map((key) => (
-                <option key={key} value={key}>
-                  {paymentTypes[key]}
-                </option>
-              ))}
+              {options.types.length > 0 && (
+                <option value="CASH">ลูกค้าจ่ายเงินสด</option>
+              )}
+              {options.finance && (
+                <option value="FINANCE">บริษัทไฟแนนซ์โอนยอดจัด</option>
+              )}
             </select>
           </label>
-        ) : (
-          <>
+          {method === 'CASH' ? (
             <label className="s-fld">
-              <span>บริษัทไฟแนนซ์ *</span>
-              <input
+              <span>ชำระเป็น *</span>
+              <select
                 className="s-in"
-                name="company"
-                placeholder="เช่น โตโยตี้ ลีสซิ่ง"
-                maxLength={150}
-                required
-              />
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+              >
+                {options.types.map((key) => (
+                  <option key={key} value={key}>
+                    {paymentTypes[key]}
+                  </option>
+                ))}
+              </select>
             </label>
+          ) : (
             <label className="s-fld">
               <span>เลขที่สัญญาเช่าซื้อ *</span>
               <input
@@ -738,29 +752,51 @@ function CashDialog({ order, onClose, onDone }) {
                 required
               />
             </label>
-          </>
-        )}
-        <label className="s-fld wide">
-          <span>จำนวนเงินที่รับ (บาท) *</span>
-          <input
-            key={method + type}
-            className="s-in"
-            name="amount"
-            type="number"
-            min="0.01"
-            step="0.01"
-            max={satangInput(maxAmount)}
-            defaultValue={satangInput(maxAmount)}
-            required
-          />
-        </label>
-        <div className="s-form-f">
-          <button className="s-btn pri" type="submit" disabled={busy}>
-            บันทึกรับเงิน
-          </button>
-        </div>
-        <FormMessage message={message} />
-      </form>
+          )}
+          {(method === 'FINANCE' || isDown) && (
+            <label className="s-fld wide">
+              <span>
+                {isDown ? 'บริษัทไฟแนนซ์ที่อนุมัติสินเชื่อ *' : 'บริษัทไฟแนนซ์ *'}
+              </span>
+              <input
+                className="s-in"
+                name="company"
+                placeholder="เช่น โตโยตี้ ลีสซิ่ง"
+                defaultValue={order.flow?.downPayment?.financeCompany ?? ''}
+                maxLength={150}
+                required
+              />
+            </label>
+          )}
+          {isDown ? (
+            <div className="s-fld wide">
+              <span className="lb">เงินดาวน์ (เต็มจำนวน หักเงินจองแล้ว)</span>
+              <span className="pay-fixed">{baht(fixedAmount)}</span>
+            </div>
+          ) : (
+            <label className="s-fld wide">
+              <span>จำนวนเงินที่รับ (บาท) *</span>
+              <input
+                key={method + type}
+                className="s-in"
+                name="amount"
+                type="number"
+                min="0.01"
+                step="0.01"
+                max={satangInput(maxAmount)}
+                defaultValue={satangInput(suggested)}
+                required
+              />
+            </label>
+          )}
+          <div className="s-form-f">
+            <button className="s-btn pri" type="submit" disabled={busy}>
+              บันทึกรับเงิน
+            </button>
+          </div>
+          <FormMessage message={message} />
+        </form>
+      )}
     </Dialog>
   );
 }

@@ -10,6 +10,7 @@ import {
   netPaid,
   orderOf,
   outstanding,
+  STEP_LABELS,
 } from '../utils/finance.js';
 import {
   baht,
@@ -20,6 +21,32 @@ import {
   thDateTime,
 } from '../utils/format.js';
 import '../payment.css';
+
+/** แถบขั้นตอนการซื้อ (ซื้อผ่อน 4 ขั้น / เงินสด 3 ขั้น) จาก order.flow */
+export function FlowSteps({ flow }) {
+  if (!flow) return null;
+  return (
+    <ol className="pay-steps" aria-label="ขั้นตอนการซื้อ">
+      {flow.steps.map((step, index) => {
+        const state = step.done
+          ? 'done'
+          : flow.currentStep === index + 1
+            ? 'now'
+            : 'todo';
+        return (
+          <li
+            key={step.key}
+            className={'pay-step ' + state}
+            aria-current={state === 'now' ? 'step' : undefined}
+          >
+            <span className="dot">{step.done ? '✓' : index + 1}</span>
+            <span className="lbl">{STEP_LABELS[step.key]}</span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
 
 export function StatusPill({ kind, status }) {
   const [label, tone] = statusLabels[kind][status] ?? [status, 'info'];

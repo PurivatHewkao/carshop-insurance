@@ -253,7 +253,8 @@ export async function markMadeToOrder(connection, carId) {
 export async function scheduleCar(carId, requestedTrim) {
   return withTransaction(async (db) => {
     const car = await lockCar(db, carId);
-    if (car.production_status !== 'WAITING') {
+    // QUOTED = a car the configurator (07, กร) created for an order: also waiting for a week.
+    if (!['WAITING', 'QUOTED'].includes(car.production_status)) {
       throw httpError(
         409,
         'NOT_WAITING',
@@ -456,7 +457,27 @@ export async function changeProduction(carId, body) {
       });
     } else {
       requireStatus(car, ['READY'], action);
-      set.production_status = 'DELIVERED';
+      // Step 4 of the purchase flow: the car is handed over only after the order is
+      // fully paid (deposit + down payment + finance loan, see payment/flow.js).
+      const [orders] = await db.query(
+        `SELECT id, status FROM orders WHERE car_id = ? AND status <> 'CANCELLED'
+         ORDER BY created_at DESC LIMIT 1`,
+        [carId],
+      );
+      if (!orders[0] || orders[0].status !== 'PAID') {
+        throw httpError(
+          409,
+          'ORDER_NOT_PAID',
+          'The car is delivered after the order is fully paid (order: ' +
+            (orders[0]?.status ?? 'none') +
+            ')',
+        );
+      }
+      Object.assign(set, { production_status: 'DELIVERED', status: 'SOLD' });
+      await db.query(
+        "UPDATE orders SET status = 'COMPLETED' WHERE id = ? AND status = 'PAID'",
+        [orders[0].id],
+      );
     }
     if (note !== undefined) set.production_note = note;
     const columns = Object.keys(set);

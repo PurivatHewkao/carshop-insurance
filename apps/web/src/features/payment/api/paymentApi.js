@@ -88,6 +88,13 @@ export const downloadReceiptPdf = (payment) =>
     'ใบเสร็จ-' + payment.id.slice(0, 6).toUpperCase() + '.pdf',
   );
 
+/** ใบจองรถยนต์ (ขั้นที่ 2) ลูกค้านำไปยื่นขอสินเชื่อ (GET /orders/{id}/booking-document) */
+export const downloadBookingPdf = (order) =>
+  downloadPdf(
+    `orders/${order.orderId}/booking-document`,
+    'ใบจอง-' + order.orderNumber + '.pdf',
+  );
+
 /** ประมาณค่างวดผ่อน (GET /financing/quote) — เปิดได้โดยไม่ต้อง login */
 export async function getFinancingQuote(params, signal) {
   const { data } = await paymentClient.get('financing/quote', {
@@ -111,7 +118,19 @@ const messages = {
   IDENTITY_UNAVAILABLE: 'ตรวจสอบการเข้าสู่ระบบไม่ได้ (Identity service ไม่ตอบ)',
   ORDER_NOT_FOUND: 'ไม่พบออเดอร์ หรือไม่ใช่ออเดอร์ของคุณ',
   ORDER_NOT_PAYABLE:
-    'ออเดอร์นี้ยังชำระไม่ได้ (ระหว่างรออนุมัติจ่ายได้เฉพาะเงินจอง หรือชำระครบแล้ว)',
+    'ออเดอร์นี้ยังชำระไม่ได้ (รอผู้จัดการอนุมัติก่อน หรือชำระครบแล้ว)',
+  BOOKING_DEPOSIT_REQUIRED: 'ต้องชำระเงินจองก่อน (ขั้นที่ 1)',
+  BOOKING_DEPOSIT_NOT_CONFIRMED: 'เงินจองยังรอฝ่ายการเงินตรวจยอดอยู่',
+  BOOKING_DOCUMENT_NOT_AVAILABLE:
+    'ออกใบจองได้หลังผู้จัดการอนุมัติและได้รับเงินจองแล้ว',
+  DOWN_PAYMENT_MUST_BE_FULL:
+    'เงินดาวน์ต้องชำระเต็มจำนวนในครั้งเดียว (ตามยอดในใบจอง หักเงินจองแล้ว)',
+  DOWN_PAYMENT_EXISTS: 'ออเดอร์นี้ชำระเงินดาวน์แล้ว',
+  DOWN_PAYMENT_NOT_REQUIRED: 'เงินจองครอบคลุมเงินดาวน์แล้ว ไม่ต้องจ่ายเพิ่ม',
+  DOWN_PAYMENT_NOT_IN_PLAN: 'ออเดอร์ซื้อเงินสดไม่มีเงินดาวน์ ใช้ "ชำระยอด" แทน',
+  DOWN_PAYMENT_REQUIRED:
+    'ลูกค้าต้องชำระเงินดาวน์ (และฝ่ายการเงินตรวจยอดแล้ว) ก่อนรับยอดไฟแนนซ์/ยอดที่เหลือ',
+  CAR_NOT_READY: 'รถสั่งผลิตยังไม่ถึงศูนย์ ชำระยอดสุดท้ายได้เมื่อรถพร้อม',
   DEPOSIT_TOO_HIGH: 'เงินจองต้องไม่เกิน 50,000 บาท',
   RECEIPT_NOT_AVAILABLE: 'ออกใบเสร็จได้เฉพาะยอดที่รับเงินแล้ว',
   ORDER_NOT_INVOICEABLE: 'ออกบิลได้เฉพาะออเดอร์ที่อนุมัติแล้ว',
